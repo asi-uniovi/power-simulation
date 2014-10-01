@@ -36,6 +36,9 @@ def main():
     except ValueError as value_error:
         logging.error(value_error)
         return 2
+    except RuntimeError as runtime_error:
+        logging.critical(runtime_error)
+        return 1
     except:
         logging.exception('Unexpected exception')
         return 1
