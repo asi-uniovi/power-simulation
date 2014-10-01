@@ -3,6 +3,8 @@
 """Main runner of the simulation."""
 
 import argparse
+import logging
+import os
 import sys
 import configparser
 from simulation import Simulation
@@ -17,6 +19,9 @@ def parse_arguments():
 
 def parse_config(config_file):
     """Get the config file as a dict of dicts."""
+    if not os.path.isfile(config_file):
+        raise ValueError('The configuration file does not exist')
+
     config = configparser.ConfigParser()
     config.read(config_file)
     return config
@@ -24,9 +29,16 @@ def parse_config(config_file):
 
 def main():
     """Just starts the simulation."""
-    args = parse_arguments()
-    config = parse_config(args.config_file)
-    Simulation(config).run()
+    try:
+        args = parse_arguments()
+        config = parse_config(args.config_file)
+        Simulation(config).run()
+    except ValueError as value_error:
+        logging.error(value_error)
+        return 2
+    except:
+        logging.exception('Unexpected exception')
+        return 1
 
 
 if __name__ == '__main__':
