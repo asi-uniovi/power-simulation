@@ -32,7 +32,7 @@ def main():
     try:
         args = parse_arguments()
         config = parse_config(args.config_file)
-        return Simulation(config).run()
+        print(Simulation(config).run())
     except ValueError as value_error:
         logging.error(value_error)
         return 2
