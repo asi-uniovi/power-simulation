@@ -43,7 +43,6 @@ class ActivityDistribution(object):
 
     def __load_trace(self, filename):
         """Parses the CSV with the trace formatted {day, hour, inactivity}."""
-
         with open(filename, newline='', encoding='utf-8') as trace:
             try:
                 dialect = csv.Sniffer().sniff(trace.read(1024))
