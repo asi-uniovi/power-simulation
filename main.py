@@ -33,12 +33,6 @@ def main():
         args = parse_arguments()
         config = parse_config(args.config_file)
         print(Simulation(config).run())
-    except ValueError as value_error:
-        logging.error(value_error)
-        return 2
-    except RuntimeError as runtime_error:
-        logging.critical(runtime_error)
-        return 1
     except:
         logging.exception('Unexpected exception')
         return 1
