@@ -1,20 +1,17 @@
 """A very simple simuation of a 1/M/c queuing system."""
 
 import simpy
-from activity_distribution import ActivityDistribution
+from base import Base
 from stats import Stats
 from user import User
 
 
-class Simulation(object):
+class Simulation(Base):
     """Constructs the system and runs the simulation."""
 
     def __init__(self, config):
-        self._config = config
+        super(Simulation, self).__init__(config)
         self._stats = None
-        self._env = None
-        self._activity_distribution = ActivityDistribution(
-            filename=self.get_config('filename', 'activity_distribution'))
 
     def run(self):
         """Sets up and starts a new simulation."""
@@ -24,12 +21,9 @@ class Simulation(object):
         servers = simpy.Resource(self._env, capacity=self.get_config('servers'))
 
         # Start the simulation.
-        self._env.process(User(self._env, self._config, servers))
+        self._env.process(User(self._config, self._env, servers).run())
         self._env.run(until=self.get_config('simulation_time'))
 
-    def get_config(self, key, section='simulation'):
-        """Retrieves a key from the configuration."""
-        return self._config[section][key]
 
     def __str__(self):
         if self._stats is None:
