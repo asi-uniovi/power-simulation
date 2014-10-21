@@ -17,3 +17,7 @@ class Base(metaclass=abc.ABCMeta):
     def get_config_int(self, key, section='simulation'):
         """Retrieves a key from the configuration (converts to int)."""
         return self._config.getint(section, key)
+
+    def get_config_float(self, key, section='simulation'):
+        """Retrieves a key from the configuration (converts to float)."""
+        return self._config.getfloat(section, key)
