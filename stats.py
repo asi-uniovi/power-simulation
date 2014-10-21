@@ -9,3 +9,9 @@ class Stats(dict, metaclass=Singleton):
     def increment(self, key, inc=1):
         """Increments by inc a key. Creates the key if not existing."""
         self[key] = self.get(key, 0) + inc
+
+    def __getitem__(self, key):
+        try:
+            return self[key]
+        except:
+            return 0
