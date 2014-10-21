@@ -30,6 +30,6 @@ class User(Base):
     def run(self):
         """Generates requests af the defined frequency."""
         while True:
-            self._env.process(Request(self._config, self._env, self._server,
-                                      4.0).run())
+            self._env.process(
+                Request(self._config, self._env, self._server).run())
             yield self._env.timeout(self.interarrival_time)

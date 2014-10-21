@@ -11,11 +11,10 @@ class Request(Base):
     Asks for a server by waiting in the queue and then places the request.
     """
 
-    def __init__(self, config, env, queue, serving_rate):
+    def __init__(self, config, env, queue):
         super(Request, self).__init__(config)
         self._env = env
         self._queue = queue
-        self._serving_rate = serving_rate
         self._stats = Stats()
         self._stats.increment('REQUESTS')
 
@@ -25,5 +24,4 @@ class Request(Base):
             arrival_time = self._env.now
             yield req
             self._stats.increment('WAITING_TIME', self._env.now - arrival_time)
-            yield self._env.process(Server(self._env,
-                                           self._serving_rate).serve())
+            yield self._env.process(Server(self._config, self._env).serve())
