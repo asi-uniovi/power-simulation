@@ -12,6 +12,7 @@ class Simulation(Base):
     def __init__(self, config):
         super(Simulation, self).__init__(config)
         self._stats = Stats()
+        self._env = None
 
     def run(self):
         """Sets up and starts a new simulation."""
@@ -28,7 +29,7 @@ class Simulation(Base):
 
 
     def __str__(self):
-        if self._stats is None:
+        if self._env is None:
             return 'Simulation not ran.'
         return ('End time {}\n'.format(self._env.now)
                 +'Total requests: {}\n'.format(self._stats['REQUESTS'])
