@@ -32,7 +32,7 @@ def main():
     try:
         args = parse_arguments()
         config = parse_config(args.config_file)
-        print(Simulation(config).run())
+        Simulation(config).run()
     except:
         logging.exception('Unexpected exception')
         return 1
