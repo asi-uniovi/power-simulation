@@ -18,11 +18,13 @@ class Simulation(Base):
         # Set up the environment.
         self._stats = Stats()
         self._env = simpy.Environment()
-        servers = simpy.Resource(self._env, capacity=self.get_config('servers'))
+        servers = simpy.Resource(self._env,
+                                 capacity=self.get_config_int('servers'))
 
         # Start the simulation.
         self._env.process(User(self._config, self._env, servers).run())
-        self._env.run(until=self.get_config('simulation_time'))
+        self._env.run(until=self.get_config_int('simulation_time'))
+        print(self)
 
 
     def __str__(self):
