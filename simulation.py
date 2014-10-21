@@ -11,12 +11,12 @@ class Simulation(Base):
 
     def __init__(self, config):
         super(Simulation, self).__init__(config)
-        self._stats = None
+        self._stats = Stats()
 
     def run(self):
         """Sets up and starts a new simulation."""
         # Set up the environment.
-        self._stats = Stats()
+        self._stats.clear()
         self._env = simpy.Environment()
         servers = simpy.Resource(self._env,
                                  capacity=self.get_config_int('servers'))
