@@ -30,6 +30,7 @@ class Simulation(Base):
     def __str__(self):
         if self._stats is None:
             return 'Simulation not ran.'
-        return ('Total requests: {}\n'.format(self._stats['REQUESTS'])
+        return ('End time {}\n'.format(self._env.now)
+                +'Total requests: {}\n'.format(self._stats['REQUESTS'])
                 + 'Waiting time: {}\n'.format(self._stats['WAITING_TIME'])
                 + 'Served requests: {}'.format(self._stats['SERVED_REQUESTS']))
