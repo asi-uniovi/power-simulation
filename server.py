@@ -1,17 +1,21 @@
+"""A simulation of the computer."""
+
+from base import Base
+from stats import Stats
 import numpy
 
-SERVED_REQUESTS = 0
 
-
-class Server(object):
+class Server(Base):
     """A simple server.
 
     Server with configurable exponential serving rate.
     """
 
-    def __init__(self, env, serving_rate):
+    def __init__(self, config, env):
+        super(Server, self).__init__(config)
+        self._stats = Stats()
         self._env = env
-        self._serving_rate = serving_rate
+        self._serving_rate = self.get_config_float('serving_rate')
 
     @property
     def serving_time(self):
@@ -20,6 +24,5 @@ class Server(object):
 
     def serve(self):
         """Serve and count the amount of requests completed."""
-        global SERVED_REQUESTS
         yield self._env.timeout(self.serving_time)
-        SERVED_REQUESTS += 1
+        self._stats.increment('SERVED_REQUESTS')
