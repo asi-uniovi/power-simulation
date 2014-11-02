@@ -9,6 +9,7 @@ import sys
 import configparser
 from simulation import Simulation
 
+# TODO: configure logging level via cmd line flags.
 logging.basicConfig(format='%(asctime)s %(levelname)s(%(name)s): %(message)s',
                     datefmt='%d/%m/%Y %H:%M:%S',
                     level=logging.DEBUG)
@@ -38,7 +39,7 @@ def main():
         args = parse_arguments()
         config = parse_config(args.config_file)
         Simulation(config).run()
-        logging.warning('DONE')
+        logging.info('Program finished')
     except:
         logging.exception('Unexpected exception')
         return 1
