@@ -12,6 +12,6 @@ class Stats(dict, metaclass=Singleton):
 
     def __getitem__(self, key):
         try:
-            return self[key]
+            return super(Stats, self).__getitem__(key)
         except:
             return 0
