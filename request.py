@@ -1,8 +1,11 @@
 """Request object. Mainly, it stores statistics."""
 
+import logging
 from base import Base
 from server import Server
 from stats import Stats
+
+logger = logging.getLogger(__name__)
 
 
 class Request(Base):
@@ -17,6 +20,7 @@ class Request(Base):
         self._queue = queue
         self._stats = Stats()
         self._stats.increment('REQUESTS')
+        logger.debug('A new request is created')
 
     def run(self):
         """Waits for a place in the queue and makes the request."""

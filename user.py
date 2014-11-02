@@ -1,8 +1,11 @@
 """User simulation process."""
 
+import logging
 from activity_distribution import ActivityDistribution
 from base import Base
 from request import Request
+
+logger = logging.getLogger(__name__)
 
 
 class User(Base):
@@ -21,6 +24,7 @@ class User(Base):
             filename=self.get_config('filename', 'activity_distribution'),
             distribution=self.get_config('distribution',
                                          'activity_distribution'))
+        logger.debug('A new User is created')
 
     @property
     def interarrival_time(self):
