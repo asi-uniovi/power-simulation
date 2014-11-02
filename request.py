@@ -20,7 +20,6 @@ class Request(Base):
         self._queue = queue
         self._stats = Stats()
         self._stats.increment('REQUESTS')
-        logger.debug('A new request is created')
 
     def run(self):
         """Waits for a place in the queue and makes the request."""
