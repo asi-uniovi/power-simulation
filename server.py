@@ -1,8 +1,11 @@
 """A simulation of the computer."""
 
+import logging
+import numpy
 from base import Base
 from stats import Stats
-import numpy
+
+logger = logging.getLogger(__name__)
 
 
 class Server(Base):
@@ -16,13 +19,22 @@ class Server(Base):
         self._stats = Stats()
         self._env = env
         self._serving_rate = self.get_config_float('serving_rate')
+        self.__monitor_loop()
 
     @property
     def serving_time(self):
         """Exponential serving time based on serving ratio."""
-        return numpy.random.exponential(1.0 / self._serving_rate)
+        time = numpy.random.exponential(1.0 / self._serving_rate)
+        logger.debug('Serving time: %f', time)
+        return time
 
     def serve(self):
         """Serve and count the amount of requests completed."""
         yield self._env.timeout(self.serving_time)
         self._stats.increment('SERVED_REQUESTS')
+
+    def __monitor_loop(self):
+        """Runs the monitoring loop for this server."""
+        while True:
+            logger.debug('Server monitoring loop (%d)', self._env.now)
+            yield self._env.timeout(1)
