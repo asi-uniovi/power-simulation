@@ -3,8 +3,10 @@
 import abc
 
 
-class Base(metaclass=abc.ABCMeta):
+class Base(object):
     """An abstract class with all the basic methods we need across."""
+
+    __metaclass__ = abc.ABCMeta
 
     def __init__(self, config):
         self._config = config
@@ -12,7 +14,7 @@ class Base(metaclass=abc.ABCMeta):
 
     def get_config(self, key, section='simulation'):
         """Retrieves a key from the configuration."""
-        return self._config[section][key]
+        return self._config.get(section, key)
 
     def get_config_int(self, key, section='simulation'):
         """Retrieves a key from the configuration (converts to int)."""

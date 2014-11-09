@@ -3,6 +3,7 @@
 import logging
 import simpy
 from base import Base
+from server import Server
 from stats import Stats
 from user import User
 
@@ -26,8 +27,12 @@ class Simulation(Base):
         servers = simpy.Resource(self._env,
                                  capacity=self.get_config_int('servers'))
 
+        # User an server creation.
+        user = User(self._config, self._env, servers)
+        server = Server(self._config, self._env)
+
         # Start the simulation.
-        self._env.process(User(self._config, self._env, servers).run())
+        self._env.process(user.run())
         self._env.run(until=self.get_config_int('simulation_time'))
         self.__log_results()
 

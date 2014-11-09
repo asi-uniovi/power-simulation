@@ -1,12 +1,13 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 """Main runner of the simulation."""
 
+from __future__ import print_function
 import argparse
 import logging
 import os
 import sys
-import configparser
+import ConfigParser as configparser
 from simulation import Simulation
 
 # TODO: configure logging level via cmd line flags.
