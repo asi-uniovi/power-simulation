@@ -17,6 +17,7 @@ class User(Base):
     """
 
     def __init__(self, config, env, server):
+        logger.debug('New User')
         super(User, self).__init__(config)
         self._env = env
         self._server = server
@@ -27,8 +28,10 @@ class User(Base):
 
     @property
     def interarrival_time(self):
-        return self._activity_distribution.random_inactivity_for_timestamp(
+        time = self._activity_distribution.random_inactivity_for_timestamp(
             self._env.now)
+        logger.debug('Interarrival time: %f', time)
+        return time
 
     def run(self):
         """Generates requests af the defined frequency."""
