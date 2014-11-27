@@ -14,17 +14,16 @@ class Request(Base):
     Asks for a server by waiting in the queue and then places the request.
     """
 
-    def __init__(self, config, env, queue):
+    def __init__(self, config, env, server):
+        logger.debug('New Request')
         super(Request, self).__init__(config)
         self._env = env
-        self._queue = queue
+        self._server = server
         self._stats = Stats()
         self._stats.increment('REQUESTS')
 
     def run(self):
         """Waits for a place in the queue and makes the request."""
-        with self._queue.request() as req:
-            arrival_time = self._env.now
-            yield req
-            self._stats.increment('WAITING_TIME', self._env.now - arrival_time)
-            yield self._env.process(Server(self._config, self._env).serve())
+        arrival_time = self._env.now
+        self._stats.increment('WAITING_TIME', self._env.now - arrival_time)
+        yield self._env.process(self._server.serve())

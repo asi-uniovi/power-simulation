@@ -20,19 +20,17 @@ class Simulation(Base):
 
     def run(self):
         """Sets up and starts a new simulation."""
-        logger.info('Simulation starting')
         # Set up the environment.
         self._stats.clear()
         self._env = simpy.Environment()
-        servers = simpy.Resource(self._env,
-                                 capacity=self.get_config_int('servers'))
 
         # User an server creation.
-        user = User(self._config, self._env, servers)
         server = Server(self._config, self._env)
+        user = User(self._config, self._env, server)
 
         # Start the simulation.
         self._env.process(user.run())
+        logger.info('Simulation starting')
         self._env.run(until=self.get_config_int('simulation_time'))
         self.__log_results()
 
