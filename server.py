@@ -32,6 +32,10 @@ class Server(Base):
         logger.debug('Serving time: %f', time)
         return time
 
+    @property
+    def inactivity(self):
+        return self._env.now - self._last_user_access
+
     def serve(self):
         """Serve and count the amount of requests completed."""
         self._last_user_access = self._env.now
