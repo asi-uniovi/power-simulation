@@ -3,6 +3,7 @@
 import logging
 import simpy
 from base import Base
+from policy import TimeoutPolicy
 from server import Server
 from stats import Stats
 from user import User
@@ -27,6 +28,9 @@ class Simulation(Base):
         # User an server creation.
         server = Server(self._config, self._env)
         user = User(self._config, self._env, server)
+
+        # Create the power policy to govern the server.
+        power_policy = TimeoutPolicy(self._config, self._env, server, 30)
 
         # Start the simulation.
         self._env.process(user.run())
