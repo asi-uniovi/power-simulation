@@ -21,6 +21,7 @@ class Server(Base):
         self._env = env
         self._serving_rate = self.get_config_float('serving_rate')
         self._monitoring_interval = self.get_config_int('monitoring_interval')
+        self._last_user_access = env.now
         # Start the monitoring loop as soon as the server is running.
         self._env.process(self.__monitor_loop())
 
@@ -33,11 +34,13 @@ class Server(Base):
 
     def serve(self):
         """Serve and count the amount of requests completed."""
+        self._last_user_access = self._env.now
         yield self._env.timeout(self.serving_time)
         self._stats.increment('SERVED_REQUESTS')
 
     def __monitor_loop(self):
         """Runs the monitoring loop for this server."""
         while True:
-            logger.debug('Server monitoring loop (%d)', self._env.now)
+            logger.debug('Server monitoring loop (%d): %d', self._env.now,
+                         self._last_user_access)
             yield self._env.timeout(self._monitoring_interval)
