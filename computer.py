@@ -8,7 +8,7 @@ from stats import Stats
 logger = logging.getLogger(__name__)
 
 
-class Server(Base):
+class Computer(Base):
     """A simple server.
 
     Server with configurable exponential serving rate.
@@ -16,7 +16,7 @@ class Server(Base):
 
     def __init__(self, config, env):
         logger.debug('New server')
-        super(Server, self).__init__(config)
+        super(Computer, self).__init__(config)
         self._stats = Stats()
         self._env = env
         self._serving_rate = self.get_config_float('serving_rate')

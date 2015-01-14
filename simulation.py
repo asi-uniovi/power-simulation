@@ -4,7 +4,7 @@ import logging
 import simpy
 from base import Base
 from operating_system import SimpleTimeoutOS
-from server import Server
+from computer import Computer
 from stats import Stats
 from user import User
 
@@ -26,11 +26,11 @@ class Simulation(Base):
         self._env = simpy.Environment()
 
         # User an server creation.
-        server = Server(self._config, self._env)
-        user = User(self._config, self._env, server)
+        computer = Computer(self._config, self._env)
+        user = User(self._config, self._env, computer)
 
         # Create the OS to run on the computer.
-        os = SimpleTimeoutOS(self._config, self._env, server)
+        os = SimpleTimeoutOS(self._config, self._env, computer)
 
         # Start the simulation.
         self._env.process(user.run())
