@@ -29,6 +29,7 @@ class Computer(Base):
     def serving_time(self):
         """Exponential serving time based on serving ratio."""
         time = numpy.random.exponential(1.0 / self._serving_rate)
+        self._stats.increment('SERVING_TIME', time)
         logger.debug('Serving time: %f', time)
         return time
 

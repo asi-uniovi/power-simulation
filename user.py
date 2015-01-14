@@ -4,6 +4,7 @@ import logging
 from activity_distribution import ActivityDistribution
 from base import Base
 from request import Request
+from stats import Stats
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +22,7 @@ class User(Base):
         super(User, self).__init__(config)
         self._env = env
         self._server = server
+        self._stats = Stats()
         self._activity_distribution = ActivityDistribution(
             filename=self.get_config('filename', 'activity_distribution'),
             distribution=self.get_config('distribution',
@@ -31,6 +33,7 @@ class User(Base):
         time = self._activity_distribution.random_inactivity_for_timestamp(
             self._env.now)
         logger.debug('Interarrival time: %f', time)
+        self._stats.increment('INACTIVITY_TIME', time)
         return time
 
     def run(self):
