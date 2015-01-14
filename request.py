@@ -2,7 +2,7 @@
 
 import logging
 from base import Base
-from server import Server
+from computer import Computer
 from stats import Stats
 
 logger = logging.getLogger(__name__)
