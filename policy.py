@@ -19,11 +19,7 @@ class TimeoutPolicy(Base):
         self._env = env
         self._threshold = threshold
         self._server = server
-        # Start the policy loop to control the server.
-        self._env.process(self.__policy_loop())
 
-    def __policy_loop(self):
+    def policy_eval(self):
         """Runs the policy loop to control the power status of the server."""
-        while True:
-            logger.debug('Policy control loop (%d):', self._env.now)
-            yield self._env.timeout(self._threshold)
+        logger.debug('Policy control loop (%d):', self._env.now)
