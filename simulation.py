@@ -42,7 +42,15 @@ class Simulation(Base):
         if self._env is None:
             logger.warning('Simulation not ran')
             return
-        logger.info('Simulation end time %d', self._env.now)
-        logger.info('Total requests: %d', self._stats['REQUESTS'])
-        logger.info('Total waiting time: %d', self._stats['WAITING_TIME'])
-        logger.info('Total served requests: %d', self._stats['SERVED_REQUESTS'])
+        total_requests = self._stats['REQUESTS']
+        served_requests = self._stats['SERVED_REQUESTS']
+        logger.info('Simulation ended at %d s', self._env.now)
+        logger.info('Total requests: %d', total_requests)
+        logger.info('Total served requests: %d (%.2f%%)',
+                    served_requests, served_requests / total_requests * 100)
+        logger.info('Avg. waiting time: %.3f s',
+                    self._stats['WAITING_TIME'] / served_requests)
+        logger.info('Avg. serving time: %.3f s',
+                    self._stats['SERVING_TIME'] / served_requests)
+        logger.info('Avg. inactivity time: %.3f s',
+                    self._stats['INACTIVITY_TIME'] / served_requests)
