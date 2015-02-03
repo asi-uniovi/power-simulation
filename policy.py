@@ -22,4 +22,4 @@ class TimeoutPolicy(Base):
 
     def policy_eval(self):
         """Runs the policy loop to control the power status of the server."""
-        logger.debug('Policy control loop (%d):', self._env.now)
+        logger.debug('Policy control loop (%d)', self._env.now)
