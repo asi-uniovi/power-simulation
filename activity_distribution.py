@@ -60,10 +60,11 @@ class ActivityDistribution(object):
         return self.random_inactivity_for_hour(day, hour)
 
     def _timestamp_to_day(self, timestamp):
-        day, hours = divmod(timestamp % WEEK(1), DAY(1))
-        assert 0 <= day <= 6, 'Invalid day index yielded'
-        assert 0 <= hours // HOUR(1) <= 23, 'Invalid hour index yielded'
-        return day, hours // HOUR(1)
+        day = (timestamp % WEEK(1)) // DAY(1)
+        hour = (timestamp % WEEK(1)) // DAY(1) // HOUR(1)
+        assert 0 <= day <= 6
+        assert 0 <= hour <= 23
+        return day, hour
 
     def __load_trace(self, filename):
         """Parses the CSV with the trace formatted {day, hour, inactivity}."""
