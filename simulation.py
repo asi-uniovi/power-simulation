@@ -19,21 +19,20 @@ class Simulation(Base):
         self._stats = Stats()
         self._env = None
 
+    def _create_user(self):
+        computer = Computer(self._config, self._env)
+        user = User(self._config, self._env, computer)
+        os = SimpleTimeoutOS(self._config, self._env, computer)
+        self._env.process(user.run())
+
     def run(self):
         """Sets up and starts a new simulation."""
-        # Set up the environment.
         self._stats.clear()
         self._env = simpy.Environment()
 
-        # User an server creation.
-        computer = Computer(self._config, self._env)
-        user = User(self._config, self._env, computer)
+        for i in range(100):
+            self._create_user()
 
-        # Create the OS to run on the computer.
-        os = SimpleTimeoutOS(self._config, self._env, computer)
-
-        # Start the simulation.
-        self._env.process(user.run())
         logger.info('Simulation starting')
         self._env.run(until=self.get_config_int('simulation_time'))
         self.__log_results()
