@@ -44,10 +44,8 @@ class Simulation(Base):
         for _ in range(servers):
             self._create_user(activity_distribution)
 
-        simulation_time = self.get_config_int('simulation_time')
-        logger.info('Simulating %d s', simulation_time)
         logger.info('Simulation starting')
-        self._env.run(until=simulation_time)
+        self._env.run(until=self.get_config_int('simulation_time'))
         self.__log_results()
 
     def __log_results(self):
@@ -65,10 +63,9 @@ class Simulation(Base):
         logger.info('Avg. serving time: %.3f s',
                     self._stats['SERVING_TIME'] / served_requests)
         inactivity_intervals = self._stats['INACTIVITY_TIME']
-        logger.info('Avg. inactivity time: %.3f s (%d intervals)',
-                    numpy.average(inactivity_intervals),
-                    len(inactivity_intervals))
-        inactivity_intervals = self._stats['INACTIVITY_TIME_MONITORED']
-        logger.info('Avg. inactivity time (monitored): %.3f s (%d intervals)',
-                    numpy.average(inactivity_intervals),
-                    len(inactivity_intervals))
+        logger.info('Avg. inactivity time: %.3f s',
+                    numpy.average(inactivity_intervals))
+        inactivity_intervals = list(map(
+            numpy.average, self._stats['INACTIVITY_TIME_MONITORED'].values()))
+        logger.info('Avg. inactivity time (monitored): %.3f s',
+                    numpy.average(inactivity_intervals))
