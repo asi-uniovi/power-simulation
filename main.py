@@ -9,7 +9,7 @@ import argparse
 import logging
 import os
 import sys
-import ConfigParser as configparser
+import configparser
 from simulation import Simulation
 
 
