@@ -46,6 +46,5 @@ class Computer(Base):
     def __monitor_loop(self):
         """Runs the monitoring loop for this server."""
         while True:
-            logger.debug('Server monitoring loop (%d): %d', self._env.now,
-                         self._last_user_access)
+            self._stats.append('INACTIVITY_TIME_MONITORED', self.inactivity)
             yield self._env.timeout(self._monitoring_interval)

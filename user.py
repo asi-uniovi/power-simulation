@@ -29,7 +29,7 @@ class User(Base):
         time = self._activity_distribution.random_inactivity_for_timestamp(
             self._env.now)
         logger.debug('Interarrival time: %f', time)
-        self._stats.increment('INACTIVITY_TIME', time)
+        self._stats.append('INACTIVITY_TIME', time)
         return time
 
     def run(self):
