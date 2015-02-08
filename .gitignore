@@ -53,4 +53,4 @@ docs/_build/
 target/
 
 # Project specific
-.virtualenv
+.venv
