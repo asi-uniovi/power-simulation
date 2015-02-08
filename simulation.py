@@ -1,6 +1,7 @@
 """A very simple simuation of a 1/M/c queuing system."""
 
 import logging
+import numpy
 import simpy
 from activity_distribution import ActivityDistribution
 from base import Base
@@ -29,7 +30,7 @@ class Simulation(Base):
     def _create_user(self, activity_distribution):
         computer = Computer(self._config, self._env)
         user = User(self._config, self._env, computer, activity_distribution)
-        os = SimpleTimeoutOS(self._config, self._env, computer)
+        SimpleTimeoutOS(self._config, self._env, computer)
         self._env.process(user.run())
 
     def run(self):
@@ -40,7 +41,7 @@ class Simulation(Base):
         activity_distribution = self._load_activity_distribution()
         servers = self.get_config_int('servers')
         logger.info('Simulating %d users', servers)
-        for i in range(servers):
+        for _ in range(servers):
             self._create_user(activity_distribution)
 
         simulation_time = self.get_config_int('simulation_time')
@@ -57,11 +58,17 @@ class Simulation(Base):
         served_requests = self._stats['SERVED_REQUESTS']
         logger.info('Simulation ended at %d s', self._env.now)
         logger.info('Total requests: %d', total_requests)
-        logger.info('Total served requests: %d (%.2f%%)',
+        logger.info('Total served requests: %d (%.2f%% completed)',
                     served_requests, served_requests / total_requests * 100)
         logger.info('Avg. waiting time: %.3f s',
                     self._stats['WAITING_TIME'] / served_requests)
         logger.info('Avg. serving time: %.3f s',
                     self._stats['SERVING_TIME'] / served_requests)
-        logger.info('Avg. inactivity time: %.3f s',
-                    self._stats['INACTIVITY_TIME'] / served_requests)
+        inactivity_intervals = self._stats['INACTIVITY_TIME']
+        logger.info('Avg. inactivity time: %.3f s (%d intervals)',
+                    numpy.average(inactivity_intervals),
+                    len(inactivity_intervals))
+        inactivity_intervals = self._stats['INACTIVITY_TIME_MONITORED']
+        logger.info('Avg. inactivity time (monitored): %.3f s (%d intervals)',
+                    numpy.average(inactivity_intervals),
+                    len(inactivity_intervals))

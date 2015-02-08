@@ -10,6 +10,12 @@ class Stats(dict, metaclass=Singleton):
         """Increments by inc a key. Creates the key if not existing."""
         self[key] = self.get(key, 0) + inc
 
+    def append(self, key, value):
+        """Append a new value to a list statistic. Create if non existing."""
+        item = self.get(key, [])
+        item.append(value)
+        self[key] = item
+
     def __getitem__(self, key):
         try:
             return super(Stats, self).__getitem__(key)
