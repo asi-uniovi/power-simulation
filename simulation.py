@@ -2,6 +2,7 @@
 
 import logging
 import simpy
+from activity_distribution import ActivityDistribution
 from base import Base
 from operating_system import SimpleTimeoutOS
 from computer import Computer
@@ -19,9 +20,15 @@ class Simulation(Base):
         self._stats = Stats()
         self._env = None
 
-    def _create_user(self):
+    def _load_activity_distribution(self):
+        return ActivityDistribution(
+            filename=self.get_config('filename', 'activity_distribution'),
+            distribution=self.get_config('distribution',
+                                         'activity_distribution'))
+
+    def _create_user(self, activity_distribution):
         computer = Computer(self._config, self._env)
-        user = User(self._config, self._env, computer)
+        user = User(self._config, self._env, computer, activity_distribution)
         os = SimpleTimeoutOS(self._config, self._env, computer)
         self._env.process(user.run())
 
@@ -30,11 +37,16 @@ class Simulation(Base):
         self._stats.clear()
         self._env = simpy.Environment()
 
-        for i in range(100):
-            self._create_user()
+        activity_distribution = self._load_activity_distribution()
+        servers = self.get_config_int('servers')
+        logger.info('Simulating %d users', servers)
+        for i in range(servers):
+            self._create_user(activity_distribution)
 
+        simulation_time = self.get_config_int('simulation_time')
+        logger.info('Simulating %d s', simulation_time)
         logger.info('Simulation starting')
-        self._env.run(until=self.get_config_int('simulation_time'))
+        self._env.run(until=simulation_time)
         self.__log_results()
 
     def __log_results(self):

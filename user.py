@@ -1,7 +1,6 @@
 """User simulation process."""
 
 import logging
-from activity_distribution import ActivityDistribution
 from base import Base
 from request import Request
 from stats import Stats
@@ -17,16 +16,13 @@ class User(Base):
       - The average interarrival time.
     """
 
-    def __init__(self, config, env, server):
+    def __init__(self, config, env, server, activity_distribution):
         logger.debug('New User')
         super(User, self).__init__(config)
         self._env = env
         self._server = server
         self._stats = Stats()
-        self._activity_distribution = ActivityDistribution(
-            filename=self.get_config('filename', 'activity_distribution'),
-            distribution=self.get_config('distribution',
-                                         'activity_distribution'))
+        self._activity_distribution = activity_distribution
 
     @property
     def interarrival_time(self):
