@@ -3,10 +3,8 @@
 import abc
 
 
-class Base(object):
+class Base(object, metaclass=abc.ABCMeta):
     """An abstract class with all the basic methods we need across."""
-
-    __metaclass__ = abc.ABCMeta
 
     def __init__(self, config):
         self._config = config
