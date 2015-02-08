@@ -1,5 +1,7 @@
 """Simulation statistics storage."""
 
+from activity_distribution import HOUR
+from activity_distribution import WEEK
 from singleton import Singleton
 
 
@@ -15,6 +17,11 @@ class Stats(dict, metaclass=Singleton):
         item = self.get(key, [])
         item.append(value)
         self[key] = item
+
+    def add_to_bin(self, key, value, env):
+        """Add a value to statistic binned by time."""
+        hour = (env.now % WEEK(1)) // HOUR(1)
+        self.setdefault(key, {}).setdefault(hour, []).append(value)
 
     def __getitem__(self, key):
         try:
