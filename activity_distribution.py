@@ -1,4 +1,4 @@
-"""User activiy distribution parsing and managing."""
+"""User activity distribution parsing and managing."""
 
 import csv
 import numpy
@@ -81,7 +81,7 @@ class ActivityDistribution(object):
                     data.append(inactivity)
                     self._histogram[DAYS[day]][int(hour)] = inactivity
 
-                logger.info('Loaded distr.: avg(%.3f), std(%.3f), [%.3f; %.3f]',
+                logger.info('Distr.: avg(%.2f), std(%.2f), [%.2f; %.2f]',
                             numpy.average(data), numpy.std(data),
                             numpy.min(data), numpy.max(data))
             except csv.Error as error:
