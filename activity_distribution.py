@@ -19,6 +19,7 @@ DAYS = {
 
 DISTRIBUTIONS = {
     'exp': numpy.random.exponential,
+    'par': numpy.random.pareto,
 }
 
 
