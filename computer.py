@@ -17,7 +17,7 @@ class Computer(Base):
     def __init__(self, config, env):
         logger.debug('New server')
         super(Computer, self).__init__(config)
-        self._stats = Stats()
+        self._stats = Stats(config, env)
         self._env = env
         self._serving_rate = self.get_config_float('serving_rate')
         self._monitoring_interval = self.get_config_int('monitoring_interval')
