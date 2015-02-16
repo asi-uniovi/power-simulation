@@ -21,7 +21,7 @@ class User(Base):
         super(User, self).__init__(config)
         self._env = env
         self._server = server
-        self._stats = Stats()
+        self._stats = Stats(config, env)
         self._activity_distribution = activity_distribution
 
     @property
@@ -30,6 +30,8 @@ class User(Base):
             self._env.now)
         logger.debug('Interarrival time: %f', time)
         self._stats.append('INACTIVITY_TIME', time)
+        self._stats.add_to_bin(
+            'INACTIVITY_TIME_ACCURATE', time, self._env)
         return time
 
     def run(self):

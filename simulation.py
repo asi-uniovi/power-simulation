@@ -18,14 +18,8 @@ class Simulation(Base):
 
     def __init__(self, config):
         super(Simulation, self).__init__(config)
-        self._stats = Stats()
         self._env = None
-
-    def _load_activity_distribution(self):
-        return ActivityDistribution(
-            filename=self.get_config('filename', 'activity_distribution'),
-            distribution=self.get_config('distribution',
-                                         'activity_distribution'))
+        self._stats = None
 
     def _create_user(self, activity_distribution):
         computer = Computer(self._config, self._env)
@@ -35,10 +29,12 @@ class Simulation(Base):
 
     def run(self):
         """Sets up and starts a new simulation."""
-        self._stats.clear()
         self._env = simpy.Environment()
+        self._stats = Stats(self._config, self._env)
 
-        activity_distribution = self._load_activity_distribution()
+        activity_distribution = (
+            ActivityDistribution.load_activity_distribution(self._config,
+                                                            self._env))
         servers = self.get_config_int('servers')
         logger.info('Simulating %d users', servers)
         for _ in range(servers):
@@ -69,3 +65,7 @@ class Simulation(Base):
             numpy.average, self._stats['INACTIVITY_TIME_MONITORED'].values()))
         logger.info('Avg. inactivity time (monitored): %.3f s',
                     numpy.average(inactivity_intervals))
+        self._stats.dump_histogram_to_file('INACTIVITY_TIME_MONITORED',
+                                           'stats.txt')
+        self._stats.dump_histogram_to_file('INACTIVITY_TIME_ACCURATE',
+                                           'stats2.txt')

@@ -15,7 +15,7 @@ class TimeoutPolicy(Base):
 
     def __init__(self, config, env, server, threshold):
         super(TimeoutPolicy, self).__init__(config)
-        self._stats = Stats()
+        self._stats = Stats(config, env)
         self._env = env
         self._threshold = threshold
         self._server = server
