@@ -3,7 +3,9 @@
 import csv
 import numpy
 import logging
+from base import Base
 from collections import defaultdict
+from singleton import Singleton
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +18,8 @@ DAYS = {
     'Friday': 5,
     'Saturday': 6,
 }
+
+INV_DAYS = {v: k for k, v in DAYS.items()}
 
 DISTRIBUTIONS = {
     'exp': numpy.random.exponential,
@@ -30,19 +34,22 @@ WEEK = lambda x: x * DAY(7)
 
 def float_es(string):
     """Parse a Spanish float from string (converting the ,)."""
+    assert type(string) == type('')
     return float(string.replace(',', '.'))
 
 
-class ActivityDistribution(object):
+class ActivityDistribution(Base, metaclass=Singleton):
     """Stores the hourly activity distribution over a week.
 
     Each bucket of the histogram contains the average duration of the inactivity
     intervals that start on each hour.
     """
 
-    def __init__(self, filename, distribution):
+    def __init__(self, config, filename, distribution, env):
+        super(ActivityDistribution, self).__init__(config)
         self._histogram = defaultdict(lambda: defaultdict(float))
         self._distribution = DISTRIBUTIONS[distribution]
+        self._env = env
         self.__load_trace(filename)
 
     def avg_inactivity_for_hour(self, day, hour):
@@ -52,7 +59,7 @@ class ActivityDistribution(object):
     def random_inactivity_for_hour(self, day, hour):
         """Queries the activity distribution and generates a random sample."""
         if self._distribution:
-            return self._distribution(self.avg_inactivity_for_hour(hour, day))
+            return self._distribution(self.avg_inactivity_for_hour(day, hour))
         raise RuntimeError('Distribution is not defined for this model')
 
     def random_inactivity_for_timestamp(self, timestamp):
@@ -62,9 +69,9 @@ class ActivityDistribution(object):
 
     def _timestamp_to_day(self, timestamp):
         day = (timestamp % WEEK(1)) // DAY(1)
-        hour = (timestamp % WEEK(1)) // DAY(1) // HOUR(1)
-        assert 0 <= day <= 6
-        assert 0 <= hour <= 23
+        hour = (timestamp % DAY(1)) // HOUR(1)
+        assert 0 <= day <= 6, day
+        assert 0 <= hour <= 23, hour
         return day, hour
 
     def __load_trace(self, filename):
@@ -80,6 +87,7 @@ class ActivityDistribution(object):
                 for day, hour, inactivity in reader:
                     inactivity = float_es(inactivity)
                     data.append(inactivity)
+                    assert self._histogram.get(DAYS[day], {}).get(int(hour)) is None
                     self._histogram[DAYS[day]][int(hour)] = inactivity
 
                 logger.info('Distr.: avg(%.2f), std(%.2f), [%.2f; %.2f]',
@@ -88,3 +96,12 @@ class ActivityDistribution(object):
             except csv.Error as error:
                 raise RuntimeError(('Error reading {}:{}: {}'
                                     .format(filename, trace.line_num, error)))
+
+    @classmethod
+    def load_activity_distribution(cls, config, env):
+        return cls(config,
+                   filename=config.get('activity_distribution',
+                                       'filename'),
+                   distribution=config.get('activity_distribution',
+                                           'distribution'),
+                   env=env)
