@@ -9,7 +9,7 @@ import argparse
 import logging
 import os
 import sys
-import ConfigParser as configparser
+import configparser
 from simulation import Simulation
 
 
@@ -47,7 +47,6 @@ def main():
         config_logging(args.debug)
         config = parse_config(args.config_file)
         Simulation(config).run()
-        logging.info('Simulation finished')
     except:
         logging.exception('Unexpected exception')
         return 1

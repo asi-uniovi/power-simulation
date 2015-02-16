@@ -9,6 +9,7 @@ import sys
 REQUESTS = 0
 SERVED_REQUESTS = 0
 WAITING_TIME = 0.0
+ALL_REQUESTS = []
 
 
 class Server(object):
@@ -48,10 +49,13 @@ class Request(object):
     def run(self):
         """Waits for a place in the queue and makes the request."""
         global WAITING_TIME
+        global ALL_REQUESTS
         with self._queue.request() as req:
             arrival_time = self._env.now
             yield req
-            WAITING_TIME += self._env.now - arrival_time
+            waited_time = self._env.now - arrival_time
+            WAITING_TIME += waited_time
+            ALL_REQUESTS.append(waited_time)
             yield self._env.process(Server(self._env,
                                            self._serving_rate).serve())
 
@@ -85,10 +89,13 @@ def main():
     env = simpy.Environment()
     servers = simpy.Resource(env, capacity=1)
     env.process(User(env, 0.25, servers).run())
-    env.run(until=10000)
+    env.run(until=1000)
     print('Total requests: %d' % REQUESTS)
     print('Mean waiting time: %f' % (WAITING_TIME / REQUESTS))
     print('Served requests: %d' % SERVED_REQUESTS)
+    with open("intervals.csv", 'w') as f:
+        for item in ALL_REQUESTS:
+            f.write("%f\n" % item)
 
 
 if __name__ == '__main__':

@@ -1,7 +1,9 @@
 """A very simple simuation of a 1/M/c queuing system."""
 
 import logging
+import numpy
 import simpy
+from activity_distribution import ActivityDistribution
 from base import Base
 from operating_system import SimpleTimeoutOS
 from computer import Computer
@@ -19,10 +21,16 @@ class Simulation(Base):
         self._stats = Stats()
         self._env = None
 
-    def _create_user(self):
+    def _load_activity_distribution(self):
+        return ActivityDistribution(
+            filename=self.get_config('filename', 'activity_distribution'),
+            distribution=self.get_config('distribution',
+                                         'activity_distribution'))
+
+    def _create_user(self, activity_distribution):
         computer = Computer(self._config, self._env)
-        user = User(self._config, self._env, computer)
-        os = SimpleTimeoutOS(self._config, self._env, computer)
+        user = User(self._config, self._env, computer, activity_distribution)
+        SimpleTimeoutOS(self._config, self._env, computer)
         self._env.process(user.run())
 
     def run(self):
@@ -30,8 +38,11 @@ class Simulation(Base):
         self._stats.clear()
         self._env = simpy.Environment()
 
-        for i in range(100):
-            self._create_user()
+        activity_distribution = self._load_activity_distribution()
+        servers = self.get_config_int('servers')
+        logger.info('Simulating %d users', servers)
+        for _ in range(servers):
+            self._create_user(activity_distribution)
 
         logger.info('Simulation starting')
         self._env.run(until=self.get_config_int('simulation_time'))
@@ -45,11 +56,16 @@ class Simulation(Base):
         served_requests = self._stats['SERVED_REQUESTS']
         logger.info('Simulation ended at %d s', self._env.now)
         logger.info('Total requests: %d', total_requests)
-        logger.info('Total served requests: %d (%.2f%%)',
+        logger.info('Total served requests: %d (%.2f%% completed)',
                     served_requests, served_requests / total_requests * 100)
         logger.info('Avg. waiting time: %.3f s',
                     self._stats['WAITING_TIME'] / served_requests)
         logger.info('Avg. serving time: %.3f s',
                     self._stats['SERVING_TIME'] / served_requests)
+        inactivity_intervals = self._stats['INACTIVITY_TIME']
         logger.info('Avg. inactivity time: %.3f s',
-                    self._stats['INACTIVITY_TIME'] / served_requests)
+                    numpy.average(inactivity_intervals))
+        inactivity_intervals = list(map(
+            numpy.average, self._stats['INACTIVITY_TIME_MONITORED'].values()))
+        logger.info('Avg. inactivity time (monitored): %.3f s',
+                    numpy.average(inactivity_intervals))
