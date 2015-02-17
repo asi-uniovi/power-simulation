@@ -66,6 +66,6 @@ class Simulation(Base):
         logger.info('Avg. inactivity time (monitored): %.3f s',
                     numpy.average(inactivity_intervals))
         self._stats.dump_histogram_to_file('INACTIVITY_TIME_MONITORED',
-                                           'stats.txt')
+                                           'stats-monitored.txt')
         self._stats.dump_histogram_to_file('INACTIVITY_TIME_ACCURATE',
-                                           'stats2.txt')
+                                           'stats-accurate.txt')
