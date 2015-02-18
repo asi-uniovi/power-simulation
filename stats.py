@@ -49,17 +49,11 @@ class Stats(dict, metaclass=Singleton):
             f.write('Day;Hour;Interval length;Frequency\n')
             for timestamp, data in self[key].items():
                 day, hour = timestamp // 24, timestamp % 24
-                # pylint: disable=bad-builtin
-                processed_data = list(map(int, map(numpy.floor, data)))
-                counts = numpy.bincount(processed_data)
-                assert numpy.sum(counts) == len(data)
-                for i in numpy.unique(processed_data):
-                    f.write('{0}\n'.format(
+                f.write('{0}\n'.format(
                     ';'.join(str(x) for x in (
                         INV_DAYS[day],
                         int(hour),
-                        i,
-                        counts[i] / len(data)))))
+                        ';'.join(str(i) for i in data)))))
 
     def __getitem__(self, key):
         try:
