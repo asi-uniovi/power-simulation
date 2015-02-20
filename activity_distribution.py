@@ -107,22 +107,24 @@ class ActivityDistribution(Base, metaclass=Singleton):
         """Parses the CSV with the trace formatted {day, hour, inactivity*}."""
         with open(filename) as trace:
             try:
-                dialect = csv.Sniffer().sniff(trace.read(1024))
                 trace.seek(0)
-                reader = csv.reader(trace, dialect)
+                reader = csv.reader(trace, delimiter=';')
 
                 next(reader)
                 for item in reader:
                     day = item[0]
                     hour = item[1]
-                    shape, scale, loc = scipy.stats.pareto.fit(
+                    # pylint: disable=bad-builtin
+                    shape, loc, scale = scipy.stats.pareto.fit(
                         numpy.asarray(list(map(float, item[2:]))))
                     self._histogram[DAYS[day]][int(hour)] = (
-                        functools.partial(lambda s, l: (numpy.random.pareto(s) + 1) * l,
-                                          shape, loc))
+                        functools.partial(lambda s, l, sc: (
+                            (numpy.random.pareto(s) + 1.0) * sc),
+                                          shape, loc, scale))
 
                     logger.info(
-                        'Distribution fitted to pareto of shape = %f loc = %f', shape, loc)
+                        'Pareto shape = %f loc = %f scale = %f',
+                        shape, loc, scale)
             except csv.Error as error:
                 raise RuntimeError(('Error reading {}:{}: {}'
                                     .format(filename, trace.line_num, error)))
