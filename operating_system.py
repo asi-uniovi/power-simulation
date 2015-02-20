@@ -3,7 +3,6 @@
 import logging
 from base import Base
 from policy import TimeoutPolicy
-from stats import Stats
 
 logger = logging.getLogger(__name__)
 

@@ -2,7 +2,6 @@
 
 import logging
 from base import Base
-from computer import Computer
 from stats import Stats
 
 logger = logging.getLogger(__name__)
@@ -19,7 +18,7 @@ class Request(Base):
         super(Request, self).__init__(config)
         self._env = env
         self._server = server
-        self._stats = Stats()
+        self._stats = Stats(config, env)
         self._stats.increment('REQUESTS')
 
     def run(self):
