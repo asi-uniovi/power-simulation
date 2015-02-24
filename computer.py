@@ -35,6 +35,7 @@ class Computer(Base):
 
     @property
     def inactivity(self):
+        """This simulates Window's LastUserTime()."""
         return self._env.now - self._last_user_access
 
     def serve(self):
