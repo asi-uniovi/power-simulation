@@ -49,7 +49,7 @@ def main():
         config_logging(args.debug)
         config = parse_config(args.config_file)
         Simulation(config).run()
-    except:
+    except:  # pylint: disable=bare-except
         logging.exception('Unexpected exception')
         return 1
 
