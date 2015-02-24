@@ -1,6 +1,7 @@
 """Simulation statistics storage."""
 
 import numpy
+import six
 from activity_distribution import ActivityDistribution
 from activity_distribution import HOUR
 from activity_distribution import INV_DAYS
@@ -8,7 +9,7 @@ from activity_distribution import WEEK
 from singleton import Singleton
 
 
-class Stats(dict, metaclass=Singleton):
+class Stats(six.with_metaclass(Singleton, dict)):
     """This is just a singleton dict with some helpers."""
 
     def __init__(self, config, env):

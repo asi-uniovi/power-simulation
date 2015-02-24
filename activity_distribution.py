@@ -6,6 +6,7 @@ import numpy
 import logging
 import scipy
 import scipy.stats
+import six
 from base import Base
 from collections import defaultdict
 from singleton import Singleton
@@ -41,7 +42,7 @@ def float_es(string):
     return float(string.replace(',', '.'))
 
 
-class ActivityDistribution(Base, metaclass=Singleton):
+class ActivityDistribution(six.with_metaclass(Singleton, Base)):
     """Stores the hourly activity distribution over a week.
 
     Each bucket of the histogram contains the average duration of the inactivity
