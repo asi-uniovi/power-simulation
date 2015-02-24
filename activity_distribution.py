@@ -42,6 +42,15 @@ def float_es(string):
     return float(string.replace(',', '.'))
 
 
+def timestamp_to_day(timestamp):
+    """Converts from a simulation timestamp to the pair (day, hour)."""
+    day = (timestamp % WEEK(1)) // DAY(1)
+    hour = (timestamp % DAY(1)) // HOUR(1)
+    assert 0 <= day <= 6, day
+    assert 0 <= hour <= 23, hour
+    return day, hour
+
+
 class ActivityDistribution(six.with_metaclass(Singleton, Base)):
     """Stores the hourly activity distribution over a week.
 
@@ -71,15 +80,8 @@ class ActivityDistribution(six.with_metaclass(Singleton, Base)):
 
     def random_inactivity_for_timestamp(self, timestamp):
         """Queries the activity distribution and generates a random sample."""
-        day, hour = self._timestamp_to_day(timestamp)
+        day, hour = timestamp_to_day(timestamp)
         return self.random_inactivity_for_hour(day, hour)
-
-    def _timestamp_to_day(self, timestamp):
-        day = (timestamp % WEEK(1)) // DAY(1)
-        hour = (timestamp % DAY(1)) // HOUR(1)
-        assert 0 <= day <= 6, day
-        assert 0 <= hour <= 23, hour
-        return day, hour
 
     def __load_trace(self, filename):
         """Parses the CSV with the trace formatted {day, hour, inactivity}."""
@@ -94,7 +96,8 @@ class ActivityDistribution(six.with_metaclass(Singleton, Base)):
                 for day, hour, inactivity in reader:
                     inactivity = float_es(inactivity)
                     data.append(inactivity)
-                    assert self._histogram.get(DAYS[day], {}).get(int(hour)) is None
+                    assert self._histogram.get(DAYS[day],
+                                               {}).get(int(hour)) is None
                     self._histogram[DAYS[day]][int(hour)] = inactivity
 
                 logger.info('Distr.: avg(%.2f), std(%.2f), [%.2f; %.2f]',
@@ -132,6 +135,7 @@ class ActivityDistribution(six.with_metaclass(Singleton, Base)):
 
     @classmethod
     def load_activity_distribution(cls, config, env):
+        """Loads the activity distribution file into a new object."""
         return cls(config,
                    filename=config.get('activity_distribution',
                                        'filename'),
