@@ -22,6 +22,7 @@ class Simulation(Base):
         self._stats = None
 
     def _create_user(self, activity_distribution):
+        """Creates a user and the dependent simulation objects (computers)."""
         computer = Computer(self._config, self._env)
         user = User(self._config, self._env, computer, activity_distribution)
         SimpleTimeoutOS(self._config, self._env, computer)
@@ -45,6 +46,7 @@ class Simulation(Base):
         self.__log_results()
 
     def __log_results(self):
+        """Prints the final results of the simulation run."""
         if self._env is None:
             logger.warning('Simulation not ran')
             return
@@ -61,7 +63,7 @@ class Simulation(Base):
         inactivity_intervals = self._stats['INACTIVITY_TIME']
         logger.info('Avg. inactivity time: %.3f s',
                     numpy.average(inactivity_intervals))
-        inactivity_intervals = list(map(
+        inactivity_intervals = list(map(  # pylint: disable=bad-builtin
             numpy.average, self._stats['INACTIVITY_TIME_MONITORED'].values()))
         logger.info('Avg. inactivity time (monitored): %.3f s',
                     numpy.average(inactivity_intervals))
