@@ -25,6 +25,7 @@ class SimpleTimeoutOS(Base):
 
     @property
     def policies(self):
+        """Gets a list of the policies of this OS."""
         return self._policies.values()
 
     def change_policy(self, policy):
