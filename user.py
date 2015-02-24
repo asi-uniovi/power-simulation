@@ -26,6 +26,7 @@ class User(Base):
 
     @property
     def interarrival_time(self):
+        """Calcualtes a random reflexion or interarrival time for the user."""
         time = self._activity_distribution.random_inactivity_for_timestamp(
             self._env.now)
         logger.debug('Interarrival time: %f', time)
