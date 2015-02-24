@@ -33,6 +33,8 @@ class Stats(six.with_metaclass(Singleton, dict)):
         self.setdefault(key, {}).setdefault(hour, []).append(value)
 
     def dump_histogram_to_file(self, key, filename):
+        """Dumps a histogram viriable to a file."""
+        # pylint: disable=invalid-name
         with open(filename, 'w') as f:
             f.write('i;n;Day;Hour;{0}\n'.format(key))
             for timestamp, data in self[key].items():
@@ -46,6 +48,7 @@ class Stats(six.with_metaclass(Singleton, dict)):
                         numpy.average(data),
                         self._activity_distribution.avg_inactivity_for_hour(
                             day, hour)))))
+        # pylint: disable=invalid-name
         with open('distribution-' + filename, 'w') as f:
             f.write('Day;Hour;Interval length;Frequency\n')
             for timestamp, data in self[key].items():
