@@ -4,6 +4,7 @@ import csv
 import functools
 import numpy
 import logging
+import powerlaw
 import scipy
 import scipy.stats
 import six
@@ -27,7 +28,8 @@ INV_DAYS = {v: k for k, v in DAYS.items()}
 
 DISTRIBUTIONS = {
     'exp': numpy.random.exponential,
-    'par': numpy.random.pareto,
+    'pareto': numpy.random.pareto,
+    'lognorm': numpy.random.lognormal,
 }
 
 
@@ -38,7 +40,7 @@ WEEK = lambda x: x * DAY(7)
 
 def float_es(string):
     """Parse a Spanish float from string (converting the ,)."""
-    assert type(string) == type('')
+    assert isinstance(string, str)
     return float(string.replace(',', '.'))
 
 
@@ -83,52 +85,29 @@ class ActivityDistribution(six.with_metaclass(Singleton, Base)):
         day, hour = timestamp_to_day(timestamp)
         return self.random_inactivity_for_hour(day, hour)
 
-    def __load_trace(self, filename):
-        """Parses the CSV with the trace formatted {day, hour, inactivity}."""
-        with open(filename) as trace:
-            try:
-                dialect = csv.Sniffer().sniff(trace.read(1024))
-                trace.seek(0)
-                reader = csv.reader(trace, dialect)
-
-                next(reader)
-                data = []  # Max 168 values (hours of a week).
-                for day, hour, inactivity in reader:
-                    inactivity = float_es(inactivity)
-                    data.append(inactivity)
-                    assert self._histogram.get(DAYS[day],
-                                               {}).get(int(hour)) is None
-                    self._histogram[DAYS[day]][int(hour)] = inactivity
-
-                logger.info('Distr.: avg(%.2f), std(%.2f), [%.2f; %.2f]',
-                            numpy.average(data), numpy.std(data),
-                            numpy.min(data), numpy.max(data))
-            except csv.Error as error:
-                raise RuntimeError(('Error reading {}:{}: {}'
-                                    .format(filename, trace.line_num, error)))
-
     def __load_raw_trace_and_fit(self, filename):
-        """Parses the CSV with the trace formatted {day, hour, inactivity*}."""
+        """Parses the CSV with the trace formatted {day, hour, inactivity+}."""
         with open(filename) as trace:
             try:
-                trace.seek(0)
                 reader = csv.reader(trace, delimiter=';')
-
-                next(reader)
+                next(reader, None)
                 for item in reader:
                     day = item[0]
                     hour = item[1]
                     # pylint: disable=bad-builtin
-                    shape, loc, scale = scipy.stats.pareto.fit(
-                        numpy.asarray(list(map(float, item[2:]))))
+                    data = numpy.asarray(list(map(float, item[2:])))
+                    fit = powerlaw.Fit(data)
+
                     self._histogram[DAYS[day]][int(hour)] = (
-                        functools.partial(lambda s, l, sc: (
-                            (numpy.random.pareto(s) + 1.0) * sc),
-                                          shape, loc, scale))
+                        functools.partial(numpy.random.lognormal,
+                                          fit.lognormal.mu,
+                                          fit.lognormal.sigma))
 
                     logger.info(
-                        'Pareto shape = %f loc = %f scale = %f',
-                        shape, loc, scale)
+                        'Lognormal fit: mu = %f sigma = %f (xmin = %f)',
+                        fit.lognormal.mu,
+                        fit.lognormal.sigma,
+                        fit.lognormal.xmin)
             except csv.Error as error:
                 raise RuntimeError(('Error reading {}:{}: {}'
                                     .format(filename, trace.line_num, error)))
