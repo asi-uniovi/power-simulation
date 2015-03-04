@@ -1,9 +1,10 @@
 """Base objects for the simulation."""
 
 import abc
+import six
 
 
-class Base(object):#, metaclass=abc.ABCMeta):
+class Base(six.with_metaclass(abc.ABCMeta, object)):
     """An abstract class with all the basic methods we need across."""
 
     def __init__(self, config):

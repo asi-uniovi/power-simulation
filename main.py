@@ -2,8 +2,10 @@
 
 """Main runner of the simulation."""
 
+from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
+from __future__ import unicode_literals
 
 import argparse
 import logging
@@ -47,7 +49,7 @@ def main():
         config_logging(args.debug)
         config = parse_config(args.config_file)
         Simulation(config).run()
-    except:
+    except:  # pylint: disable=bare-except
         logging.exception('Unexpected exception')
         return 1
 

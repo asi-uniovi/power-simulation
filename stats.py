@@ -1,6 +1,7 @@
 """Simulation statistics storage."""
 
 import numpy
+import six
 from activity_distribution import ActivityDistribution
 from activity_distribution import HOUR
 from activity_distribution import INV_DAYS
@@ -8,7 +9,7 @@ from activity_distribution import WEEK
 from singleton import Singleton
 
 
-class Stats(dict, metaclass=Singleton):
+class Stats(six.with_metaclass(Singleton, dict)):
     """This is just a singleton dict with some helpers."""
 
     def __init__(self, config, env):
@@ -32,6 +33,8 @@ class Stats(dict, metaclass=Singleton):
         self.setdefault(key, {}).setdefault(hour, []).append(value)
 
     def dump_histogram_to_file(self, key, filename):
+        """Dumps a histogram viriable to a file."""
+        # pylint: disable=invalid-name
         with open(filename, 'w') as f:
             f.write('i;n;Day;Hour;{0}\n'.format(key))
             for timestamp, data in self[key].items():
@@ -45,6 +48,7 @@ class Stats(dict, metaclass=Singleton):
                         numpy.average(data),
                         self._activity_distribution.avg_inactivity_for_hour(
                             day, hour)))))
+        # pylint: disable=invalid-name
         with open('distribution-' + filename, 'w') as f:
             f.write('Day;Hour;Interval length;Frequency\n')
             for timestamp, data in self[key].items():
