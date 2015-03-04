@@ -75,7 +75,12 @@ class ActivityDistribution(six.with_metaclass(Singleton, Base)):
         """Queries the activity distribution and generates a random sample."""
         inactivity = self.avg_inactivity_for_hour(day, hour)
         if callable(inactivity):
-            return inactivity()
+            inactivity_result = inactivity()
+            if not inactivity_result > 0:
+                import pdb
+                pdb.set_trace()
+                raise RuntimeError(inactivity)
+            return inactivity_result
         if self._distribution:
             return self._distribution(inactivity)
         raise RuntimeError('Distribution is not defined for this model')
@@ -97,17 +102,24 @@ class ActivityDistribution(six.with_metaclass(Singleton, Base)):
                     # pylint: disable=bad-builtin
                     data = numpy.asarray(list(map(float, item[2:])))
                     fit = powerlaw.Fit(data)
+                    fit.find_xmin()
+                    m = fit.lognormal.mu
+                    v = fit.lognormal.sigma
+
+                    # Transform to the normal distr. associated with the LogN.
+                    # Source: http://ch.mathworks.com/help/stats/lognstat.html
+                    mu = numpy.log((m*m)/numpy.sqrt(v+m*m))
+                    sigma = numpy.sqrt(numpy.log(v/(m*m)+1))
 
                     self._histogram[DAYS[day]][int(hour)] = (
                         functools.partial(numpy.random.lognormal,
-                                          fit.lognormal.mu,
-                                          fit.lognormal.sigma))
+                                          mu,
+                                          sigma))
 
                     logger.info(
-                        'Lognormal fit: mu = %f sigma = %f (xmin = %f)',
-                        fit.lognormal.mu,
-                        fit.lognormal.sigma,
-                        fit.lognormal.xmin)
+                        'Lognormal fit: (m = %.3f; v = %.3f) '
+                        '(mu = %.3f; sigma = %.3f)',
+                        m, v, mu, sigma)
             except csv.Error as error:
                 raise RuntimeError(('Error reading {}:{}: {}'
                                     .format(filename, trace.line_num, error)))
