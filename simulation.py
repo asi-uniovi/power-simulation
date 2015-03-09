@@ -20,6 +20,7 @@ class Simulation(Base):
         super(Simulation, self).__init__(config)
         self._env = None
         self._stats = None
+        self._monitoring_interval = None
 
     def _create_user(self, activity_distribution):
         """Creates a user and the dependent simulation objects (computers)."""
@@ -30,8 +31,11 @@ class Simulation(Base):
 
     def run(self):
         """Sets up and starts a new simulation."""
+        simulation_time = self.get_config_int('simulation_time')
+        self._monitoring_interval = simulation_time / 10.0
         self._env = simpy.Environment()
         self._stats = Stats(self._config, self._env)
+        self._env.process(self.__monitor_time())
 
         activity_distribution = (
             ActivityDistribution.load_activity_distribution(self._config,
@@ -42,7 +46,7 @@ class Simulation(Base):
             self._create_user(activity_distribution)
 
         logger.info('Simulation starting')
-        self._env.run(until=self.get_config_int('simulation_time'))
+        self._env.run(until=simulation_time)
         self.__log_results()
 
     def __log_results(self):
@@ -71,3 +75,8 @@ class Simulation(Base):
                                            'stats-monitored.txt')
         self._stats.dump_histogram_to_file('INACTIVITY_TIME_ACCURATE',
                                            'stats-accurate.txt')
+
+    def __monitor_time(self):
+        while True:
+            print('{} seconds completed'.format(self._env.now))
+            yield self._env.timeout(self._monitoring_interval)
