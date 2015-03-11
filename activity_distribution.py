@@ -27,9 +27,9 @@ DAYS = {
 INV_DAYS = {v: k for k, v in DAYS.items()}
 
 DISTRIBUTIONS = {
-    'exp': numpy.random.exponential,
-    'pareto': numpy.random.pareto,
-    'lognorm': numpy.random.lognormal,
+    'exponential': scipy.stats.expon,
+    'pareto': scipy.stats.pareto,
+    'lognormal': scipy.stats.lognorm,
 }
 
 
@@ -74,15 +74,8 @@ class ActivityDistribution(six.with_metaclass(Singleton, Base)):
     def random_inactivity_for_hour(self, day, hour):
         """Queries the activity distribution and generates a random sample."""
         inactivity = self.avg_inactivity_for_hour(day, hour)
-        if callable(inactivity):
-            inactivity_result = inactivity()
-            if not inactivity_result > 0:
-                import pdb
-                pdb.set_trace()
-                raise RuntimeError(inactivity)
-            return inactivity_result
-        if self._distribution:
-            return self._distribution(inactivity)
+        if inactivity is not None:
+            return inactivity.rvs()
         raise RuntimeError('Distribution is not defined for this model')
 
     def random_inactivity_for_timestamp(self, timestamp):
@@ -101,25 +94,12 @@ class ActivityDistribution(six.with_metaclass(Singleton, Base)):
                     hour = item[1]
                     # pylint: disable=bad-builtin
                     data = numpy.asarray(list(map(float, item[2:])))
-                    fit = powerlaw.Fit(data)
-                    fit.find_xmin()
-                    m = fit.lognormal.mu
-                    v = fit.lognormal.sigma
-
-                    # Transform to the normal distr. associated with the LogN.
-                    # Source: http://ch.mathworks.com/help/stats/lognstat.html
-                    mu = numpy.log((m*m)/numpy.sqrt(v+m*m))
-                    sigma = numpy.sqrt(numpy.log(v/(m*m)+1))
-
+                    param = self._distribution.fit(data)
                     self._histogram[DAYS[day]][int(hour)] = (
-                        functools.partial(numpy.random.lognormal,
-                                          mu,
-                                          sigma))
-
-                    logger.info(
-                        'Lognormal fit: (m = %.3f; v = %.3f) '
-                        '(mu = %.3f; sigma = %.3f)',
-                        m, v, mu, sigma)
+                        self._distribution(*param[:-2],
+                                           loc=param[-2],
+                                           scale=param[-1]))
+                    logger.debug('Fitted distribution for %s %s', day, hour)
             except csv.Error as error:
                 raise RuntimeError(('Error reading {}:{}: {}'
                                     .format(filename, trace.line_num, error)))
