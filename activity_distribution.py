@@ -75,7 +75,10 @@ class ActivityDistribution(six.with_metaclass(Singleton, Base)):
         """Queries the activity distribution and generates a random sample."""
         inactivity = self.avg_inactivity_for_hour(day, hour)
         if inactivity is not None:
-            return inactivity.rvs()
+            i = inactivity.rvs()
+            while i > 5259488:
+                i = inactivity.rvs()
+            return i
         raise RuntimeError('Distribution is not defined for this model')
 
     def random_inactivity_for_timestamp(self, timestamp):
@@ -93,7 +96,8 @@ class ActivityDistribution(six.with_metaclass(Singleton, Base)):
                     day = item[0]
                     hour = item[1]
                     # pylint: disable=bad-builtin
-                    data = numpy.asarray(list(map(float, item[2:])))
+                    data = map(float, item[2:])
+                    data = numpy.asarray([i for i in data if 60 <= i <= 172800])
                     param = self._distribution.fit(data)
                     self._histogram[DAYS[day]][int(hour)] = (
                         self._distribution(*param[:-2],
