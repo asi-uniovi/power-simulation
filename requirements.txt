@@ -1,12 +1,4 @@
-matplotlib
-mpmath
-nose
 numpy
-pandas
-patsy
-powerlaw
 scipy
 simpy
 six
-statsmodels
-sympy

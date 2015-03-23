@@ -4,7 +4,6 @@ import csv
 import functools
 import numpy
 import logging
-import powerlaw
 import scipy
 import scipy.stats
 import six
