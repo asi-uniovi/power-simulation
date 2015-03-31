@@ -1,15 +1,19 @@
 """Base objects for the simulation."""
 
 import abc
+import injector
 import six
+
+from module import config_key, env_key
 
 
 class Base(six.with_metaclass(abc.ABCMeta, object)):
     """An abstract class with all the basic methods we need across."""
 
-    def __init__(self, config):
+    @injector.inject(config=config_key, env=env_key)
+    def __init__(self, config, env):
         self._config = config
-        self._env = None
+        self._env = env
 
     def get_config(self, key, section='simulation'):
         """Retrieves a key from the configuration."""

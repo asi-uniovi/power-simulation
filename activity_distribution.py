@@ -1,45 +1,27 @@
-"""User activity distribution parsing and managing."""
+"""User (in)activity distribution parsing, fitting and generation."""
 
 import csv
 import functools
+import injector
 import numpy
 import logging
-import scipy
 import scipy.stats
-import six
+
 from base import Base
-from collections import defaultdict
-from singleton import Singleton
+from static import HOUR, DAY, DAYS, WEEK
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
-DAYS = {
-    'Sunday': 0,
-    'Monday': 1,
-    'Tuesday': 2,
-    'Wednesday': 3,
-    'Thursday': 4,
-    'Friday': 5,
-    'Saturday': 6,
-}
-
-INV_DAYS = {v: k for k, v in DAYS.items()}
 
 DISTRIBUTIONS = {
-    'exponential': scipy.stats.expon,
-    'pareto': scipy.stats.pareto,
-    'lognormal': scipy.stats.lognorm,
+    'exponential': scipy.stats.expon,  # pylint: disable=no-member
+    'lognormal': scipy.stats.lognorm,  # pylint: disable=no-member
+    'pareto': scipy.stats.pareto,  # pylint: disable=no-member
 }
-
-
-HOUR = lambda x: x * 60 * 60
-DAY = lambda x: x * HOUR(24)
-WEEK = lambda x: x * DAY(7)
 
 
 def float_es(string):
     """Parse a Spanish float from string (converting the ,)."""
-    assert isinstance(string, str)
     return float(string.replace(',', '.'))
 
 
@@ -47,72 +29,71 @@ def timestamp_to_day(timestamp):
     """Converts from a simulation timestamp to the pair (day, hour)."""
     day = (timestamp % WEEK(1)) // DAY(1)
     hour = (timestamp % DAY(1)) // HOUR(1)
-    assert 0 <= day <= 6, day
-    assert 0 <= hour <= 23, hour
+    assert 0 <= day <= 6
+    assert 0 <= hour <= 23
     return day, hour
 
 
-class ActivityDistribution(six.with_metaclass(Singleton, Base)):
+@injector.singleton
+class ActivityDistribution(Base):
     """Stores the hourly activity distribution over a week.
 
-    Each bucket of the histogram contains the average duration of the inactivity
-    intervals that start on each hour.
+    Each bucket of the histogram contains the distribution of the log file
+    processed. Each bucket represents one hour of the week.
     """
 
-    def __init__(self, config, filename, distribution, env):
-        super(ActivityDistribution, self).__init__(config)
-        self._histogram = defaultdict(lambda: defaultdict(float))
-        self._distribution = DISTRIBUTIONS[distribution]
-        self._env = env
-        self.__load_raw_trace_and_fit(filename)
-
-    def avg_inactivity_for_hour(self, day, hour):
-        """Queries the activity distribution to the get average inactivity."""
-        return self._histogram[day][hour]
+    def __init__(self):
+        """All the data of this object is loaded from the config object."""
+        super(ActivityDistribution, self).__init__()
+        getter = functools.partial(
+            self.get_config, section='activity_distribution')
+        self._histogram = {}
+        self._distribution = DISTRIBUTIONS[getter('distribution')]
+        self._xmin = float(getter('xmin'))
+        self._xmax = float(getter('xmax'))
+        self._noise_threshold = float(getter('noise_threshold'))
+        self.__load_raw_trace_and_fit(getter('filename'))
 
     def random_inactivity_for_hour(self, day, hour):
         """Queries the activity distribution and generates a random sample."""
-        inactivity = self.avg_inactivity_for_hour(day, hour)
-        if inactivity is not None:
-            i = inactivity.rvs()
-            while i > 5259488:
-                i = inactivity.rvs()
-            return i
-        raise RuntimeError('Distribution is not defined for this model')
+        distribution = self._distribution_for_hour(day, hour)
+        if distribution is not None:
+            rnd_inactivity = distribution.rvs()
+            if self._noise_threshold is not None:
+                while rnd_inactivity > self._noise_threshold:
+                    rnd_inactivity = distribution.rvs()
+            return rnd_inactivity
+
+        raise RuntimeError('Distribution undefined for {} {}'.format(day, hour))
 
     def random_inactivity_for_timestamp(self, timestamp):
         """Queries the activity distribution and generates a random sample."""
-        day, hour = timestamp_to_day(timestamp)
-        return self.random_inactivity_for_hour(day, hour)
+        return self.random_inactivity_for_hour(*timestamp_to_day(timestamp))
+
+    def _distribution_for_hour(self, day, hour):
+        """Queries the activity distribution to the get average inactivity."""
+        return self._histogram[day][hour]
 
     def __load_raw_trace_and_fit(self, filename):
         """Parses the CSV with the trace formatted {day, hour, inactivity+}."""
+        logger.info('Parsing and fitting distributions.')
         with open(filename) as trace:
             try:
                 reader = csv.reader(trace, delimiter=';')
                 next(reader, None)
                 for item in reader:
-                    day = item[0]
-                    hour = item[1]
-                    # pylint: disable=bad-builtin
-                    data = map(float, item[2:])
-                    data = numpy.asarray([i for i in data if 60 <= i <= 172800])
-                    param = self._distribution.fit(data)
-                    self._histogram[DAYS[day]][int(hour)] = (
-                        self._distribution(*param[:-2],
-                                           loc=param[-2],
-                                           scale=param[-1]))
+                    day = DAYS[item[0]]
+                    hour = int(item[1])
+                    # pylint: disable=no-member
+                    distr_params = self._distribution.fit(numpy.asarray(
+                        [i for i in [float(j) for j in item[2:]]
+                         if self._xmin <= i <= self._xmax]))
+                    self._histogram.setdefault(day, {})[hour] = (
+                        # https://stackoverflow.com/a/16651955
+                        self._distribution(*distr_params[:-2],
+                                           loc=distr_params[-2],
+                                           scale=distr_params[-1]))
                     logger.debug('Fitted distribution for %s %s', day, hour)
             except csv.Error as error:
                 raise RuntimeError(('Error reading {}:{}: {}'
                                     .format(filename, trace.line_num, error)))
-
-    @classmethod
-    def load_activity_distribution(cls, config, env):
-        """Loads the activity distribution file into a new object."""
-        return cls(config,
-                   filename=config.get('activity_distribution',
-                                       'filename'),
-                   distribution=config.get('activity_distribution',
-                                           'distribution'),
-                   env=env)

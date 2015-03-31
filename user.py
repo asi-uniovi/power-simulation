@@ -1,11 +1,16 @@
 """User simulation process."""
 
+import injector
 import logging
+
+from activity_distribution import ActivityDistribution
 from base import Base
+from computer import Computer
+from module import Binder, CustomInjector
 from request import Request
 from stats import Stats
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
 
 class User(Base):
@@ -16,13 +21,13 @@ class User(Base):
       - The average interarrival time.
     """
 
-    def __init__(self, config, env, server, activity_distribution):
-        logger.debug('New User')
-        super(User, self).__init__(config)
-        self._env = env
-        self._server = server
-        self._stats = Stats(config, env)
+    @injector.inject(activity_distribution=ActivityDistribution,
+                     stats=Stats, computer=Computer)
+    def __init__(self, activity_distribution, stats, computer):
+        super(User, self).__init__()
         self._activity_distribution = activity_distribution
+        self._computer = computer
+        self._stats = stats
 
     @property
     def interarrival_time(self):
@@ -31,13 +36,12 @@ class User(Base):
             self._env.now)
         logger.debug('Interarrival time: %f', time)
         self._stats.append('INACTIVITY_TIME', time)
-        self._stats.add_to_bin(
-            'INACTIVITY_TIME_ACCURATE', time, self._env)
+        self._stats.add_to_bin('INACTIVITY_TIME_ACCURATE', time)
         return time
 
     def run(self):
         """Generates requests af the defined frequency."""
         while True:
             self._env.process(
-                Request(self._config, self._env, self._server).run())
+                CustomInjector(Binder()).get(Request).run(self._computer))
             yield self._env.timeout(self.interarrival_time)

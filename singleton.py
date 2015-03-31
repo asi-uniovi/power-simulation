@@ -1,9 +1,7 @@
 """Enables singleton classess via a metaclass."""
 
-import abc
 
-
-class Singleton(abc.ABCMeta):
+class Singleton(type):
     """Singleton metaclass.
 
     Stores the instance on the class itself and overrides the construction via
@@ -11,7 +9,7 @@ class Singleton(abc.ABCMeta):
     """
 
     def __init__(cls, name, bases, dct):
-        abc.ABCMeta.__init__(cls, name, bases, dct)
+        type.__init__(cls, name, bases, dct)
         cls.__instance = None
 
     def __call__(cls, *args, **kwargs):

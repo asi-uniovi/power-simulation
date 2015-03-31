@@ -1,59 +1,47 @@
 """A very simple simuation of a 1/M/c queuing system."""
 
+import functools
+import injector
 import logging
 import numpy
-import simpy
+
 from activity_distribution import ActivityDistribution
 from base import Base
-from operating_system import SimpleTimeoutOS
-from computer import Computer
+from module import Binder, CustomInjector
 from stats import Stats
 from user import User
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
 
 class Simulation(Base):
     """Constructs the system and runs the simulation."""
 
-    def __init__(self, config):
-        super(Simulation, self).__init__(config)
-        self._env = None
-        self._stats = None
-        self._monitoring_interval = None
+    @injector.inject(activity_distribution=ActivityDistribution, stats=Stats)
+    def __init__(self, activity_distribution, stats):
+        super(Simulation, self).__init__()
+        self._activity_distribution = activity_distribution
+        self._stats = stats
 
-    def _create_user(self, activity_distribution):
-        """Creates a user and the dependent simulation objects (computers)."""
-        computer = Computer(self._config, self._env)
-        user = User(self._config, self._env, computer, activity_distribution)
-        SimpleTimeoutOS(self._config, self._env, computer)
-        self._env.process(user.run())
+    @property
+    @functools.lru_cache(maxsize=1)
+    def simulation_time(self):
+        """Gets the simulation time from the config."""
+        return self.get_config_int('simulation_time')
 
     def run(self):
         """Sets up and starts a new simulation."""
-        simulation_time = self.get_config_int('simulation_time')
-        self._monitoring_interval = simulation_time / 10.0
-        self._env = simpy.Environment()
-        self._stats = Stats(self._config, self._env)
-        self._env.process(self.__monitor_time())
-
-        activity_distribution = (
-            ActivityDistribution.load_activity_distribution(self._config,
-                                                            self._env))
         servers = self.get_config_int('servers')
         logger.info('Simulating %d users', servers)
+        self._env.process(self.__monitor_time())
         for _ in range(servers):
-            self._create_user(activity_distribution)
-
+            self._env.process(CustomInjector(Binder()).get(User).run())
         logger.info('Simulation starting')
-        self._env.run(until=simulation_time)
+        self._env.run(until=self.simulation_time)
         self.__log_results()
 
     def __log_results(self):
         """Prints the final results of the simulation run."""
-        if self._env is None:
-            logger.warning('Simulation not ran')
-            return
         total_requests = self._stats['REQUESTS']
         served_requests = self._stats['SERVED_REQUESTS']
         logger.info('Simulation ended at %d s', self._env.now)
@@ -65,6 +53,7 @@ class Simulation(Base):
         logger.info('Avg. serving time: %.3f s',
                     self._stats['SERVING_TIME'] / served_requests)
         inactivity_intervals = self._stats['INACTIVITY_TIME']
+        # pylint: disable=no-member
         logger.info('Avg. inactivity time: %.3f s',
                     numpy.average(inactivity_intervals))
         inactivity_intervals = list(map(  # pylint: disable=bad-builtin
@@ -77,6 +66,11 @@ class Simulation(Base):
                                            'stats-accurate.txt')
 
     def __monitor_time(self):
+        """Indicates how te simulation is progressing."""
         while True:
-            print('{} seconds completed'.format(self._env.now))
-            yield self._env.timeout(self._monitoring_interval)
+            print('{:10.2f} seconds completed'.format(self._env.now))
+            yield self._env.timeout(self.simulation_time / 10.0)
+
+
+def runner(config):
+    CustomInjector(Binder(config)).get(Simulation).run()

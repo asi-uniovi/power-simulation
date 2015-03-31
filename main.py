@@ -12,7 +12,8 @@ import logging
 import os
 import sys
 import configparser
-from simulation import Simulation
+
+from simulation import runner
 
 
 def config_logging(debug):
@@ -42,13 +43,17 @@ def parse_config(config_file):
     return config
 
 
+def configure():
+    """Sets the basic configuration and dependency injections."""
+    args = parse_arguments()
+    config_logging(args.debug)
+    return parse_config(args.config_file)
+
+
 def main():
     """Just starts the simulation."""
     try:
-        args = parse_arguments()
-        config_logging(args.debug)
-        config = parse_config(args.config_file)
-        Simulation(config).run()
+        runner(configure())
     except:  # pylint: disable=bare-except
         logging.exception('Unexpected exception')
         return 1

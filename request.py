@@ -1,10 +1,12 @@
 """Request object. Mainly, it stores statistics."""
 
+import injector
 import logging
+
 from base import Base
 from stats import Stats
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
 
 class Request(Base):
@@ -13,16 +15,14 @@ class Request(Base):
     Asks for a server by waiting in the queue and then places the request.
     """
 
-    def __init__(self, config, env, server):
-        logger.debug('New Request')
-        super(Request, self).__init__(config)
-        self._env = env
-        self._server = server
-        self._stats = Stats(config, env)
+    @injector.inject(stats=Stats)
+    def __init__(self, stats):
+        super(Request, self).__init__()
+        self._stats = stats
         self._stats.increment('REQUESTS')
 
-    def run(self):
+    def run(self, computer):
         """Waits for a place in the queue and makes the request."""
         arrival_time = self._env.now
         self._stats.increment('WAITING_TIME', self._env.now - arrival_time)
-        yield self._env.process(self._server.serve())
+        yield self._env.process(computer.serve())
