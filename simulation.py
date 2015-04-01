@@ -1,5 +1,6 @@
 """A very simple simuation of a 1/M/c queuing system."""
 
+import functools
 import injector
 import logging
 import numpy
@@ -9,11 +10,6 @@ from base import Base
 from module import Binder, CustomInjector
 from stats import Stats
 from user import User
-
-try:
-    import functools
-except ImportError:
-    import functools32 as functools
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
@@ -28,7 +24,6 @@ class Simulation(Base):
         self._stats = stats
 
     @property
-    @functools.lru_cache(maxsize=1)
     def simulation_time(self):
         """Gets the simulation time from the config."""
         return self.get_config_int('simulation_time')

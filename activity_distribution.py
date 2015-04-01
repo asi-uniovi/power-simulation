@@ -1,6 +1,7 @@
 """User (in)activity distribution parsing, fitting and generation."""
 
 import csv
+import functools
 import injector
 import numpy
 import logging
@@ -8,11 +9,6 @@ import scipy.stats
 
 from base import Base
 from static import HOUR, DAY, DAYS, WEEK
-
-try:
-    import functools
-except ImportError:
-    import functools32 as functools
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
