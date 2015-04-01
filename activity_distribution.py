@@ -96,8 +96,9 @@ class ActivityDistribution(six.with_metaclass(Singleton, Base)):
                     day = item[0]
                     hour = item[1]
                     # pylint: disable=bad-builtin
-                    data = map(float, item[2:])
-                    data = numpy.asarray([i for i in data if 60 <= i <= 172800])
+#                     data = map(float, item[2:])
+#                     data = numpy.asarray([i for i in data if 60 <= i <= 172800])
+                    data = numpy.asarray(list(map(float, item[2:])))
                     param = self._distribution.fit(data)
                     self._histogram[DAYS[day]][int(hour)] = (
                         self._distribution(*param[:-2],
