@@ -58,10 +58,10 @@ class ActivityDistribution(Base):
         """Queries the activity distribution and generates a random sample."""
         distribution = self._distribution_for_hour(day, hour)
         if distribution is not None:
-            rnd_inactivity = distribution.rvs()
+            rnd_inactivity = distribution.resample(size=1)[0][0]
             if self._noise_threshold is not None:
                 while rnd_inactivity > self._noise_threshold:
-                    rnd_inactivity = distribution.rvs()
+                    rnd_inactivity = distribution.resample(size=1)[0][0]
             return rnd_inactivity
 
         raise RuntimeError('Distribution undefined for {} {}'.format(day, hour))
@@ -85,14 +85,11 @@ class ActivityDistribution(Base):
                     day = DAYS[item[0]]
                     hour = int(item[1])
                     # pylint: disable=no-member
-                    distr_params = self._distribution.fit(numpy.asarray(
+                    s = numpy.asarray(
                         [i for i in [float(j) for j in item[2:]]
-                         if self._xmin <= i <= self._xmax]))
+                         if self._xmin <= i <= self._xmax])
                     self._histogram.setdefault(day, {})[hour] = (
-                        # https://stackoverflow.com/a/16651955
-                        self._distribution(*distr_params[:-2],
-                                           loc=distr_params[-2],
-                                           scale=distr_params[-1]))
+                        scipy.stats.gaussian_kde(s, 0.2 / s.std(ddof=1)))
                     logger.debug('Fitted distribution for %s %s', day, hour)
             except csv.Error as error:
                 raise RuntimeError(('Error reading {}:{}: {}'
