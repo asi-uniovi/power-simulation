@@ -67,7 +67,8 @@ class Simulation(Base):
     def __monitor_time(self):
         """Indicates how te simulation is progressing."""
         while True:
-            print('{:10.2f} seconds completed'.format(self._env.now))
+            print('{:10.2f}% completed'.format(
+                self._env.now / self.simulation_time * 100.0))
             yield self._env.timeout(self.simulation_time / 10.0)
 
 
