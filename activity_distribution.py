@@ -74,6 +74,11 @@ class ActivityDistribution(Base):
         """Queries the activity distribution to the get average inactivity."""
         return self._histogram[day][hour]
 
+    def _bandwidth(self, data):
+        """Silverman's rule of thumb for bandwith estimation."""
+        # return 1.06 * numpy.std(data) * numpy.power(len(data), -1/5)
+        return 0.00005
+
     def __load_raw_trace_and_fit(self, filename):
         """Parses the CSV with the trace formatted {day, hour, inactivity+}."""
         logger.info('Parsing and fitting distributions.')
@@ -89,7 +94,7 @@ class ActivityDistribution(Base):
                         [i for i in [float(j) for j in item[2:]]
                          if self._xmin <= i <= self._xmax])
                     self._histogram.setdefault(day, {})[hour] = (
-                        scipy.stats.gaussian_kde(s, 0.2 / s.std(ddof=1)))
+                        scipy.stats.gaussian_kde(s, self._bandwidth(s)))
                     logger.debug('Fitted distribution for %s %s', day, hour)
             except csv.Error as error:
                 raise RuntimeError(('Error reading {}:{}: {}'
