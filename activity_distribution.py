@@ -5,6 +5,7 @@ import functools
 import injector
 import numpy
 import logging
+import scipy.interpolate
 import scipy.stats
 
 from base import Base
@@ -34,6 +35,22 @@ def timestamp_to_day(timestamp):
     return day, hour
 
 
+class EmpiricalDistribution(object):
+
+    def __init__(self, data):
+        data = numpy.array(data, copy=True)
+        if data.ndim != 1:
+            raise ValueError("data should be one-dimensional")
+        data.sort()
+
+        y = numpy.linspace(0, 1, data.size)
+        self._tck = scipy.interpolate.splrep(y, data)
+
+    def rvs(self):
+        y = numpy.random.random()
+        return float(scipy.interpolate.splev(y, self._tck))
+
+
 @injector.singleton
 class ActivityDistribution(Base):
     """Stores the hourly activity distribution over a week.
@@ -58,10 +75,10 @@ class ActivityDistribution(Base):
         """Queries the activity distribution and generates a random sample."""
         distribution = self._distribution_for_hour(day, hour)
         if distribution is not None:
-            rnd_inactivity = distribution.resample(size=1)[0][0]
+            rnd_inactivity = distribution.rvs()
             if self._noise_threshold is not None:
                 while rnd_inactivity > self._noise_threshold:
-                    rnd_inactivity = distribution.resample(size=1)[0][0]
+                    rnd_inactivity = distribution.rvs()
             return rnd_inactivity
 
         raise RuntimeError('Distribution undefined for {} {}'.format(day, hour))
@@ -74,10 +91,8 @@ class ActivityDistribution(Base):
         """Queries the activity distribution to the get average inactivity."""
         return self._histogram[day][hour]
 
-    def _bandwidth(self, data):
-        """Silverman's rule of thumb for bandwith estimation."""
-        # return 1.06 * numpy.std(data) * numpy.power(len(data), -1/5)
-        return 0.00005
+    def _sample_ecdf(self, ecdf):
+        pass
 
     def __load_raw_trace_and_fit(self, filename):
         """Parses the CSV with the trace formatted {day, hour, inactivity+}."""
@@ -94,7 +109,7 @@ class ActivityDistribution(Base):
                         [i for i in [float(j) for j in item[2:]]
                          if self._xmin <= i <= self._xmax])
                     self._histogram.setdefault(day, {})[hour] = (
-                        scipy.stats.gaussian_kde(s, self._bandwidth(s)))
+                        EmpiricalDistribution(s))
                     logger.debug('Fitted distribution for %s %s', day, hour)
             except csv.Error as error:
                 raise RuntimeError(('Error reading {}:{}: {}'
