@@ -3,22 +3,17 @@
 import csv
 import functools
 import injector
+import math
 import numpy
 import logging
 import scipy.interpolate
 import scipy.stats
+import statsmodels.api as sm
 
 from base import Base
 from static import HOUR, DAY, DAYS, WEEK
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
-
-
-DISTRIBUTIONS = {
-    'exponential': scipy.stats.expon,  # pylint: disable=no-member
-    'lognormal': scipy.stats.lognorm,  # pylint: disable=no-member
-    'pareto': scipy.stats.pareto,  # pylint: disable=no-member
-}
 
 
 def float_es(string):
@@ -38,17 +33,11 @@ def timestamp_to_day(timestamp):
 class EmpiricalDistribution(object):
 
     def __init__(self, data):
-        data = numpy.array(data, copy=True)
-        if data.ndim != 1:
-            raise ValueError("data should be one-dimensional")
-        data.sort()
-
-        y = numpy.linspace(0, 1, data.size)
-        self._tck = scipy.interpolate.splrep(y, data)
+        ecdf = sm.distributions.ECDF(numpy.array(data, copy=True))
+        self._inverse = sm.distributions.monotone_fn_inverter(ecdf, ecdf.x)
 
     def rvs(self):
-        y = numpy.random.random()
-        return float(scipy.interpolate.splev(y, self._tck))
+        return float(self._inverse(numpy.random.random()))
 
 
 @injector.singleton
@@ -65,7 +54,6 @@ class ActivityDistribution(Base):
         getter = functools.partial(
             self.get_config, section='activity_distribution')
         self._histogram = {}
-        self._distribution = DISTRIBUTIONS[getter('distribution')]
         self._xmin = float(getter('xmin'))
         self._xmax = float(getter('xmax'))
         self._noise_threshold = float(getter('noise_threshold'))
@@ -77,7 +65,8 @@ class ActivityDistribution(Base):
         if distribution is not None:
             rnd_inactivity = distribution.rvs()
             if self._noise_threshold is not None:
-                while rnd_inactivity > self._noise_threshold:
+                while (rnd_inactivity > self._noise_threshold
+                       or math.isnan(rnd_inactivity)):
                     rnd_inactivity = distribution.rvs()
             return rnd_inactivity
 
