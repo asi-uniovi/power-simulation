@@ -40,12 +40,12 @@ class ActivityDistribution(Base):
         """All the data of this object is loaded from the config object."""
         super(ActivityDistribution, self).__init__()
         getter = functools.partial(
-            self.get_config, section='activity_distribution')
+            self.get_config, section='inactivity_distribution')
         self._histogram = {}
         self._xmin = float(getter('xmin'))
         self._xmax = float(getter('xmax'))
         self._noise_threshold = float(getter('noise_threshold'))
-        self.__load_raw_trace_and_fit(getter('filename'))
+        self.__load_raw_trace_and_fit(getter('intervals_file'))
 
     def random_inactivity_for_hour(self, day, hour):
         """Queries the activity distribution and generates a random sample."""
