@@ -6,11 +6,9 @@ import injector
 import math
 import numpy
 import logging
-import scipy.interpolate
-import scipy.stats
-import statsmodels.api as sm
 
 from base import Base
+from distribution import EmpiricalDistribution
 from static import HOUR, DAY, DAYS, WEEK
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
@@ -28,16 +26,6 @@ def timestamp_to_day(timestamp):
     assert 0 <= day <= 6
     assert 0 <= hour <= 23
     return day, hour
-
-
-class EmpiricalDistribution(object):
-
-    def __init__(self, data):
-        ecdf = sm.distributions.ECDF(numpy.array(data, copy=True))
-        self._inverse = sm.distributions.monotone_fn_inverter(ecdf, ecdf.x)
-
-    def rvs(self):
-        return float(self._inverse(numpy.random.random()))
 
 
 @injector.singleton

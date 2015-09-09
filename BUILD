@@ -3,6 +3,7 @@ py_library(
     srcs = ["activity_distribution.py"],
     deps = [
         ":base",
+        ":distribution",
         ":static",
     ],
 )
@@ -29,6 +30,11 @@ filegroup(
 filegroup(
     name = "data",
     srcs = glob(["data/*.csv"]),
+)
+
+py_library(
+    name = "distribution",
+    srcs = ["distribution.py"],
 )
 
 py_binary(
