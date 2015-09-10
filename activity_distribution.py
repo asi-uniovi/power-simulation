@@ -85,7 +85,7 @@ class ActivityDistribution(Base):
                 for item in reader:
                     day = DAYS[item[0]]
                     hour = int(item[1])
-                    # pylint: disable=no-member
+                    # pylint: disable=no-member,invalid-name
                     s = numpy.asarray(
                         [i for i in [float(j) for j in item[2:]]
                          if self._xmin <= i <= self._xmax])
