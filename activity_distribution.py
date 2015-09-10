@@ -8,7 +8,7 @@ import numpy
 import logging
 
 from base import Base
-from distribution import EmpiricalDistribution
+from distribution import EmpiricalDistribution, BernoulliDistribution
 from static import HOUR, DAY, DAYS, WEEK
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
@@ -39,13 +39,19 @@ class ActivityDistribution(Base):
     def __init__(self):
         """All the data of this object is loaded from the config object."""
         super(ActivityDistribution, self).__init__()
-        getter = functools.partial(
+        inactivity = functools.partial(
             self.get_config, section='inactivity_distribution')
-        self._histogram = {}
-        self._xmin = float(getter('xmin'))
-        self._xmax = float(getter('xmax'))
-        self._noise_threshold = float(getter('noise_threshold'))
-        self.__load_raw_trace_and_fit(getter('intervals_file'))
+        shutdown = functools.partial(
+            self.get_config, section='shutdown_distribution')
+        self._xmin = float(inactivity('xmin'))
+        self._xmax = float(inactivity('xmax'))
+        self._noise_threshold = float(inactivity('noise_threshold'))
+        self._inactivity_intervals_histogram = self.__load_and_fit(
+            inactivity('intervals_file'))
+        self._off_intervals_histogram = self.__load_and_fit(
+            shutdown('intervals_file'))
+        self._off_probability_histogram = self.__load_and_fit(
+            shutdown('probability_file'))
 
     def random_inactivity_for_hour(self, day, hour):
         """Queries the activity distribution and generates a random sample."""
@@ -66,16 +72,14 @@ class ActivityDistribution(Base):
 
     def _distribution_for_hour(self, day, hour):
         """Queries the activity distribution to the get average inactivity."""
-        return self._histogram[day][hour]
+        return self._inactivity_intervals_histogram[day][hour]
 
-    def _sample_ecdf(self, ecdf):
-        pass
-
-    def __load_raw_trace_and_fit(self, filename):
+    def __load_and_fit(self, filename):
         """Parses the CSV with the trace formatted {day, hour, inactivity+}."""
         logger.info('Parsing and fitting distributions.')
         with open(filename) as trace:
             try:
+                histogram = {}
                 reader = csv.reader(trace, delimiter=';')
                 next(reader, None)
                 for item in reader:
@@ -85,9 +89,15 @@ class ActivityDistribution(Base):
                     s = numpy.asarray(
                         [i for i in [float(j) for j in item[2:]]
                          if self._xmin <= i <= self._xmax])
-                    self._histogram.setdefault(day, {})[hour] = (
-                        EmpiricalDistribution(s))
+                    if len(s) > 1:
+                        distr = EmpiricalDistribution(s)
+                    elif len(s) == 1:
+                        distr = BernoulliDistribution(s[0])
+                    elif len(s) == 0:
+                        distr = BernoulliDistribution(0)
+                    histogram.setdefault(day, {})[hour] = distr
                     logger.debug('Fitted distribution for %s %s', day, hour)
+                return histogram
             except csv.Error as error:
                 raise RuntimeError(('Error reading {}:{}: {}'
                                     .format(filename, trace.line_num, error)))

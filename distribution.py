@@ -17,7 +17,7 @@ class Distribution(six.with_metaclass(abc.ABCMeta)):
 
     def xrvs(self, n):
         """Sample the distribution several times."""
-        return [self.rvs() for _ in range(n)]
+        return numpy.asarray([self.rvs() for _ in range(n)])
 
 
 class EmpiricalDistribution(Distribution):
@@ -31,11 +31,22 @@ class EmpiricalDistribution(Distribution):
         return float(self._inverse(numpy.random.random()))
 
 
-class SimpleRateDistribution(Distribution):
-    """This distribution returns 1 with a probability of rate."""
+class BinomialDistribution(Distribution):
+    """The binomial distribution."""
 
-    def __init__(self, rate):
-        self._rate = rate
+    def __init__(self, n, p):
+        self._n = n
+        self._p = p
 
     def rvs(self):
-        return self._rate
+        return numpy.random.binomial(self._n, self._p)
+
+    def xrvs(self, n):
+        return numpy.random.binomial(self._n, self._p, n)
+
+
+class BernoulliDistribution(BinomialDistribution):
+    """This distribution returns 1 with a probability of p."""
+
+    def __init__(self, p):
+        super(BernoulliDistribution, self).__init__(1, p)
