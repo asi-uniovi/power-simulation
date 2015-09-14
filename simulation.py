@@ -63,12 +63,14 @@ class Simulation(Base):
                                            'stats-monitored.txt')
         self._stats.dump_histogram_to_file('INACTIVITY_TIME_ACCURATE',
                                            'stats-accurate.txt')
+        self._stats.dump_histogram_to_file('COMPUTERS_SHUTDOWN',
+                                           'shutdowns.txt')
 
     def __monitor_time(self):
         """Indicates how te simulation is progressing."""
         while True:
-            print('{:10.2f}% completed'.format(
-                self._env.now / self.simulation_time * 100.0))
+            logger.info('%.2f%% completed',
+                        self._env.now / self.simulation_time * 100.0)
             yield self._env.timeout(self.simulation_time / 10.0)
 
 

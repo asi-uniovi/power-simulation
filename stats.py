@@ -32,16 +32,23 @@ class Stats(dict):
         hour = (self._env.now % WEEK(1)) // HOUR(1)
         self.setdefault(key, {}).setdefault(hour, []).append(value)
 
+    def increment_bin(self, key, inc=1):
+        """Increment the counter in a bin."""
+        hour = (self._env.now % WEEK(1)) // HOUR(1)
+        self.setdefault(key, {}).setdefault(hour, 0)
+        self[key][hour] += inc
+
     def dump_histogram_to_file(self, key, filename):
         """Dumps a histogram viriable to a file."""
         # pylint: disable=invalid-name
         with open(filename, 'w') as f:
             f.write('Day;Hour;Interval length;Frequency\n')
-            for timestamp, data in self[key].items():
-                f.write('{}\n'.format(';'.join(str(x) for x in (
-                    INV_DAYS[timestamp // 24],
-                    int(timestamp % 24),
-                    ';'.join(repr(i) for i in data)))))
+            if hasattr(self[key], 'items'):
+                for timestamp, data in self[key].items():
+                    f.write('{}\n'.format(';'.join(str(x) for x in (
+                        INV_DAYS[timestamp // 24],
+                        int(timestamp % 24),
+                        ';'.join(repr(i) for i in list(data))))))
 
     def __getitem__(self, key):
         try:

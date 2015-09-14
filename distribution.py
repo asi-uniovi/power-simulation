@@ -3,6 +3,7 @@
 import abc
 import logging
 import numpy
+import random
 import six
 import statsmodels.api as sm
 
@@ -23,10 +24,23 @@ class Distribution(six.with_metaclass(abc.ABCMeta)):
         return numpy.asarray([self.rvs() for _ in range(n)])
 
 
+class DiscreteUniformDistribution(Distribution):
+    """Uniform distribution over a set of values."""
+
+    def __init__(self, *data):
+        self._data = data
+
+    def rvs(self):
+        return self.xrvs(1)
+
+    def xrvs(self, n):
+        return random.sample(self._data, n)
+
+
 class EmpiricalDistribution(Distribution):
     """Empirical distribution according to the data provided."""
 
-    def __init__(self, data):
+    def __init__(self, *data):
         # pylint: disable=no-member
         ecdf = sm.distributions.ECDF(numpy.array(data, copy=True))
         self._inverse = sm.distributions.monotone_fn_inverter(ecdf, ecdf.x)
@@ -38,18 +52,17 @@ class EmpiricalDistribution(Distribution):
 class BinomialDistribution(Distribution):
     """The binomial distribution."""
 
-    def __init__(self, n, p):
+    def __init__(self, N, p):
         # pylint: disable=invalid-name
-        self._n = n
+        self._N = N
         self._p = p
 
     def rvs(self):
-        # pylint: disable=no-member
-        return numpy.random.binomial(self._n, self._p)
+        return self.xrvs(1)
 
     def xrvs(self, n):
         # pylint: disable=no-member
-        return numpy.random.binomial(self._n, self._p, n)
+        return numpy.random.binomial(self._N, self._p, n)
 
 
 class BernoulliDistribution(BinomialDistribution):

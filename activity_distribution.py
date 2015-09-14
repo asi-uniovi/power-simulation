@@ -8,7 +8,9 @@ import numpy
 import logging
 
 from base import Base
-from distribution import EmpiricalDistribution, BernoulliDistribution
+from distribution import BernoulliDistribution
+from distribution import DiscreteUniformDistribution
+from distribution import EmpiricalDistribution
 from static import HOUR, DAY, DAYS, WEEK
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
@@ -25,7 +27,7 @@ def timestamp_to_day(timestamp):
     hour = (timestamp % DAY(1)) // HOUR(1)
     assert 0 <= day <= 6
     assert 0 <= hour <= 23
-    return day, hour
+    return int(day), int(hour)
 
 
 @injector.singleton
@@ -51,11 +53,12 @@ class ActivityDistribution(Base):
         self._off_intervals_histogram = self.__load_and_fit(
             shutdown('intervals_file'))
         self._off_probability_histogram = self.__load_and_fit(
-            shutdown('probability_file'))
+            shutdown('probability_file'), BernoulliDistribution)
 
     def random_inactivity_for_hour(self, day, hour):
         """Queries the activity distribution and generates a random sample."""
-        distribution = self._distribution_for_hour(day, hour)
+        distribution = self._distribution_for_hour(
+            self._inactivity_intervals_histogram, day, hour)
         if distribution is not None:
             rnd_inactivity = distribution.rvs()
             if self._noise_threshold is not None:
@@ -70,11 +73,38 @@ class ActivityDistribution(Base):
         """Queries the activity distribution and generates a random sample."""
         return self.random_inactivity_for_hour(*timestamp_to_day(timestamp))
 
-    def _distribution_for_hour(self, day, hour):
-        """Queries the activity distribution to the get average inactivity."""
-        return self._inactivity_intervals_histogram[day][hour]
+    def shutdown_for_hour(self, day, hour):
+        """Determines whether a computer should turndown or not."""
+        distribution = self._distribution_for_hour(
+            self._off_probability_histogram, day, hour)
+        if distribution is not None:
+            return bool(distribution.rvs())
+        return False
 
-    def __load_and_fit(self, filename):
+    def shutdown_for_timestamp(self, timestamp):
+        """Determines whether a computer should turndown or not."""
+        return self.shutdown_for_hour(*timestamp_to_day(timestamp))
+
+    def off_interval_for_hour(self, day, hour):
+        """Samples an off interval for the day and hour provided"""
+        distribution = self._distribution_for_hour(
+            self._off_intervals_histogram, day, hour)
+        if distribution is not None:
+            off_interval = distribution.rvs()
+            while off_interval < 0:
+                off_interval = distribution.rvs()
+            return off_interval
+        return 0.0
+
+    def off_interval_for_timestamp(self, timestamp):
+        """Samples an off interval for the day and hour provided"""
+        return self.off_interval_for_hour(*timestamp_to_day(timestamp))
+
+    def _distribution_for_hour(self, histogram, day, hour):
+        """Queries the activity distribution to the get average inactivity."""
+        return histogram.get(day, {}).get(hour)
+
+    def __load_and_fit(self, filename, distr=None):
         """Parses the CSV with the trace formatted {day, hour, inactivity+}."""
         logger.info('Parsing and fitting distributions.')
         with open(filename) as trace:
@@ -89,13 +119,14 @@ class ActivityDistribution(Base):
                     s = numpy.asarray(
                         [i for i in [float(j) for j in item[2:]]
                          if self._xmin <= i <= self._xmax])
-                    if len(s) > 1:
-                        distr = EmpiricalDistribution(s)
-                    elif len(s) == 1:
-                        distr = BernoulliDistribution(s[0])
-                    elif len(s) == 0:
-                        distr = BernoulliDistribution(0)
-                    histogram.setdefault(day, {})[hour] = distr
+                    if len(s) == 0:
+                        continue
+                    if distr is None:
+                        if len(s) > 1:
+                            distr = EmpiricalDistribution
+                        elif len(s) == 1:
+                            distr = DiscreteUniformDistribution
+                    histogram.setdefault(day, {})[hour] = distr(*s)
                     logger.debug('Fitted distribution for %s %s', day, hour)
                 return histogram
             except csv.Error as error:

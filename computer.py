@@ -1,13 +1,22 @@
 """A simulation process of the computer."""
 
+import enum
 import injector
 import logging
 import numpy
 
+from activity_distribution import ActivityDistribution
 from base import Base
 from stats import Stats
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
+
+
+@enum.unique
+class ComputerStatus(enum.Enum):
+    """Possible statuses for the Computer."""
+    on = 1
+    off = 2
 
 
 class Computer(Base):
@@ -16,14 +25,17 @@ class Computer(Base):
     Server with configurable exponential serving rate.
     """
 
-    @injector.inject(stats=Stats)
-    def __init__(self, stats):
+    @injector.inject(activity_distribution=ActivityDistribution, stats=Stats)
+    def __init__(self, activity_distribution, stats):
         super(Computer, self).__init__()
+        self._activity_distribution = activity_distribution
         self._stats = stats
         self._serving_rate = self.get_config_float('serving_rate')
         self._monitoring_interval = self.get_config_int('monitoring_interval')
         self._last_user_access = self._env.now
+        self.status = ComputerStatus.on
         self._env.process(self.__monitor_loop())
+        self._env.process(self.__off_loop())
 
     @property
     def serving_time(self):
@@ -48,6 +60,23 @@ class Computer(Base):
     def __monitor_loop(self):
         """Runs the monitoring loop for this server."""
         while True:
+            logger.debug('__monitor_loop running')
             self._stats.add_to_bin(
                 'INACTIVITY_TIME_MONITORED', self.inactivity)
             yield self._env.timeout(self._monitoring_interval)
+
+    def __off_loop(self):
+        """Runs the loop that turns the server off."""
+        while True:
+            logger.info('__off_loop running (%d)', self._env.now)
+            self.status = ComputerStatus.on
+            off_interval = 3600
+            if self._activity_distribution.shutdown_for_timestamp(
+                    self._env.now):
+                off_interval = (
+                    self._activity_distribution.off_interval_for_timestamp(
+                        self._env.now))
+                self.status = ComputerStatus.off
+                logger.info('A computer has been turned down.')
+                self._stats.increment_bin('COMPUTERS_SHUTDOWN')
+            yield self._env.timeout(off_interval)
