@@ -1,6 +1,7 @@
 """Simulation statistics storage."""
 
 import injector
+import numpy
 
 from activity_distribution import ActivityDistribution
 from base import env_key
@@ -37,6 +38,12 @@ class Stats(dict):
         hour = (self._env.now % WEEK(1)) // HOUR(1)
         self.setdefault(key, {}).setdefault(hour, 0)
         self[key][hour] += inc
+
+    def means_for_histogram(self, key):
+        return [numpy.mean(distr) for distr in self[key].values()]
+
+    def medians_for_histogram(self, key):
+        return [numpy.median(distr) for distr in self[key].values()]
 
     def dump_histogram_to_file(self, key, filename):
         """Dumps a histogram viriable to a file."""
