@@ -1,4 +1,5 @@
 injector
+matplotlib
 numpy
 scipy
 simpy
