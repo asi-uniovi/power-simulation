@@ -73,6 +73,14 @@ class ActivityDistribution(Base):
         """Queries the activity distribution and generates a random sample."""
         return self.random_inactivity_for_hour(*timestamp_to_day(timestamp))
 
+    def inactivity_means(self):
+        return [i.mean for i in self._flatten_histogram(
+            self._inactivity_intervals_histogram)]
+
+    def inactivity_medians(self):
+        return [i.median for i in self._flatten_histogram(
+            self._inactivity_intervals_histogram)]
+
     def shutdown_for_hour(self, day, hour):
         """Determines whether a computer should turndown or not."""
         distribution = self._distribution_for_hour(
@@ -103,6 +111,10 @@ class ActivityDistribution(Base):
     def _distribution_for_hour(self, histogram, day, hour):
         """Queries the activity distribution to the get average inactivity."""
         return histogram.get(day, {}).get(hour)
+
+    def _flatten_histogram(self, histogram):
+        """Makes a histogram be a list of 168 elements."""
+        return [i for h in histogram.values() for i in h.values()]
 
     def __load_and_fit(self, filename, distr=None):
         """Parses the CSV with the trace formatted {day, hour, inactivity+}."""
