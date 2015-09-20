@@ -68,7 +68,7 @@ class Computer(Base):
     def __off_loop(self):
         """Runs the loop that turns the server off."""
         while True:
-            logger.info('__off_loop running (%d)', self._env.now)
+            logger.debug('__off_loop running (%d)', self._env.now)
             self.status = ComputerStatus.on
             off_interval = 3600
             if self._activity_distribution.shutdown_for_timestamp(
