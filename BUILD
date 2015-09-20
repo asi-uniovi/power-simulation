@@ -54,6 +54,12 @@ py_library(
 )
 
 py_library(
+    name = "plot",
+    srcs = ["plot.py"],
+    deps = [":stats"],
+)
+
+py_library(
     name = "request",
     srcs = ["request.py"],
     deps = [
@@ -69,6 +75,7 @@ py_library(
         ":activity_distribution",
         ":base",
         ":module",
+        ":plot",
         ":stats",
         ":user",
     ],

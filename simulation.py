@@ -8,6 +8,7 @@ import numpy
 from activity_distribution import ActivityDistribution
 from base import Base
 from module import Binder, CustomInjector
+from plot import Plot
 from stats import Stats
 from user import User
 
@@ -17,10 +18,11 @@ logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 class Simulation(Base):
     """Constructs the system and runs the simulation."""
 
-    @injector.inject(activity_distribution=ActivityDistribution, stats=Stats)
-    def __init__(self, activity_distribution, stats):
+    @injector.inject(activity_distribution=ActivityDistribution, plot=Plot, stats=Stats)
+    def __init__(self, activity_distribution, plot, stats):
         super(Simulation, self).__init__()
         self._activity_distribution = activity_distribution
+        self._plot = plot
         self._stats = stats
 
     @property
@@ -65,6 +67,7 @@ class Simulation(Base):
                                            'stats-accurate.txt')
         self._stats.dump_histogram_to_file('COMPUTERS_SHUTDOWN',
                                            'shutdowns.txt')
+        self._plot.plot_inactivity_means_and_medians()
 
     def __monitor_time(self):
         """Indicates how te simulation is progressing."""
