@@ -40,11 +40,11 @@ py_library(
 py_binary(
     name = "main",
     srcs = ["main.py"],
-    deps = [":simulation"],
     data = [
         ":config",
         ":data",
     ],
+    deps = [":simulation"],
 )
 
 py_library(
