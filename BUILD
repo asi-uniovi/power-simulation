@@ -24,7 +24,10 @@ py_library(
 
 filegroup(
     name = "config",
-    srcs = ["config.ini"],
+    srcs = [
+        "config.ini",
+        "config_dev.ini",
+    ],
 )
 
 filegroup(
