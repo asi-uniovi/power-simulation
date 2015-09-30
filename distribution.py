@@ -23,6 +23,11 @@ class Distribution(six.with_metaclass(abc.ABCMeta)):
         """Expected 50th percentile for the distribution."""
         raise NotImplementedError
 
+    @property
+    def sample_size(self):
+        """Number of items used for the fit."""
+        raise NotImplementedError
+
     def rvs(self):
         """This samples the distribution for one value."""
         raise NotImplementedError
@@ -46,6 +51,10 @@ class DiscreteUniformDistribution(Distribution):
     def xrvs(self, n):
         return random.sample(self._data, n)
 
+    @property
+    def sample_size(self):
+        return len(self._data)
+
 
 class EmpiricalDistribution(Distribution):
     """Empirical distribution according to the data provided."""
@@ -56,6 +65,7 @@ class EmpiricalDistribution(Distribution):
         self._inverse = sm.distributions.monotone_fn_inverter(ecdf, ecdf.x)
         self._mean = numpy.mean(data)
         self._median = numpy.median(data)
+        self._sample_size = len(data)
 
     @property
     def mean(self):
@@ -64,6 +74,10 @@ class EmpiricalDistribution(Distribution):
     @property
     def median(self):
         return self._median
+
+    @property
+    def sample_size(self):
+        return self._sample_size
 
     def rvs(self):
         return float(self._inverse(numpy.random.random()))
