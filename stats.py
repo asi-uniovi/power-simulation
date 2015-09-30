@@ -33,6 +33,11 @@ class Stats(dict):
         hour = (self._env.now % WEEK(1)) // HOUR(1)
         self.setdefault(key, {}).setdefault(hour, []).append(value)
 
+    def init_bin(self, key, default=0):
+        """Initialize the value of a histogram."""
+        for hour in range(168):
+            self.setdefault(key, {}).setdefault(hour, default)
+
     def increment_bin(self, key, inc=1):
         """Increment the counter in a bin."""
         hour = (self._env.now % WEEK(1)) // HOUR(1)
@@ -44,6 +49,9 @@ class Stats(dict):
 
     def medians_for_histogram(self, key):
         return [numpy.median(distr) for distr in self[key].values()]
+
+    def counts_for_histogram(self, key):
+        return list(self[key].values())
 
     def dump_histogram_to_file(self, key, filename):
         """Dumps a histogram viriable to a file."""
