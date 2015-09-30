@@ -81,6 +81,14 @@ class ActivityDistribution(Base):
         return [i.median for i in self._flatten_histogram(
             self._inactivity_intervals_histogram)]
 
+    def inactivity_counts(self):
+        return [i.sample_size for i in self._flatten_histogram(
+            self._inactivity_intervals_histogram)]
+
+    def shutdown_counts(self):
+        return [i.sample_size for i in self._flatten_histogram(
+            self._off_intervals_histogram)]
+
     def shutdown_for_hour(self, day, hour):
         """Determines whether a computer should turndown or not."""
         distribution = self._distribution_for_hour(
