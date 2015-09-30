@@ -32,6 +32,7 @@ class Simulation(Base):
 
     def run(self):
         """Sets up and starts a new simulation."""
+        self._stats.init_bin('COMPUTERS_SHUTDOWN', default=0)
         servers = self.get_config_int('servers')
         logger.info('Simulating %d users (%d s)', servers, self.simulation_time)
         self._env.process(self.__monitor_time())
@@ -61,12 +62,10 @@ class Simulation(Base):
             numpy.average, self._stats['INACTIVITY_TIME_MONITORED'].values()))
         logger.info('Avg. inactivity time (monitored): %.3f s',
                     numpy.average(inactivity_intervals))
-        self._stats.dump_histogram_to_file('INACTIVITY_TIME_MONITORED',
-                                           'stats-monitored.txt')
-        self._stats.dump_histogram_to_file('INACTIVITY_TIME_ACCURATE',
-                                           'stats-accurate.txt')
-        self._stats.dump_histogram_to_file('COMPUTERS_SHUTDOWN',
-                                           'shutdowns.txt')
+        # self._stats.dump_histogram_to_file('INACTIVITY_TIME_MONITORED',
+        #                                    'stats-monitored.txt')
+        # self._stats.dump_histogram_to_file('INACTIVITY_TIME_ACCURATE',
+        #                                    'stats-accurate.txt')
         self._plot.plot_inactivity_means_and_medians()
 
     def __monitor_time(self):
