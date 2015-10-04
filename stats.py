@@ -51,6 +51,9 @@ class Stats(dict):
         return [numpy.median(distr) for distr in self[key].values()]
 
     def counts_for_histogram(self, key):
+        return [len(distr) for distr in self[key].values()]
+
+    def raw_histogram(self, key):
         return list(self[key].values())
 
     def dump_histogram_to_file(self, key, filename):

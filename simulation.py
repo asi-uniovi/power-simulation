@@ -54,10 +54,10 @@ class Simulation(Base):
                     self._stats['WAITING_TIME'] / served_requests)
         logger.info('Avg. serving time: %.3f s',
                     self._stats['SERVING_TIME'] / served_requests)
-        inactivity_intervals = self._stats['INACTIVITY_TIME']
         # pylint: disable=no-member
         logger.info('Avg. inactivity time: %.3f s',
-                    numpy.average(inactivity_intervals))
+                    numpy.average(self._stats.means_for_histogram(
+                        'INACTIVITY_TIME_ACCURATE')))
         inactivity_intervals = list(map(  # pylint: disable=bad-builtin
             numpy.average, self._stats['INACTIVITY_TIME_MONITORED'].values()))
         logger.info('Avg. inactivity time (monitored): %.3f s',
@@ -67,6 +67,7 @@ class Simulation(Base):
         # self._stats.dump_histogram_to_file('INACTIVITY_TIME_ACCURATE',
         #                                    'stats-accurate.txt')
         self._plot.plot_inactivity_means_and_medians()
+        self._plot.plot_inactivity_counts_and_shutdowns()
 
     def __monitor_time(self):
         """Indicates how te simulation is progressing."""
