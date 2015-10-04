@@ -9,6 +9,15 @@ py_library(
 )
 
 py_library(
+    name = "agent",
+    srcs = ["agent.py"],
+    deps = [
+         ":activity_distribution",
+         ":base",
+    ],
+)
+
+py_library(
     name = "base",
     srcs = ["base.py"],
 )
@@ -17,6 +26,7 @@ py_library(
     name = "computer",
     srcs = ["computer.py"],
     deps = [
+        ":agent",
         ":base",
         ":stats",
     ],

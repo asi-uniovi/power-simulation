@@ -5,7 +5,7 @@ import injector
 import logging
 import numpy
 
-from activity_distribution import ActivityDistribution
+from agent import Agent
 from base import Base
 from stats import Stats
 
@@ -25,10 +25,10 @@ class Computer(Base):
     Server with configurable exponential serving rate.
     """
 
-    @injector.inject(activity_distribution=ActivityDistribution, stats=Stats)
-    def __init__(self, activity_distribution, stats):
+    @injector.inject(agent=Agent, stats=Stats)
+    def __init__(self, agent, stats):
         super(Computer, self).__init__()
-        self._activity_distribution = activity_distribution
+        self._agent = agent
         self._stats = stats
         self._serving_rate = self.get_config_float('serving_rate')
         self._monitoring_interval = self.get_config_int('monitoring_interval')
@@ -69,14 +69,11 @@ class Computer(Base):
         """Runs the loop that turns the server off."""
         while True:
             logger.debug('__off_loop running (%d)', self._env.now)
-            self.status = ComputerStatus.on
-            off_interval = 3600
-            if self._activity_distribution.shutdown_for_timestamp(
-                    self._env.now):
-                off_interval = (
-                    self._activity_distribution.off_interval_for_timestamp(
-                        self._env.now))
-                self.status = ComputerStatus.off
-                logger.info('A computer has been turned down.')
+            if self._agent.indicate_shutdown():
                 self._stats.increment_bin('COMPUTERS_SHUTDOWN')
-            yield self._env.timeout(off_interval)
+                self.status = ComputerStatus.off
+                # TODO(m3drano): get an actual shutdown interval.
+                yield self._env.timeout(self._agent.shutdown_interval())
+                self.status = ComputerStatus.on
+            else:
+                yield self._env.timeout(60)
