@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 @enum.unique
 class ComputerStatus(enum.Enum):
     """Possible statuses for the Computer."""
+    # pylint: disable=invalid-name
     on = 1
     off = 2
 
@@ -72,7 +73,6 @@ class Computer(Base):
             if self._agent.indicate_shutdown():
                 self._stats.increment_bin('COMPUTERS_SHUTDOWN')
                 self.status = ComputerStatus.off
-                # TODO(m3drano): get an actual shutdown interval.
                 yield self._env.timeout(self._agent.shutdown_interval())
                 self.status = ComputerStatus.on
             else:

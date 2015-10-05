@@ -10,6 +10,7 @@ config_key = injector.Key('config')  # pylint: disable=invalid-name
 env_key = injector.Key('env')  # pylint: disable=invalid-name
 
 
+# pylint: disable=too-few-public-methods
 class Binder(six.with_metaclass(Singleton, injector.Module)):
     """This binds all the types needed on the simulation."""
 

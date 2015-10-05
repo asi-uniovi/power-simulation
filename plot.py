@@ -19,7 +19,9 @@ class Plot(object):
         self._activity_distribution = activity_distribution
         self._stats = stats
 
+    # pylint: disable=invalid-name
     def plot_inactivity_means_and_medians(self):
+        """Plots the inactivity means and medians in two plots."""
         fig = plt.figure()
         self._plot_run(
             fig,
@@ -37,7 +39,9 @@ class Plot(object):
         fig.set_tight_layout(True)
         fig.savefig('inactivity_means_and_medians.png')
 
+    # pylint: disable=invalid-name
     def plot_inactivity_counts_and_shutdowns(self):
+        """Plots the cunt of inactivity events and the shutdown events."""
         fig = plt.figure()
         self._plot_run(
             fig,
@@ -55,13 +59,19 @@ class Plot(object):
         fig.set_tight_layout(True)
         fig.savefig('inactivity_counts_and_shutdowns.png')
 
+    # pylint: disable=too-many-arguments
     def _plot_run(self, fig, real_data, simulation_data, label, subplot=111,
                   unit=None):
+        """Internal implementation of the plot generation."""
+        # pylint: disable=invalid-name
         ax = fig.add_subplot(subplot)
+        ax.set_title(label)
+        # pylint: disable=no-member
         ax.plot(numpy.linspace(1, len(real_data), len(real_data)),
                 real_data,
                 'r-',
                 label='real data')
+        # pylint: disable=no-member
         ax.plot(numpy.linspace(1, len(simulation_data), len(simulation_data)),
                 simulation_data,
                 'g-',
@@ -70,11 +80,12 @@ class Plot(object):
         if unit:
             ax.set_ylabel(unit)
 
+    # pylint: disable=no-self-use
     def _format_ax_line(self, ax):
+        """Common format for each of the axes."""
         ax.legend(loc='upper center', fontsize=8)
         ax.set_xlim(0, 7 * 24 - 1)
-        ax.set_xticks(numpy.arange(7) * 24)
+        ax.set_xticks(numpy.arange(7) * 24)  # pylint: disable=no-member
         ax.set_xticklabels(
             [key for key, _ in sorted(DAYS.items(),
-                                      key=operator.itemgetter(1))],
-            rotation=60)
+                                      key=operator.itemgetter(1))], rotation=60)

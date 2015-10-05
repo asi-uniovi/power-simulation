@@ -45,15 +45,21 @@ class Stats(dict):
         self[key][hour] += inc
 
     def means_for_histogram(self, key):
+        """Means per bucket of histogram."""
+        # pylint: disable=no-member
         return [numpy.mean(distr) for distr in self[key].values()]
 
     def medians_for_histogram(self, key):
+        """Medians per bucket of histogram."""
+        # pylint: disable=no-member
         return [numpy.median(distr) for distr in self[key].values()]
 
     def counts_for_histogram(self, key):
+        """Counts per bucket of histogram."""
         return [len(distr) for distr in self[key].values()]
 
     def raw_histogram(self, key):
+        """Raw access for the histogram buckets.."""
         return list(self[key].values())
 
     def dump_histogram_to_file(self, key, filename):

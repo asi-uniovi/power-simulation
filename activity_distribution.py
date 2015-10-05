@@ -30,6 +30,16 @@ def timestamp_to_day(timestamp):
     return int(day), int(hour)
 
 
+def _distribution_for_hour(histogram, day, hour):
+    """Queries the activity distribution to the get average inactivity."""
+    return histogram.get(day, {}).get(hour)
+
+
+def _flatten_histogram(histogram):
+    """Makes a histogram be a list of 168 elements."""
+    return [i for h in histogram.values() for i in h.values()]
+
+
 @injector.singleton
 class ActivityDistribution(Base):
     """Stores the hourly activity distribution over a week.
@@ -57,7 +67,7 @@ class ActivityDistribution(Base):
 
     def random_inactivity_for_hour(self, day, hour):
         """Queries the activity distribution and generates a random sample."""
-        distribution = self._distribution_for_hour(
+        distribution = _distribution_for_hour(
             self._inactivity_intervals_histogram, day, hour)
         if distribution is not None:
             rnd_inactivity = distribution.rvs()
@@ -74,24 +84,28 @@ class ActivityDistribution(Base):
         return self.random_inactivity_for_hour(*timestamp_to_day(timestamp))
 
     def inactivity_means(self):
-        return [i.mean for i in self._flatten_histogram(
+        """Calculates the mean of the inactivity distribution per hour."""
+        return [i.mean for i in _flatten_histogram(
             self._inactivity_intervals_histogram)]
 
     def inactivity_medians(self):
-        return [i.median for i in self._flatten_histogram(
+        """Calculates the median of the inactivity distribution per hour."""
+        return [i.median for i in _flatten_histogram(
             self._inactivity_intervals_histogram)]
 
     def inactivity_counts(self):
-        return [i.sample_size for i in self._flatten_histogram(
+        """Calculates the counts of the inactivity distribution per hour."""
+        return [i.sample_size for i in _flatten_histogram(
             self._inactivity_intervals_histogram)]
 
     def shutdown_counts(self):
-        return [i.sample_size for i in self._flatten_histogram(
+        """Calculates the counts of the shutdown distribution per hour."""
+        return [i.sample_size for i in _flatten_histogram(
             self._off_intervals_histogram)]
 
     def shutdown_for_hour(self, day, hour):
         """Determines whether a computer should turndown or not."""
-        distribution = self._distribution_for_hour(
+        distribution = _distribution_for_hour(
             self._off_probability_histogram, day, hour)
         if distribution is not None:
             return bool(distribution.rvs())
@@ -103,7 +117,7 @@ class ActivityDistribution(Base):
 
     def off_interval_for_hour(self, day, hour):
         """Samples an off interval for the day and hour provided"""
-        distribution = self._distribution_for_hour(
+        distribution = _distribution_for_hour(
             self._off_intervals_histogram, day, hour)
         if distribution is not None:
             off_interval = distribution.rvs()
@@ -115,14 +129,6 @@ class ActivityDistribution(Base):
     def off_interval_for_timestamp(self, timestamp):
         """Samples an off interval for the day and hour provided"""
         return self.off_interval_for_hour(*timestamp_to_day(timestamp))
-
-    def _distribution_for_hour(self, histogram, day, hour):
-        """Queries the activity distribution to the get average inactivity."""
-        return histogram.get(day, {}).get(hour)
-
-    def _flatten_histogram(self, histogram):
-        """Makes a histogram be a list of 168 elements."""
-        return [i for h in histogram.values() for i in h.values()]
 
     def __load_and_fit(self, filename, distr=None):
         """Parses the CSV with the trace formatted {day, hour, inactivity+}."""

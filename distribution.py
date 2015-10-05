@@ -39,6 +39,7 @@ class Distribution(six.with_metaclass(abc.ABCMeta)):
         return numpy.asarray([self.rvs() for _ in range(n)])
 
 
+# pylint: disable=abstract-method
 class DiscreteUniformDistribution(Distribution):
     """Uniform distribution over a set of values."""
 
@@ -83,6 +84,7 @@ class EmpiricalDistribution(Distribution):
         return float(self._inverse(numpy.random.random()))
 
 
+# pylint: disable=abstract-method
 class BinomialDistribution(Distribution):
     """The binomial distribution."""
 

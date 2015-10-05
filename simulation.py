@@ -1,6 +1,5 @@
 """A very simple simuation of a 1/M/c queuing system."""
 
-import functools
 import injector
 import logging
 import numpy
@@ -18,7 +17,8 @@ logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 class Simulation(Base):
     """Constructs the system and runs the simulation."""
 
-    @injector.inject(activity_distribution=ActivityDistribution, plot=Plot, stats=Stats)
+    @injector.inject(activity_distribution=ActivityDistribution, plot=Plot,
+                     stats=Stats)
     def __init__(self, activity_distribution, plot, stats):
         super(Simulation, self).__init__()
         self._activity_distribution = activity_distribution
@@ -78,4 +78,5 @@ class Simulation(Base):
 
 
 def runner(config):
+    """Bind all and launch the simulation!"""
     CustomInjector(Binder(config)).get(Simulation).run()
