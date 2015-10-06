@@ -62,6 +62,8 @@ class Simulation(Base):
             numpy.average, self._stats['INACTIVITY_TIME_MONITORED'].values()))
         logger.info('Avg. inactivity time (monitored): %.3f s',
                     numpy.average(inactivity_intervals))
+        logger.info('Shutdown events: %d',
+                    sum(self._stats['COMPUTERS_SHUTDOWN'].values()))
         # self._stats.dump_histogram_to_file('INACTIVITY_TIME_MONITORED',
         #                                    'stats-monitored.txt')
         # self._stats.dump_histogram_to_file('INACTIVITY_TIME_ACCURATE',

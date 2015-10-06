@@ -59,9 +59,9 @@ class ActivityDistribution(Base):
         self._xmax = float(inactivity('xmax'))
         self._noise_threshold = float(inactivity('noise_threshold'))
         self._inactivity_intervals_histogram = self.__load_and_fit(
-            inactivity('intervals_file'))
+            inactivity('intervals_file'), do_filter=True)
         self._off_intervals_histogram = self.__load_and_fit(
-            shutdown('intervals_file'))
+            shutdown('intervals_file'), do_filter=True)
         self._off_probability_histogram = self.__load_and_fit(
             shutdown('probability_file'), BernoulliDistribution)
 
@@ -108,8 +108,8 @@ class ActivityDistribution(Base):
         distribution = _distribution_for_hour(
             self._off_probability_histogram, day, hour)
         if distribution is not None:
-            return bool(distribution.rvs())
-        return False
+            return distribution.mean
+        return 0.0
 
     def shutdown_for_timestamp(self, timestamp):
         """Determines whether a computer should turndown or not."""
@@ -130,7 +130,7 @@ class ActivityDistribution(Base):
         """Samples an off interval for the day and hour provided"""
         return self.off_interval_for_hour(*timestamp_to_day(timestamp))
 
-    def __load_and_fit(self, filename, distr=None):
+    def __load_and_fit(self, filename, distr=None, do_filter=False):
         """Parses the CSV with the trace formatted {day, hour, inactivity+}."""
         logger.info('Parsing and fitting distributions.')
         with open(filename) as trace:
@@ -142,9 +142,10 @@ class ActivityDistribution(Base):
                     day = DAYS[item[0]]
                     hour = int(item[1])
                     # pylint: disable=no-member,invalid-name
-                    s = numpy.asarray(
-                        [i for i in [float(j) for j in item[2:]]
-                         if self._xmin <= i <= self._xmax])
+                    s = [float(j) for j in item[2:]]
+                    if do_filter:
+                        s = [i for i in s if self._xmin <= i <= self._xmax]
+                    s = numpy.asarray(s)
                     if len(s) == 0:
                         continue
                     if distr is None:

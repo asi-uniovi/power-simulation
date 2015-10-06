@@ -47,7 +47,7 @@ class DiscreteUniformDistribution(Distribution):
         self._data = data
 
     def rvs(self):
-        return self.xrvs(1)
+        return self.xrvs(1)[0]
 
     def xrvs(self, n):
         return random.sample(self._data, n)
@@ -103,7 +103,7 @@ class BinomialDistribution(Distribution):
         return round(self._N * self._p)
 
     def rvs(self):
-        return self.xrvs(1)
+        return self.xrvs(1)[0]
 
     def xrvs(self, n):
         # pylint: disable=no-member
