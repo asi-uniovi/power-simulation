@@ -31,8 +31,11 @@ class Agent(Base):
 
     def shutdown_interval(self):
         """Generates shutdown interval lengths."""
-        return self._activity_distribution.off_interval_for_timestamp(
-            self._env.now)
+        try:
+            return round(self._activity_distribution.off_interval_for_timestamp(
+                self._env.now))
+        except ValueError:
+            return 0
 
     def __fraction_to_shutdown(self):
         """Indicates how many PCs we should be turning down right now."""
