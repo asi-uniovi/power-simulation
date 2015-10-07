@@ -45,6 +45,6 @@ class Agent(Base):
     def __upgrade_loop(self):
         """Upgrades the configuration for the target turndown for this hour."""
         while True:
+            yield self._env.timeout(3600)
             self.__pcs_done = 0
             self.__pcs_to_do = self.__fraction_to_shutdown()
-            yield self._env.timeout(3600)

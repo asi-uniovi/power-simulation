@@ -1,5 +1,6 @@
 """User (in)activity distribution parsing, fitting and generation."""
 
+import collections
 import csv
 import functools
 import injector
@@ -37,7 +38,14 @@ def _distribution_for_hour(histogram, day, hour):
 
 def _flatten_histogram(histogram):
     """Makes a histogram be a list of 168 elements."""
-    return [i for h in histogram.values() for i in h.values()]
+    null = collections.namedtuple('null', ['median', 'sample_size'])
+    ret = []
+    for d in range(7):
+        for h in range(24):
+            ret.append(histogram.get(d, {}).get(h, null(median=0,
+                                                        sample_size=0)))
+    assert len(ret) == 168, len(ret)
+    return ret
 
 
 @injector.singleton
@@ -100,8 +108,10 @@ class ActivityDistribution(Base):
 
     def shutdown_counts(self):
         """Calculates the counts of the shutdown distribution per hour."""
-        return [i.sample_size for i in _flatten_histogram(
+        ret = [i.sample_size for i in _flatten_histogram(
             self._off_intervals_histogram)]
+        assert len(ret) == 168, len(ret)
+        return ret
 
     def shutdown_for_hour(self, day, hour):
         """Determines whether a computer should turndown or not."""

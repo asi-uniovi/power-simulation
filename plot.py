@@ -49,6 +49,7 @@ class Plot(object):
             self._stats.counts_for_histogram('INACTIVITY_TIME_ACCURATE'),
             'interval count comparison', 121,
             unit='Interval count')
+        assert len(self._stats.raw_histogram('COMPUTERS_SHUTDOWN')) == 168
         self._plot_run(
             fig,
             self._activity_distribution.shutdown_counts(),
