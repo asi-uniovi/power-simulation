@@ -50,12 +50,19 @@ py_library(
     srcs = ["distribution.py"],
 )
 
+cc_library(
+    name = "libsqlitefunctions",
+    srcs = ["extension-functions.c"],
+    linkstatic = False,
+)
+
 py_binary(
     name = "main",
     srcs = ["main.py"],
     data = [
         ":config",
         ":data",
+        ":libsqlitefunctions",
     ],
     deps = [":simulation"],
 )
