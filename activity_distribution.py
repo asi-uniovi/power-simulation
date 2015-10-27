@@ -40,8 +40,8 @@ def _flatten_histogram(histogram):
     """Makes a histogram be a list of 168 elements."""
     null = collections.namedtuple('null', ['median', 'sample_size'])
     ret = []
-    for d in range(7):
-        for h in range(24):
+    for d in range(7):  # pylint: disable=invalid-name
+        for h in range(24):  # pylint: disable=invalid-name
             ret.append(histogram.get(d, {}).get(h, null(median=0,
                                                         sample_size=0)))
     assert len(ret) == 168, len(ret)
