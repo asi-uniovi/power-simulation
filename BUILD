@@ -51,9 +51,9 @@ py_library(
 )
 
 cc_library(
-    name = "libsqlitefunctions",
+    name = "sqlitefunctions",
     srcs = ["extension-functions.c"],
-    linkstatic = False,
+    copts = ["-fno-common"],
 )
 
 py_binary(
@@ -62,7 +62,6 @@ py_binary(
     data = [
         ":config",
         ":data",
-        ":libsqlitefunctions",
     ],
     deps = [":simulation"],
 )
@@ -71,6 +70,7 @@ py_library(
     name = "module",
     srcs = ["module.py"],
     deps = [":singleton"],
+    data = [":sqlitefunctions"],
 )
 
 py_library(
