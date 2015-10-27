@@ -12,14 +12,15 @@ py_library(
     name = "agent",
     srcs = ["agent.py"],
     deps = [
-         ":activity_distribution",
-         ":base",
+        ":activity_distribution",
+        ":base",
     ],
 )
 
 py_library(
     name = "base",
     srcs = ["base.py"],
+    deps = [":module"]
 )
 
 py_library(
@@ -50,6 +51,11 @@ py_library(
     srcs = ["distribution.py"],
 )
 
+py_library(
+    name = "histogram",
+    srcs = ["histogram.py"],
+)
+
 cc_library(
     name = "sqlitefunctions",
     srcs = ["extension-functions.c"],
@@ -69,14 +75,21 @@ py_binary(
 py_library(
     name = "module",
     srcs = ["module.py"],
-    deps = [":singleton"],
     data = [":sqlitefunctions"],
+    deps = [
+        ":singleton",
+        ":static",
+    ],
 )
 
 py_library(
     name = "plot",
     srcs = ["plot.py"],
-    deps = [":stats"],
+    deps = [
+        ":activity_distribution",
+        ":static",
+        ":stats",
+    ],
 )
 
 py_library(
@@ -94,6 +107,7 @@ py_library(
     deps = [
         ":activity_distribution",
         ":base",
+        ":histogram",
         ":module",
         ":plot",
         ":stats",
@@ -115,9 +129,8 @@ py_library(
     name = "stats",
     srcs = ["stats.py"],
     deps = [
-        ":activity_distribution",
-        ":base",
-        ":static",
+        ":histogram",
+        ":module",
     ],
 )
 

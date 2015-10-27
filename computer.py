@@ -43,7 +43,7 @@ class Computer(Base):
         """Exponential serving time based on serving ratio."""
         # pylint: disable=no-member
         time = numpy.random.exponential(1.0 / self._serving_rate)
-        self._stats.increment('SERVING_TIME', time)
+        self._stats.append('SERVING_TIME', time)
         logger.debug('Serving time: %f', time)
         return time
 
@@ -56,14 +56,13 @@ class Computer(Base):
         """Serve and count the amount of requests completed."""
         self._last_user_access = self._env.now
         yield self._env.timeout(self.serving_time)
-        self._stats.increment('SERVED_REQUESTS')
+        self._stats.append('SERVED_REQUESTS', 1)
 
     def __monitor_loop(self):
         """Runs the monitoring loop for this server."""
         while True:
             logger.debug('__monitor_loop running')
-            self._stats.add_to_bin(
-                'INACTIVITY_TIME_MONITORED', self.inactivity)
+            self._stats.append('INACTIVITY_TIME_MONITORED', self.inactivity)
             yield self._env.timeout(self._monitoring_interval)
 
     def __off_loop(self):
@@ -72,7 +71,7 @@ class Computer(Base):
             logger.debug('__off_loop running (%d)', self._env.now)
             if self._agent.indicate_shutdown():
                 logger.debug('Shutting down PC.')
-                self._stats.increment_bin('COMPUTERS_SHUTDOWN')
+                self._stats.append('COMPUTERS_SHUTDOWN', 1)
                 self.status = ComputerStatus.off
                 yield self._env.timeout(self._agent.shutdown_interval())
                 self.status = ComputerStatus.on

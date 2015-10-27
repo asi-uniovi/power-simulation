@@ -16,3 +16,7 @@ INV_DAYS = {v: k for k, v in DAYS.items()}
 HOUR = lambda x: x * 3600.0
 DAY = lambda x: x * HOUR(24)
 WEEK = lambda x: x * DAY(7)
+
+# And these to bytes.
+KB = lambda x: x << 10
+MB = lambda x: x << 20

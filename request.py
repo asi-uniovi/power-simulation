@@ -19,10 +19,10 @@ class Request(Base):
     def __init__(self, stats):
         super(Request, self).__init__()
         self._stats = stats
-        self._stats.increment('REQUESTS')
+        self._stats.append('REQUESTS', 1)
 
     def run(self, computer):
         """Waits for a place in the queue and makes the request."""
         arrival_time = self._env.now
-        self._stats.increment('WAITING_TIME', self._env.now - arrival_time)
+        self._stats.append('WAITING_TIME', self._env.now - arrival_time)
         yield self._env.process(computer.serve())

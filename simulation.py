@@ -2,10 +2,10 @@
 
 import injector
 import logging
-import numpy
 
 from activity_distribution import ActivityDistribution
 from base import Base
+from histogram import create_histogram_tables
 from module import Binder, CustomInjector
 from plot import Plot
 from stats import Stats
@@ -32,7 +32,6 @@ class Simulation(Base):
 
     def run(self):
         """Sets up and starts a new simulation."""
-        self._stats.init_bin('COMPUTERS_SHUTDOWN', default=0)
         servers = self.get_config_int('servers')
         logger.info('Simulating %d users (%d s)', servers, self.simulation_time)
         self._env.process(self.__monitor_time())
@@ -44,28 +43,34 @@ class Simulation(Base):
 
     def __log_results(self):
         """Prints the final results of the simulation run."""
-        total_requests = self._stats['REQUESTS']
-        served_requests = self._stats['SERVED_REQUESTS']
+        total_requests = self._stats.get_statistics('REQUESTS')['count']
+        served_requests = self._stats.get_statistics('SERVED_REQUESTS')['count']
+        waiting_time = self._stats.get_statistics('WAITING_TIME')['sum']
+        serving_time = self._stats.get_statistics('SERVING_TIME')['sum']
+        inactivity_time = self._stats.get_statistics(
+            'INACTIVITY_TIME_ACCURATE')['mean']
+        inactivity_time_monitored = self._stats.get_statistics(
+            'INACTIVITY_TIME_MONITORED')['mean']
+        try:
+            computers_shutdown = self._stats.get_statistics(
+                'COMPUTERS_SHUTDOWN')['sum']
+        except KeyError:
+            computers_shutdown = 0
         logger.info('Simulation ended at %d s', self._env.now)
         logger.info('Total requests: %d', total_requests)
         logger.info('Total served requests: %d (%.2f%% completed)',
                     served_requests, served_requests / total_requests * 100)
         logger.info('Avg. waiting time: %.3f s',
-                    self._stats['WAITING_TIME'] / served_requests)
+                    waiting_time / served_requests)
         logger.info('Avg. serving time: %.3f s',
-                    self._stats['SERVING_TIME'] / served_requests)
+                    serving_time / served_requests)
         # pylint: disable=no-member
-        logger.info('Avg. inactivity time: %.3f s',
-                    numpy.average(self._stats.means_for_histogram(
-                        'INACTIVITY_TIME_ACCURATE')))
-        inactivity_intervals = list(map(  # pylint: disable=bad-builtin
-            numpy.average, self._stats['INACTIVITY_TIME_MONITORED'].values()))
+        logger.info('Avg. inactivity time: %.3f s', inactivity_time)
         logger.info('Avg. inactivity time (monitored): %.3f s',
-                    numpy.average(inactivity_intervals))
-        logger.info('Shutdown events: %d',
-                    sum(self._stats['COMPUTERS_SHUTDOWN'].values()))
-        self._plot.plot_inactivity_means_and_medians()
-        self._plot.plot_inactivity_counts_and_shutdowns()
+                    inactivity_time_monitored)
+        logger.info('Shutdown events: %d', computers_shutdown)
+        #self._plot.plot_inactivity_means_and_medians()
+        #self._plot.plot_inactivity_counts_and_shutdowns()
 
     def __monitor_time(self):
         """Indicates how te simulation is progressing."""
@@ -77,4 +82,6 @@ class Simulation(Base):
 
 def runner(config):
     """Bind all and launch the simulation!"""
-    CustomInjector(Binder(config)).get(Simulation).run()
+    custom_injector = CustomInjector(Binder(config))
+    custom_injector.get(create_histogram_tables)()
+    custom_injector.get(Simulation).run()

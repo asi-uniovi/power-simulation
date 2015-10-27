@@ -3,8 +3,10 @@
 import injector
 import simpy
 import six
+import sqlite3
 
 from singleton import Singleton
+from static import KB, MB
 
 config_key = injector.Key('config')  # pylint: disable=invalid-name
 env_key = injector.Key('env')  # pylint: disable=invalid-name
@@ -23,6 +25,25 @@ class Binder(six.with_metaclass(Singleton, injector.Module)):
         """Sets the basic configuration and dependency injections."""
         binder.bind(config_key, to=injector.InstanceProvider(self._config))
         binder.bind(env_key, to=injector.InstanceProvider(self._env))
+
+    # pylint: disable=no-self-use
+    @injector.singleton
+    @injector.provides(sqlite3.Connection)
+    @injector.inject(config=config_key)
+    def provide_db_connection(self, config):
+        """Sets the database up for the module to work."""
+        conn = sqlite3.connect(config.get('simulation', 'database_name'))
+        conn.isolation_level = None
+        conn.row_factory = sqlite3.Row
+        conn.enable_load_extension(True)
+        # TODO(m3drano): Find the library with Bazel paths.
+        conn.load_extension('../libsqlitefunctions')
+        conn.execute('PRAGMA journal_mode = OFF;')
+        conn.execute('PRAGMA foreign_keys = ON;')
+        conn.execute('PRAGMA cache_size = %d;' % -int(MB(256) / KB(1)))
+        conn.execute('PRAGMA synchronous = OFF;')
+        conn.execute('PRAGMA temp_store = MEMORY;')
+        return conn
 
 
 class CustomInjector(six.with_metaclass(Singleton, injector.Injector)):
