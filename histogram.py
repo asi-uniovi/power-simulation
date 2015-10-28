@@ -15,13 +15,13 @@ class Histogram(object):
         self.__name = name
         self.__dimension = dimension
         self.__cursor = cursor
-        self.__write_cache_ts = array.array('l')
+        self.__write_cache_ts = array.array('f')
         self.__write_cache_val = array.array('f')
         self.__create_entries()
 
     def append(self, timestamp, value):
         """Inserts into the histogram, just in cache for now."""
-        self.__write_cache_ts.append(timestamp)
+        self.__write_cache_ts.append(float(timestamp))
         self.__write_cache_val.append(float(value))
         if len(self.__write_cache_ts) > MAX_ENTRIES:
             self.flush()
@@ -32,7 +32,7 @@ class Histogram(object):
             ('INSERT INTO histogram_entry(histogram, timestamp, value) '
              "VALUES('%s', ?, ?);") % self.__name,
             zip(self.__write_cache_ts, self.__write_cache_val))
-        self.__write_cache_ts = array.array('l')
+        self.__write_cache_ts = array.array('f')
         self.__write_cache_val = array.array('f')
 
     def get_hourly_histogram(self, hour):
@@ -107,8 +107,8 @@ def create_histogram_tables(conn):
         CREATE TABLE IF NOT EXISTS histogram_entry (
           id        INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
           histogram TEXT    NOT NULL REFERENCES histogram(name),
-          timestamp INTEGER NOT NULL,
-          value     INTEGER NOT NULL
+          timestamp REAL    NOT NULL,
+          value     REAL    NOT NULL
         );''')
     cursor.execute('DELETE FROM histogram_entry;')
     cursor.execute('DELETE FROM histogram;')
