@@ -39,7 +39,7 @@ class Binder(six.with_metaclass(Singleton, injector.Module)):
         # TODO(m3drano): Find the library with Bazel paths.
         conn.load_extension('../libsqlitefunctions')
         conn.execute('PRAGMA journal_mode = OFF;')
-        conn.execute('PRAGMA foreign_keys = ON;')
+        conn.execute('PRAGMA foreign_keys = OFF;')
         conn.execute('PRAGMA cache_size = %d;' % -int(MB(256) / KB(1)))
         conn.execute('PRAGMA synchronous = OFF;')
         conn.execute('PRAGMA temp_store = MEMORY;')
