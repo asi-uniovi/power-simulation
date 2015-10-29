@@ -22,17 +22,18 @@ class Plot(object):
     # pylint: disable=invalid-name
     def plot_inactivity_means_and_medians(self):
         """Plots the inactivity means and medians in two plots."""
+        stats = self._stats.get_hourly_statistics('INACTIVITY_TIME_ACCURATE')
         fig = plt.figure()
         self._plot_run(
             fig,
             self._activity_distribution.inactivity_means(),
-            self._stats.means_for_histogram('INACTIVITY_TIME_ACCURATE'),
+            [i['mean'] for i in stats],
             'means comparison', 121,
             unit='Inactivity interval length (s)')
         self._plot_run(
             fig,
             self._activity_distribution.inactivity_medians(),
-            self._stats.medians_for_histogram('INACTIVITY_TIME_ACCURATE'),
+            [i['median'] for i in stats],
             'medians comparison', 122,
             unit='Inactivity interval length (s)')
         fig.set_size_inches(12, 5)
@@ -42,18 +43,19 @@ class Plot(object):
     # pylint: disable=invalid-name
     def plot_inactivity_counts_and_shutdowns(self):
         """Plots the cunt of inactivity events and the shutdown events."""
+        stats = self._stats.get_hourly_statistics('INACTIVITY_TIME_ACCURATE')
+        stats2 = self._stats.get_hourly_statistics('COMPUTERS_SHUTDOWN')
         fig = plt.figure()
         self._plot_run(
             fig,
             self._activity_distribution.inactivity_counts(),
-            self._stats.counts_for_histogram('INACTIVITY_TIME_ACCURATE'),
+            [i['count'] for i in stats],
             'interval count comparison', 121,
             unit='Interval count')
-        assert len(self._stats.raw_histogram('COMPUTERS_SHUTDOWN')) == 168
         self._plot_run(
             fig,
             self._activity_distribution.shutdown_counts(),
-            self._stats.raw_histogram('COMPUTERS_SHUTDOWN'),
+            [i['count'] for i in stats2],
             'shutdown event count comparison', 122,
             unit='Shutdown events count')
         fig.set_size_inches(12, 5)

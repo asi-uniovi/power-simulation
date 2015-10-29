@@ -69,8 +69,8 @@ class Simulation(Base):
         logger.info('Avg. inactivity time (monitored): %.3f s',
                     inactivity_time_monitored)
         logger.info('Shutdown events: %d', computers_shutdown)
-        #self._plot.plot_inactivity_means_and_medians()
-        #self._plot.plot_inactivity_counts_and_shutdowns()
+        self._plot.plot_inactivity_means_and_medians()
+        self._plot.plot_inactivity_counts_and_shutdowns()
 
     def __monitor_time(self):
         """Indicates how te simulation is progressing."""
