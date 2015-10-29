@@ -1,6 +1,7 @@
 """Database backed histogram."""
 
 import array
+import collections
 import gc
 import injector
 import sqlite3
@@ -46,7 +47,7 @@ class Histogram(object):
                 WHERE histogram = ?
                       AND hour = ?;''',
             (self.__name, hour))
-        return [i[0] for i in self.__cursor.fetchall()]
+        return self.__cursor.fetchall()
 
     def get_hourly_statistics(self):
         """Calculate all statistics for the histogram per hour."""
@@ -66,7 +67,7 @@ class Histogram(object):
              GROUP BY hour
              ORDER BY hour;''',
             (self.__name,))
-        return self.__cursor.fetchall()
+        return self.__fetch_hourly()
 
     def get_statistics(self):
         """Calculate all statistics for the histogram."""
@@ -88,6 +89,11 @@ class Histogram(object):
     def dump_to_file(self, filename):
         """Dumps a histogram viriable to a file."""
         raise NotImplementedError
+
+    def __fetch_hourly(self):
+        """Fills in the gaps for mising data points."""
+        d = {i['hour']: i for i in self.__cursor.fetchall()}
+        return [d.get(i, collections.defaultdict(int)) for i in range(168)]
 
 
 @injector.inject(conn=sqlite3.Connection)

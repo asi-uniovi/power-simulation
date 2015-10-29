@@ -53,7 +53,7 @@ class Simulation(Base):
             'INACTIVITY_TIME_MONITORED')['mean']
         try:
             computers_shutdown = self._stats.get_statistics(
-                'COMPUTERS_SHUTDOWN')['sum']
+                'COMPUTERS_SHUTDOWN')['count']
         except KeyError:
             computers_shutdown = 0
         logger.info('Simulation ended at %d s', self._env.now)
@@ -71,6 +71,7 @@ class Simulation(Base):
         logger.info('Shutdown events: %d', computers_shutdown)
         self._plot.plot_inactivity_means_and_medians()
         self._plot.plot_inactivity_counts_and_shutdowns()
+        self._plot.plot_generic_histogram('SHUTDOWN_INTERVAL')
 
     def __monitor_time(self):
         """Indicates how te simulation is progressing."""

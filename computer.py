@@ -71,9 +71,10 @@ class Computer(Base):
             logger.debug('__off_loop running (%d)', self._env.now)
             if self._agent.indicate_shutdown():
                 logger.debug('Shutting down PC.')
-                self._stats.append('COMPUTERS_SHUTDOWN', 1)
                 self.status = ComputerStatus.off
-                yield self._env.timeout(self._agent.shutdown_interval())
+                shutdown_time = self._agent.shutdown_interval()
+                self._stats.append('SHUTDOWN_INTERVAL', shutdown_time)
+                yield self._env.timeout(shutdown_time)
                 self.status = ComputerStatus.on
             else:
                 yield self._env.timeout(60)

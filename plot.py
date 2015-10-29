@@ -19,6 +19,18 @@ class Plot(object):
         self._activity_distribution = activity_distribution
         self._stats = stats
 
+    def plot_generic_histogram(self, histogram, key='mean'):
+        stats = self._stats.get_hourly_statistics(histogram)
+        fig = plt.figure()
+        self._plot_run(
+            fig,
+            None,
+            [i[key] for i in stats],
+            '%s (%s)' % (histogram, key), 111)
+        fig.set_size_inches(6, 5)
+        fig.set_tight_layout(True)
+        fig.savefig('inactivity_%s_%s.png' % (histogram.lower(), key.lower()))
+
     # pylint: disable=invalid-name
     def plot_inactivity_means_and_medians(self):
         """Plots the inactivity means and medians in two plots."""
@@ -44,7 +56,7 @@ class Plot(object):
     def plot_inactivity_counts_and_shutdowns(self):
         """Plots the cunt of inactivity events and the shutdown events."""
         stats = self._stats.get_hourly_statistics('INACTIVITY_TIME_ACCURATE')
-        stats2 = self._stats.get_hourly_statistics('COMPUTERS_SHUTDOWN')
+        stats2 = self._stats.get_hourly_statistics('SHUTDOWN_INTERVAL')
         fig = plt.figure()
         self._plot_run(
             fig,
@@ -70,10 +82,11 @@ class Plot(object):
         ax = fig.add_subplot(subplot)
         ax.set_title(label)
         # pylint: disable=no-member
-        ax.plot(numpy.linspace(1, len(real_data), len(real_data)),
-                real_data,
-                'r-',
-                label='real data')
+        if real_data:
+            ax.plot(numpy.linspace(1, len(real_data), len(real_data)),
+                    real_data,
+                    'r-',
+                    label='real data')
         # pylint: disable=no-member
         ax.plot(numpy.linspace(1, len(simulation_data), len(simulation_data)),
                 simulation_data,
