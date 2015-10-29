@@ -42,15 +42,15 @@ class Histogram(object):
             '''SELECT value
                  FROM histogram
                 WHERE histogram = ?
-                      AND ((CAST(timestamp AS INTEGER) % ?) / 3600) = ?;''',
-            (self.__name, WEEK(1), hour))
+                      AND hour = ?;''',
+            (self.__name, hour))
         return [i[0] for i in self.__cursor.fetchall()]
 
     def get_hourly_statistics(self):
         """Calculate all statistics for the histogram per hour."""
         self.flush()
         self.__cursor.execute(
-            '''SELECT (CAST(timestamp AS INTEGER) % ?) / 3600 AS hour,
+            '''SELECT hour,
                       COUNT(value) AS count,
                       SUM(value) AS sum,
                       AVG(value) AS mean,
@@ -63,7 +63,7 @@ class Histogram(object):
                 WHERE histogram = ?
              GROUP BY hour
              ORDER BY hour;''',
-            (WEEK(1), self.__name))
+            (self.__name,))
         return self.__cursor.fetchall()
 
     def get_statistics(self):
@@ -95,11 +95,19 @@ def create_histogram_tables(conn):
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS histogram (
           id        INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+          hour      INTEGER,
           histogram TEXT    NOT NULL,
           timestamp REAL    NOT NULL,
           value     REAL    NOT NULL
         );''')
     cursor.execute(
         'CREATE INDEX IF NOT EXISTS i_histogram ON histogram(histogram);')
+    cursor.execute('''
+        CREATE TRIGGER IF NOT EXISTS t_hour AFTER INSERT ON histogram
+        FOR EACH ROW BEGIN
+          UPDATE histogram SET hour =
+              (CAST(new.timestamp AS INTEGER) %% %d) / 3600
+            WHERE id = NEW.id;
+        END;''' % WEEK(1))
     cursor.execute('DELETE FROM histogram;')
     cursor.execute('VACUUM;')
