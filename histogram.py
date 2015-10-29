@@ -1,12 +1,13 @@
 """Database backed histogram."""
 
 import array
+import gc
 import injector
 import sqlite3
 
 from static import WEEK
 
-MAX_ENTRIES = 1000000  # TODO(m3drano): Move this into the config file.
+MAX_ENTRIES = 100000  # TODO(m3drano): Move this into the config file.
 
 
 class Histogram(object):
@@ -34,6 +35,7 @@ class Histogram(object):
             zip(self.__write_cache_ts, self.__write_cache_val))
         self.__write_cache_ts = array.array('f')
         self.__write_cache_val = array.array('f')
+        gc.collect()
 
     def get_hourly_histogram(self, hour):
         """Gets the subhistogram for one particular hour."""
