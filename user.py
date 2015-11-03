@@ -34,7 +34,7 @@ class User(Base):
         """Calcualtes a random reflexion or interarrival time for the user."""
         time = self._activity_distribution.random_inactivity_for_timestamp(
             self._env.now)
-        logger.debug('Interarrival time: %f', time)
+        logger.debug('Inactivity time: %f', time)
         self._stats.append('INACTIVITY_TIME_ACCURATE', time)
         return time
 

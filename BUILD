@@ -27,6 +27,7 @@ py_library(
     name = "computer",
     srcs = ["computer.py"],
     deps = [
+        ":activity_distribution",
         ":agent",
         ":base",
         ":stats",

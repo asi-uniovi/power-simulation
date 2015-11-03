@@ -3,8 +3,8 @@
 import enum
 import injector
 import logging
-import numpy
 
+from activity_distribution import ActivityDistribution
 from agent import Agent
 from base import Base
 from stats import Stats
@@ -26,9 +26,11 @@ class Computer(Base):
     Server with configurable exponential serving rate.
     """
 
-    @injector.inject(agent=Agent, stats=Stats)
-    def __init__(self, agent, stats):
+    @injector.inject(activity_distribution=ActivityDistribution, agent=Agent,
+                     stats=Stats)
+    def __init__(self, activity_distribution, agent, stats):
         super(Computer, self).__init__()
+        self._activity_distribution = activity_distribution
         self._agent = agent
         self._stats = stats
         self._serving_rate = self.get_config_float('serving_rate')
@@ -42,9 +44,10 @@ class Computer(Base):
     def serving_time(self):
         """Exponential serving time based on serving ratio."""
         # pylint: disable=no-member
-        time = numpy.random.exponential(1.0 / self._serving_rate)
+        time = self._activity_distribution.random_activity_for_timestamp(
+            self._env.now)
+        logger.debug('Activity time: %f', time)
         self._stats.append('SERVING_TIME', time)
-        logger.debug('Serving time: %f', time)
         return time
 
     @property

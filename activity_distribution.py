@@ -59,6 +59,8 @@ class ActivityDistribution(Base):
     def __init__(self):
         """All the data of this object is loaded from the config object."""
         super(ActivityDistribution, self).__init__()
+        activity = functools.partial(
+            self.get_config, section='activity_distribution')
         inactivity = functools.partial(
             self.get_config, section='inactivity_distribution')
         shutdown = functools.partial(
@@ -66,12 +68,45 @@ class ActivityDistribution(Base):
         self._xmin = float(inactivity('xmin'))
         self._xmax = float(inactivity('xmax'))
         self._noise_threshold = float(inactivity('noise_threshold'))
+        self._activity_intervals_histogram = self.__load_and_fit(
+            activity('intervals_file'))
         self._inactivity_intervals_histogram = self.__load_and_fit(
             inactivity('intervals_file'), do_filter=True)
         self._off_intervals_histogram = self.__load_and_fit(
             shutdown('intervals_file'), do_filter=True)
         self._off_probability_histogram = self.__load_and_fit(
             shutdown('probability_file'), BernoulliDistribution)
+
+    def random_activity_for_hour(self, day, hour):
+        """Queries the activity distribution and generates a random sample."""
+        distribution = _distribution_for_hour(
+            self._activity_intervals_histogram, day, hour)
+        if distribution is not None:
+            rnd_activity = distribution.rvs()
+            while math.isnan(rnd_activity):
+                rnd_activity = distribution.rvs()
+            return rnd_activity
+
+        raise RuntimeError('Distribution undefined for {} {}'.format(day, hour))
+
+    def random_activity_for_timestamp(self, timestamp):
+        """Queries the activity distribution and generates a random sample."""
+        return self.random_activity_for_hour(*timestamp_to_day(timestamp))
+
+    def activity_means(self):
+        """Calculates the mean of the activity distribution per hour."""
+        return [i.mean for i in _flatten_histogram(
+            self._activity_intervals_histogram)]
+
+    def activity_medians(self):
+        """Calculates the median of the activity distribution per hour."""
+        return [i.median for i in _flatten_histogram(
+            self._activity_intervals_histogram)]
+
+    def activity_counts(self):
+        """Calculates the counts of the activity distribution per hour."""
+        return [i.sample_size for i in _flatten_histogram(
+            self._activity_intervals_histogram)]
 
     def random_inactivity_for_hour(self, day, hour):
         """Queries the activity distribution and generates a random sample."""
