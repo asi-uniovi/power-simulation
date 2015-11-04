@@ -41,7 +41,9 @@ class User(Base):
     def run(self):
         """Generates requests af the defined frequency."""
         while True:
-            #if self._computer.status == ComputerStatus.on:
-            self._env.process(
-                CustomInjector(Binder()).get(Request).run(self._computer))
-            yield self._env.timeout(self.interarrival_time)
+            if self._computer.status == ComputerStatus.on:
+              self._env.process(
+                  CustomInjector(Binder()).get(Request).run(self._computer))
+              yield self._env.timeout(self.interarrival_time)
+            else:
+              yield self._env.timeout(10)
