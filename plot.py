@@ -32,6 +32,27 @@ class Plot(object):
         fig.savefig('inactivity_%s_%s.png' % (histogram.lower(), key.lower()))
 
     # pylint: disable=invalid-name
+    def plot_activity_means_and_medians(self):
+        """Plots the activity means and medians in two plots."""
+        stats = self._stats.get_hourly_statistics('SERVING_TIME')
+        fig = plt.figure()
+        self._plot_run(
+            fig,
+            self._activity_distribution.activity_means(),
+            [i['mean'] for i in stats],
+            'means comparison', 121,
+            unit='Activity interval length (s)')
+        self._plot_run(
+            fig,
+            self._activity_distribution.activity_medians(),
+            [i['median'] for i in stats],
+            'medians comparison', 122,
+            unit='Activity interval length (s)')
+        fig.set_size_inches(12, 5)
+        fig.set_tight_layout(True)
+        fig.savefig('activity_means_and_medians.png')
+
+    # pylint: disable=invalid-name
     def plot_inactivity_means_and_medians(self):
         """Plots the inactivity means and medians in two plots."""
         stats = self._stats.get_hourly_statistics('INACTIVITY_TIME_ACCURATE')
