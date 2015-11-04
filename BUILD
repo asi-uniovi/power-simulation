@@ -20,7 +20,7 @@ py_library(
 py_library(
     name = "base",
     srcs = ["base.py"],
-    deps = [":module"]
+    deps = [":module"],
 )
 
 py_library(
