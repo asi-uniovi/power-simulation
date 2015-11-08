@@ -25,6 +25,10 @@ class Stats(dict):
             self[key] = self.__builder.build(name=key)
         self[key].append(self._env.now, value)
 
+    def get_hourly_histogram(self, key, hour):
+        """Gets the subhistogram for one particular hour."""
+        return self[key].get_hourly_histogram(hour)
+
     def get_hourly_statistics(self, key):
         """Get the stats for a histogram per hour."""
         return self[key].get_hourly_statistics()
