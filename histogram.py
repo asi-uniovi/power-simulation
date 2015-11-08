@@ -88,10 +88,6 @@ class Histogram(Base):
             (self.__name,))
         return self.__cursor.fetchone()
 
-    def dump_to_file(self, filename):
-        """Dumps a histogram viriable to a file."""
-        raise NotImplementedError
-
     def __fetch_hourly(self):
         """Fills in the gaps for mising data points."""
         d = {i['hour']: i for i in self.__cursor.fetchall()}

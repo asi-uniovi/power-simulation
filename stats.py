@@ -32,7 +32,3 @@ class Stats(dict):
     def get_statistics(self, key):
         """Get the stats for a histogram."""
         return self[key].get_statistics()
-
-    def dump_histogram_to_file(self, key, filename):
-        """Dumps a histogram key to a file."""
-        self[key].dump_to_file(filename)
