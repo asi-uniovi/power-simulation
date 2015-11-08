@@ -32,7 +32,7 @@ class Binder(six.with_metaclass(Singleton, injector.Module)):
     @injector.inject(config=config_key)
     def provide_db_connection(self, config):
         """Sets the database up for the module to work."""
-        conn = sqlite3.connect(config.get('simulation', 'database_name'))
+        conn = sqlite3.connect(config.get('stats', 'database_name'))
         conn.isolation_level = None
         conn.row_factory = sqlite3.Row
         conn.enable_load_extension(True)

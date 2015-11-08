@@ -4,7 +4,7 @@ import injector
 import sqlite3
 
 from histogram import Histogram
-from module import env_key
+from module import Binder, CustomInjector, env_key
 
 
 @injector.singleton
@@ -16,11 +16,13 @@ class Stats(dict):
         super(Stats, self).__init__()
         self._env = env
         self.__conn = conn
+        self.__builder = CustomInjector(Binder()).get(
+            injector.AssistedBuilder(cls=Histogram))
 
     def append(self, key, value):
         """Inserts a new value for a key at now.."""
         if key not in self:
-            self[key] = Histogram(key, self.__conn.cursor())
+            self[key] = self.__builder.build(name=key)
         self[key].append(self._env.now, value)
 
     def get_hourly_statistics(self, key):

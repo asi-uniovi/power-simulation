@@ -4,20 +4,21 @@ import array
 import collections
 import gc
 import injector
+import numpy
 import sqlite3
 
+from base import Base
 from static import WEEK
 
-MAX_ENTRIES = 100000  # TODO(m3drano): Move this into the config file.
 
-
-class Histogram(object):
+class Histogram(Base):
     """Histogram stored in a DB."""
 
-    def __init__(self, name, cursor):
+    @injector.inject(conn=sqlite3.Connection)
+    def __init__(self, conn, name):
         super(Histogram, self).__init__()
         self.__name = name
-        self.__cursor = cursor
+        self.__cursor = conn.cursor()
         self.__write_cache_ts = array.array('f')
         self.__write_cache_val = array.array('f')
 
@@ -25,7 +26,8 @@ class Histogram(object):
         """Inserts into the histogram, just in cache for now."""
         self.__write_cache_ts.append(timestamp)
         self.__write_cache_val.append(value)
-        if len(self.__write_cache_ts) > MAX_ENTRIES:
+        if len(self.__write_cache_ts) > self.get_config_int('cache_size',
+                                                            section='stats'):
             self.flush()
 
     def flush(self):

@@ -55,7 +55,10 @@ py_library(
 py_library(
     name = "histogram",
     srcs = ["histogram.py"],
-    deps = [":static"],
+    deps = [
+        ":base",
+        ":static",
+    ],
 )
 
 cc_library(
