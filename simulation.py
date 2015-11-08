@@ -43,17 +43,17 @@ class Simulation(Base):
 
     def __log_results(self):
         """Prints the final results of the simulation run."""
-        total_requests = self._stats.get_statistics('REQUESTS')['count']
-        served_requests = self._stats.get_statistics('SERVED_REQUESTS')['count']
+        total_requests = self._stats.get_statistics('REQUEST_COUNT')['count']
+        served_requests = self._stats.get_statistics('SERVED_REQUEST_COUNT')['count']
         waiting_time = self._stats.get_statistics('WAITING_TIME')['sum']
-        serving_time = self._stats.get_statistics('SERVING_TIME')['sum']
+        serving_time = self._stats.get_statistics('ACTIVITY_TIME')['sum']
         inactivity_time = self._stats.get_statistics(
             'INACTIVITY_TIME_ACCURATE')['mean']
         inactivity_time_monitored = self._stats.get_statistics(
             'INACTIVITY_TIME_MONITORED')['mean']
         try:
             computers_shutdown = self._stats.get_statistics(
-                'COMPUTERS_SHUTDOWN')['count']
+                'SHUTDOWN_EVENT_COUNT')['count']
         except KeyError:
             computers_shutdown = 0
         logger.info('Simulation ended at %d s', self._env.now)
@@ -70,8 +70,8 @@ class Simulation(Base):
                     inactivity_time_monitored)
         logger.info('Shutdown events: %d', computers_shutdown)
         self._plot.plot_generic_histogram('INACTIVITY_TIME_ACCURATE')
-        self._plot.plot_generic_histogram('SHUTDOWN_INTERVAL')
-        self._plot.plot_generic_histogram('SERVING_TIME')
+        self._plot.plot_generic_histogram('SHUTDOWN_TIME')
+        self._plot.plot_generic_histogram('ACTIVITY_TIME')
 
     def __monitor_time(self):
         """Indicates how te simulation is progressing."""

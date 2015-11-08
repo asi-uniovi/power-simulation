@@ -47,7 +47,7 @@ class Computer(Base):
         time = self._activity_distribution.random_activity_for_timestamp(
             self._env.now)
         logger.debug('Activity time: %f', time)
-        self._stats.append('SERVING_TIME', time)
+        self._stats.append('ACTIVITY_TIME', time)
         return time
 
     @property
@@ -59,7 +59,7 @@ class Computer(Base):
         """Serve and count the amount of requests completed."""
         self._last_user_access = self._env.now
         yield self._env.timeout(self.serving_time)
-        self._stats.append('SERVED_REQUESTS', 1)
+        self._stats.append('SERVED_REQUEST_COUNT', 1)
 
     def __monitor_loop(self):
         """Runs the monitoring loop for this server."""
@@ -76,7 +76,7 @@ class Computer(Base):
                 logger.debug('Shutting down PC.')
                 self.status = ComputerStatus.off
                 shutdown_time = self._agent.shutdown_interval()
-                self._stats.append('SHUTDOWN_INTERVAL', shutdown_time)
+                self._stats.append('SHUTDOWN_TIME', shutdown_time)
                 yield self._env.timeout(shutdown_time)
                 self.status = ComputerStatus.on
             else:

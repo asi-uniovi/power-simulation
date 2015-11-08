@@ -19,7 +19,7 @@ class Request(Base):
     def __init__(self, stats):
         super(Request, self).__init__()
         self._stats = stats
-        self._stats.append('REQUESTS', 1)
+        self._stats.append('REQUEST_COUNT', 1)
 
     def run(self, computer):
         """Waits for a place in the queue and makes the request."""
