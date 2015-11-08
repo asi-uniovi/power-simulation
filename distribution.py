@@ -1,13 +1,10 @@
 """Some useful statistical distributions."""
 
 import abc
-import logging
 import numpy
 import random
 import six
 import statsmodels.api as sm
-
-logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
 
 class Distribution(six.with_metaclass(abc.ABCMeta)):

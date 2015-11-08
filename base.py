@@ -8,13 +8,9 @@ import six
 from module import config_key, env_key
 
 
+@injector.inject(_config=config_key, _env=env_key)
 class Base(six.with_metaclass(abc.ABCMeta, object)):
     """An abstract class with all the basic methods we need across."""
-
-    @injector.inject(config=config_key, env=env_key)
-    def __init__(self, config, env):
-        self._config = config
-        self._env = env
 
     @functools.lru_cache()
     def get_config(self, key, section='simulation'):

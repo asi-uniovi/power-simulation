@@ -14,16 +14,11 @@ from user import User
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
 
+@injector.inject(_activity_distribution=ActivityDistribution,
+                 _plot=Plot,
+                 _stats=Stats)
 class Simulation(Base):
     """Constructs the system and runs the simulation."""
-
-    @injector.inject(activity_distribution=ActivityDistribution, plot=Plot,
-                     stats=Stats)
-    def __init__(self, activity_distribution, plot, stats):
-        super(Simulation, self).__init__()
-        self._activity_distribution = activity_distribution
-        self._plot = plot
-        self._stats = stats
 
     @property
     def simulation_time(self):

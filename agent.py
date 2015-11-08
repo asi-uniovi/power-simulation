@@ -7,6 +7,7 @@ from base import Base
 
 
 @injector.singleton
+@injector.inject(_activity_distribution=ActivityDistribution)
 class Agent(Base):
     """Agent to manage compter status.
 
@@ -14,10 +15,8 @@ class Agent(Base):
     or off, depending on the control policy installed.
     """
 
-    @injector.inject(activity_distribution=ActivityDistribution)
-    def __init__(self, activity_distribution):
+    def __init__(self):
         super(Agent, self).__init__()
-        self._activity_distribution = activity_distribution
         self.__pcs_done = 0
         self.__pcs_to_do = self.__fraction_to_shutdown()
         self._env.process(self.__upgrade_loop())

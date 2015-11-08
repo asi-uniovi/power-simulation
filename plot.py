@@ -10,14 +10,9 @@ from stats import Stats
 from static import DAYS
 
 
+@injector.inject(_activity_distribution=ActivityDistribution, _stats=Stats)
 class Plot(object):
     """Generates plots from the Stats modules."""
-
-    @injector.inject(activity_distribution=ActivityDistribution, stats=Stats)
-    def __init__(self, activity_distribution, stats):
-        super(Plot, self).__init__()
-        self._activity_distribution = activity_distribution
-        self._stats = stats
 
     def plot_generic_histogram(self, histogram):
         fig, ax = plt.subplots()

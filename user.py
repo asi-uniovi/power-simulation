@@ -13,6 +13,9 @@ from stats import Stats
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
 
+@injector.inject(_activity_distribution=ActivityDistribution,
+                 _stats=Stats,
+                 _computer=Computer)
 class User(Base):
     """A user model.
 
@@ -20,14 +23,6 @@ class User(Base):
       - A distribution of arrival times: defaults to exponential.
       - The average interarrival time.
     """
-
-    @injector.inject(activity_distribution=ActivityDistribution,
-                     stats=Stats, computer=Computer)
-    def __init__(self, activity_distribution, stats, computer):
-        super(User, self).__init__()
-        self._activity_distribution = activity_distribution
-        self._computer = computer
-        self._stats = stats
 
     @property
     def interarrival_time(self):
