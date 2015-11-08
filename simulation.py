@@ -38,32 +38,7 @@ class Simulation(Base):
 
     def __log_results(self):
         """Prints the final results of the simulation run."""
-        total_requests = self._stats.get_statistics('REQUEST_COUNT')['count']
-        served_requests = self._stats.get_statistics('SERVED_REQUEST_COUNT')['count']
-        waiting_time = self._stats.get_statistics('WAITING_TIME')['sum']
-        serving_time = self._stats.get_statistics('ACTIVITY_TIME')['sum']
-        inactivity_time = self._stats.get_statistics(
-            'INACTIVITY_TIME_ACCURATE')['mean']
-        inactivity_time_monitored = self._stats.get_statistics(
-            'INACTIVITY_TIME_MONITORED')['mean']
-        try:
-            computers_shutdown = self._stats.get_statistics(
-                'SHUTDOWN_EVENT_COUNT')['count']
-        except KeyError:
-            computers_shutdown = 0
         logger.info('Simulation ended at %d s', self._env.now)
-        logger.info('Total requests: %d', total_requests)
-        logger.info('Total served requests: %d (%.2f%% completed)',
-                    served_requests, served_requests / total_requests * 100)
-        logger.info('Avg. waiting time: %.3f s',
-                    waiting_time / served_requests)
-        logger.info('Avg. serving time: %.3f s',
-                    serving_time / served_requests)
-        # pylint: disable=no-member
-        logger.info('Avg. inactivity time: %.3f s', inactivity_time)
-        logger.info('Avg. inactivity time (monitored): %.3f s',
-                    inactivity_time_monitored)
-        logger.info('Shutdown events: %d', computers_shutdown)
         self._plot.plot_generic_histogram('INACTIVITY_TIME_ACCURATE')
         self._plot.plot_generic_histogram('SHUTDOWN_TIME')
         self._plot.plot_generic_histogram('ACTIVITY_TIME')

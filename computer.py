@@ -57,7 +57,6 @@ class Computer(Base):
         """Serve and count the amount of requests completed."""
         self._last_user_access = self._env.now
         yield self._env.timeout(self.serving_time)
-        self._stats.append('SERVED_REQUEST_COUNT', 1)
 
     def __monitor_loop(self):
         """Runs the monitoring loop for this server."""

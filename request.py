@@ -15,6 +15,4 @@ class Request(Base):
 
     def run(self, computer):
         """Waits for a place in the queue and makes the request."""
-        arrival_time = self._env.now
-        self._stats.append('WAITING_TIME', self._env.now - arrival_time)
         yield self._env.process(computer.serve())
