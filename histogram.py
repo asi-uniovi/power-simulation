@@ -51,48 +51,6 @@ class Histogram(Base):
             (self.__name, hour))
         return numpy.asarray(self.__cursor.fetchall())
 
-    def get_hourly_statistics(self):
-        """Calculate all statistics for the histogram per hour."""
-        self.flush()
-        self.__cursor.execute(
-            '''SELECT hour,
-                      COUNT(value) AS count,
-                      SUM(value) AS sum,
-                      AVG(value) AS mean,
-                      STDEV(value) AS stdev,
-                      MEDIAN(value) AS median,
-                      MIN(value) AS min,
-                      MAX(value) AS max,
-                      MODE(value) AS mode
-                 FROM histogram
-                WHERE histogram = ?
-             GROUP BY hour
-             ORDER BY hour;''',
-            (self.__name,))
-        return self.__fetch_hourly()
-
-    def get_statistics(self):
-        """Calculate all statistics for the histogram."""
-        self.flush()
-        self.__cursor.execute(
-            '''SELECT COUNT(value) AS count,
-                      SUM(value) AS sum,
-                      AVG(value) AS mean,
-                      STDEV(value) AS stdev,
-                      MEDIAN(value) AS median,
-                      MIN(value) AS min,
-                      MAX(value) AS max,
-                      MODE(value) AS mode
-                 FROM histogram
-                WHERE histogram = ?;''',
-            (self.__name,))
-        return self.__cursor.fetchone()
-
-    def __fetch_hourly(self):
-        """Fills in the gaps for mising data points."""
-        d = {i['hour']: i for i in self.__cursor.fetchall()}
-        return [d.get(i, collections.defaultdict(int)) for i in range(168)]
-
 
 @injector.inject(conn=sqlite3.Connection)
 def create_histogram_tables(conn):
