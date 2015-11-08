@@ -65,7 +65,7 @@ def create_histogram_tables(conn):
           value     REAL    NOT NULL
         );''')
     cursor.execute(
-        'CREATE INDEX IF NOT EXISTS i_histogram ON histogram(histogram);')
+        'CREATE INDEX IF NOT EXISTS i_histogram ON histogram(histogram, hour);')
     cursor.execute('''
         CREATE TRIGGER IF NOT EXISTS t_hour AFTER INSERT ON histogram
         FOR EACH ROW BEGIN
