@@ -17,8 +17,8 @@ class Histogram(Base):
     @injector.inject(conn=sqlite3.Connection)
     def __init__(self, conn, name):
         super(Histogram, self).__init__()
-        self.__name = name
         self.__cursor = conn.cursor()
+        self.__name = name
         self.__write_cache_ts = array.array('f')
         self.__write_cache_val = array.array('f')
 
@@ -26,8 +26,9 @@ class Histogram(Base):
         """Inserts into the histogram, just in cache for now."""
         self.__write_cache_ts.append(timestamp)
         self.__write_cache_val.append(value)
-        if len(self.__write_cache_ts) > self.get_config_int('cache_size',
-                                                            section='stats'):
+        if (len(self.__write_cache_ts)
+            >= self.get_config_int('cache_size', section='stats')):
+            assert len(self.__write_cache_ts) == len(self.__write_cache_val)
             self.flush()
 
     def flush(self):
