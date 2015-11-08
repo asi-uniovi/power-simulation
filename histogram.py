@@ -49,7 +49,7 @@ class Histogram(Base):
                 WHERE histogram = ?
                       AND hour = ?;''',
             (self.__name, hour))
-        return self.__cursor.fetchall()
+        return numpy.asarray(self.__cursor.fetchall())
 
     def get_hourly_statistics(self):
         """Calculate all statistics for the histogram per hour."""
