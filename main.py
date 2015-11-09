@@ -12,7 +12,11 @@ import argparse
 import logging
 import os
 import sys
-import configparser
+
+try:
+    import configparser
+except ImportError:
+    import ConfigParser as configparser
 
 from simulation import runner
 
