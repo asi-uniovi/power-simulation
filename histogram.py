@@ -74,6 +74,12 @@ class Histogram(Base):
             (self.__name,))
         return self.__fetch_hourly()
 
+    @lru_cache()
+    def get_all_hourly_summaries(self, summaries):
+        """Gets all the summaries per hour."""
+        return [{s: getattr(numpy, s)(h) for s in summaries}
+                for h in self.get_all_hourly_histograms()]
+
     def __fetch_hourly(self):
         """Groups by hour and fills in the hours with no data."""
         d = {i: numpy.asarray(list(g)) for i, g in itertools.groupby(
@@ -84,6 +90,7 @@ class Histogram(Base):
     def __cache_invalidate(cls):
         cls.get_hourly_histogram.cache_clear()
         cls.get_all_hourly_histograms.cache_clear()
+        cls.get_all_hourly_summaries.cache_clear()
 
 
 @injector.inject(conn=sqlite3.Connection)
