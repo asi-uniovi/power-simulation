@@ -77,8 +77,16 @@ class Histogram(Base):
     @lru_cache()
     def get_all_hourly_summaries(self, summaries):
         """Gets all the summaries per hour."""
-        return [{s: getattr(numpy, s)(h) for s in summaries}
-                for h in self.get_all_hourly_histograms()]
+        l = []
+        for h in self.get_all_hourly_histograms():
+            d = {}
+            for s in summaries:
+                try:
+                    d[s] = getattr(numpy, s)(h)
+                except IndexError:
+                    d[s] = 0
+            l.append(d)
+        return l
 
     def __fetch_hourly(self):
         """Groups by hour and fills in the hours with no data."""
