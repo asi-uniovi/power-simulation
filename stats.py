@@ -28,3 +28,7 @@ class Stats(dict):
     def get_hourly_histogram(self, key, hour):
         """Gets the subhistogram for one particular hour."""
         return self[key].get_hourly_histogram(hour)
+
+    def get_all_hourly_histograms(self, key):
+        """Gets all the subhistograms per hour."""
+        return self[key].get_all_hourly_histograms()

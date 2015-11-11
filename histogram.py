@@ -1,10 +1,11 @@
 """Database backed histogram."""
 
 import array
-import collections
 import gc
 import injector
+import itertools
 import numpy
+import operator
 import sqlite3
 
 from base import Base
@@ -52,6 +53,23 @@ class Histogram(Base):
             (self.__name, hour))
         return numpy.asarray(self.__cursor.fetchall())
 
+    def get_all_hourly_histograms(self):
+        """Gets all the subhistograms per hour."""
+        self.flush()
+        self.__cursor.execute(
+            '''SELECT hour, value
+                 FROM histogram
+                WHERE histogram = ?
+             ORDER BY hour ASC;''',
+            (self.__name,))
+        return self.__fetch_hourly()
+
+    def __fetch_hourly(self):
+        """Groups by hour and fills in the hours with no data."""
+        d = {i: numpy.asarray(list(g)) for i, g in itertools.groupby(
+            self.__cursor.fetchall(), operator.itemgetter(0))}
+        return [d.get(i, []) for i in range(168)]
+
 
 @injector.inject(conn=sqlite3.Connection)
 def create_histogram_tables(conn):
@@ -75,4 +93,3 @@ def create_histogram_tables(conn):
             WHERE id = NEW.id;
         END;''' % WEEK(1))
     cursor.execute('DELETE FROM histogram;')
-    cursor.execute('VACUUM;')

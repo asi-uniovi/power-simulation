@@ -18,11 +18,7 @@ class Plot(object):
         fig, ax = plt.subplots()
         ax.set_title(histogram)
 
-        hists = []
-        for i in range(168):
-            hists.append(self._stats.get_hourly_histogram(histogram, i))
-        hists = numpy.asarray(hists)
-
+        hists = self._stats.get_all_hourly_histograms(histogram)
         for p, style in ((50, 'r'), (95, 'g'), (99, 'g')):
             data = []
             for h in hists:
