@@ -91,15 +91,6 @@ py_library(
 )
 
 py_library(
-    name = "request",
-    srcs = ["request.py"],
-    deps = [
-        ":base",
-        ":stats",
-    ],
-)
-
-py_library(
     name = "simulation",
     srcs = ["simulation.py"],
     deps = [
@@ -140,7 +131,6 @@ py_library(
         ":base",
         ":computer",
         ":module",
-        ":request",
         ":stats",
     ],
 )

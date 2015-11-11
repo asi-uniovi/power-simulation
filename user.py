@@ -7,7 +7,6 @@ from activity_distribution import ActivityDistribution
 from base import Base
 from computer import Computer, ComputerStatus
 from module import Binder, CustomInjector
-from request import Request
 from stats import Stats
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
@@ -37,8 +36,7 @@ class User(Base):
         """Generates requests af the defined frequency."""
         while True:
             if self._computer.status == ComputerStatus.on:
-              self._env.process(
-                  CustomInjector(Binder()).get(Request).run(self._computer))
+              yield self._env.process(self._computer.serve())
               yield self._env.timeout(self.interarrival_time)
             else:
               yield self._env.timeout(10)
