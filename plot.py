@@ -18,7 +18,7 @@ class Plot(object):
     def plot_hourly_histogram_quantiles(
             self, histogram, quantiles=(50, 75, 80, 90, 95, 99)):
         fig, ax = plt.subplots()
-        ax.set_title(histogram)
+        ax.set_title(histogram + ' (percentiles)')
         ax.set_xlim(0, 7 * 24 - 1)
 
         hists = self._stats.get_all_hourly_histograms(histogram)
@@ -36,7 +36,26 @@ class Plot(object):
         _format_ax_line(ax)
         fig.set_size_inches(6, 5)
         fig.set_tight_layout(True)
-        fig.savefig('%s.png' % histogram.lower())
+        fig.savefig('percentile_%s.png' % histogram.lower())
+
+    def plot_mean_medians_comparison(self, histogram):
+        hist = self._stats.get_all_hourly_summaries(histogram)
+        data = self._stats.get_all_hourly_summaries(histogram)
+        # data = self._activity_distribution.get_all_hourly_summaries(histogram)
+
+        for s in ('mean', 'median'):
+            fig, ax = plt.subplots()
+            ax.set_title('%s (%s)' % (histogram, s))
+            ax.set_xlim(0, 7 * 24 - 1)
+
+            for d, label in ((hist, 'simulation'), (data, 'data')):
+                f = [i[s] for i in d]
+                ax.plot(numpy.linspace(1, len(f), len(f)), f, label=label)
+
+            _format_ax_line(ax)
+            fig.set_size_inches(6, 5)
+            fig.set_tight_layout(True)
+            fig.savefig('%s_%s.png' % (s, histogram.lower()))
 
 
 def _format_ax_line(ax):

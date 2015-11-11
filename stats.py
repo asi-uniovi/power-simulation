@@ -33,6 +33,6 @@ class Stats(dict):
         """Gets all the subhistograms per hour."""
         return self[key].get_all_hourly_histograms()
 
-    def get_all_hourly_summaries(self, key, summaries=['mean', 'median']):
+    def get_all_hourly_summaries(self, key, summaries=('mean', 'median')):
         """Gets all the summaries per hour."""
         return self[key].get_all_hourly_summaries(summaries)
