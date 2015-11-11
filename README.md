@@ -19,12 +19,6 @@ packages, for instance, in the case of Debian/Ubuntu:
 
 `$ sudo apt-get install python-dev libatlas-base-dev gfortran libsqlite3-dev`
 
-Compile the SQLite extension module:
-
-`$ gcc -fPIC -lm -shared extension-functions.c -o libsqlitefunctions.so`
-
-`$ gcc -fno-common -dynamiclib extension-functions.c -o libsqlitefunctions.dylib`
-
 Run the simulation with a config file:
 
 `$ python main.py --config config.ini`
