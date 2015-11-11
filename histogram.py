@@ -8,6 +8,11 @@ import numpy
 import operator
 import sqlite3
 
+try:
+    from functools import lru_cache
+except ImportError:
+    from functools32 import lru_cache
+
 from base import Base
 from static import WEEK
 
@@ -29,19 +34,23 @@ class Histogram(Base):
         self.__write_cache_val.append(value)
         if (len(self.__write_cache_ts)
             >= self.get_config_int('cache_size', section='stats')):
-            assert len(self.__write_cache_ts) == len(self.__write_cache_val)
             self.flush()
+        assert len(self.__write_cache_ts) == len(self.__write_cache_val)
 
     def flush(self):
         """Dump the cache to the database."""
-        self.__cursor.executemany(
-            ('INSERT INTO histogram(histogram, timestamp, value) '
-             "VALUES('%s', ?, ?);") % self.__name,
-            zip(self.__write_cache_ts, self.__write_cache_val))
-        self.__write_cache_ts = array.array('f')
-        self.__write_cache_val = array.array('f')
-        gc.collect()
+        if len(self.__write_cache_ts) > 0:
+            self.__cursor.executemany(
+                ('INSERT INTO histogram(histogram, timestamp, value) '
+                 "VALUES('%s', ?, ?);") % self.__name,
+                zip(self.__write_cache_ts, self.__write_cache_val))
+            self.__write_cache_ts = array.array('f')
+            self.__write_cache_val = array.array('f')
+            Histogram.__cache_invalidate()
+            gc.collect()
+        assert len(self.__write_cache_ts) == len(self.__write_cache_val)
 
+    @lru_cache()
     def get_hourly_histogram(self, hour):
         """Gets the subhistogram for one particular hour."""
         self.flush()
@@ -53,6 +62,7 @@ class Histogram(Base):
             (self.__name, hour))
         return numpy.asarray(self.__cursor.fetchall())
 
+    @lru_cache()
     def get_all_hourly_histograms(self):
         """Gets all the subhistograms per hour."""
         self.flush()
@@ -70,13 +80,21 @@ class Histogram(Base):
             self.__cursor.fetchall(), operator.itemgetter(0))}
         return [d.get(i, []) for i in range(168)]
 
+    @classmethod
+    def __cache_invalidate(cls):
+        cls.get_hourly_histogram.cache_clear()
+        cls.get_all_hourly_histograms.cache_clear()
+
 
 @injector.inject(conn=sqlite3.Connection)
 def create_histogram_tables(conn):
     """Creates the tables on the database."""
     cursor = conn.cursor()
+    cursor.execute('DROP TRIGGER IF EXISTS t_hour;')
+    cursor.execute('DROP INDEX IF EXISTS i_histogram_hour;')
+    cursor.execute('DROP TABLE IF EXISTS histogram;')
     cursor.execute('''
-        CREATE TABLE IF NOT EXISTS histogram (
+        CREATE TABLE histogram (
           id        INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
           hour      INTEGER,
           histogram TEXT    NOT NULL,
@@ -84,12 +102,11 @@ def create_histogram_tables(conn):
           value     REAL    NOT NULL
         );''')
     cursor.execute(
-        'CREATE INDEX IF NOT EXISTS i_histogram ON histogram(histogram, hour);')
+        'CREATE INDEX i_histogram_hour ON histogram(histogram, hour);')
     cursor.execute('''
-        CREATE TRIGGER IF NOT EXISTS t_hour AFTER INSERT ON histogram
+        CREATE TRIGGER t_hour AFTER INSERT ON histogram
         FOR EACH ROW BEGIN
           UPDATE histogram SET hour =
               (CAST(new.timestamp AS INTEGER) %% %d) / 3600
             WHERE id = NEW.id;
         END;''' % WEEK(1))
-    cursor.execute('DELETE FROM histogram;')
