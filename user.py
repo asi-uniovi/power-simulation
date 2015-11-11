@@ -5,7 +5,7 @@ import logging
 
 from activity_distribution import ActivityDistribution
 from base import Base
-from computer import Computer, ComputerStatus
+from computer import Computer
 from module import Binder, CustomInjector
 from stats import Stats
 
@@ -35,8 +35,5 @@ class User(Base):
     def run(self):
         """Generates requests af the defined frequency."""
         while True:
-            if self._computer.status == ComputerStatus.on:
-              yield self._env.process(self._computer.serve())
-              yield self._env.timeout(self.interarrival_time)
-            else:
-              yield self._env.timeout(10)
+            yield self._env.process(self._computer.serve())
+            yield self._env.timeout(self.interarrival_time)
