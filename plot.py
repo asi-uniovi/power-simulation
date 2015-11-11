@@ -19,7 +19,7 @@ class Plot(object):
         ax.set_title(histogram)
 
         hists = self._stats.get_all_hourly_histograms(histogram)
-        for p, style in ((50, 'r'), (95, 'g'), (99, 'g')):
+        for p in (50, 75, 80, 90, 95, 99):
             data = []
             for h in hists:
                 try:
@@ -27,7 +27,7 @@ class Plot(object):
                 except IndexError:
                     data.append(0)
 
-            ax.plot(numpy.linspace(1, len(data), len(data)), data, style,
+            ax.plot(numpy.linspace(1, len(data), len(data)), data,
                     label='%d%%' % p)
 
         _format_ax_line(ax)
@@ -39,6 +39,7 @@ class Plot(object):
 def _format_ax_line(ax):
     """Common format for each of the axes."""
     ax.legend(loc='upper center', fontsize=8)
+    ax.grid(True)
     ax.set_xlim(0, 7 * 24 - 1)
     ax.set_xticks(numpy.arange(7) * 24)  # pylint: disable=no-member
     ax.set_xticklabels(
