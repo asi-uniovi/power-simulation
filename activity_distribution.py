@@ -38,11 +38,12 @@ def _distribution_for_hour(histogram, day, hour):
 
 def _flatten_histogram(histogram):
     """Makes a histogram be a list of 168 elements."""
-    null = collections.namedtuple('null', ['median', 'sample_size'])
+    null = collections.namedtuple('null', ['mean', 'median', 'sample_size'])
     ret = []
     for d in range(7):  # pylint: disable=invalid-name
         for h in range(24):  # pylint: disable=invalid-name
-            ret.append(histogram.get(d, {}).get(h, null(median=0,
+            ret.append(histogram.get(d, {}).get(h, null(mean=0,
+                                                        median=0,
                                                         sample_size=0)))
     assert len(ret) == 168, len(ret)
     return ret
@@ -174,6 +175,17 @@ class ActivityDistribution(Base):
     def off_interval_for_timestamp(self, timestamp):
         """Samples an off interval for the day and hour provided"""
         return self.off_interval_for_hour(*timestamp_to_day(timestamp))
+
+    def get_all_hourly_summaries(self, key, summaries=('mean', 'median')):
+        if key == 'ACTIVITY_TIME':
+            hist = self._activity_intervals_histogram
+        elif key == 'INACTIVITY_TIME_ACCURATE':
+            hist = self._inactivity_intervals_histogram
+        elif key == 'SHUTDOWN_TIME':
+            hist = self._off_intervals_histogram
+
+        return [{s: getattr(i, s) for s in summaries}
+                for i in _flatten_histogram(hist)]
 
     def __load_and_fit(self, filename, distr=None, do_filter=False):
         """Parses the CSV with the trace formatted {day, hour, inactivity+}."""

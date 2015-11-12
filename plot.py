@@ -40,8 +40,7 @@ class Plot(object):
 
     def plot_mean_medians_comparison(self, histogram):
         hist = self._stats.get_all_hourly_summaries(histogram)
-        data = self._stats.get_all_hourly_summaries(histogram)
-        # data = self._activity_distribution.get_all_hourly_summaries(histogram)
+        data = self._activity_distribution.get_all_hourly_summaries(histogram)
 
         for s in ('mean', 'median'):
             fig, ax = plt.subplots()
