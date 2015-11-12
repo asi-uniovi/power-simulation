@@ -177,15 +177,21 @@ class ActivityDistribution(Base):
         return self.off_interval_for_hour(*timestamp_to_day(timestamp))
 
     def get_all_hourly_summaries(self, key, summaries=('mean', 'median')):
-        if key == 'ACTIVITY_TIME':
-            hist = self._activity_intervals_histogram
-        elif key == 'INACTIVITY_TIME_ACCURATE':
-            hist = self._inactivity_intervals_histogram
-        elif key == 'SHUTDOWN_TIME':
-            hist = self._off_intervals_histogram
-
         return [{s: getattr(i, s) for s in summaries}
-                for i in _flatten_histogram(hist)]
+                for i in _flatten_histogram(self._resolve_histogram(key))]
+
+    def get_all_hourly_count(self, key):
+        return [i.sample_size for i in _flatten_histogram(
+            self._resolve_histogram(key))]
+
+    def _resolve_histogram(self, key):
+        if key == 'ACTIVITY_TIME':
+            return self._activity_intervals_histogram
+        elif key == 'INACTIVITY_TIME_ACCURATE':
+            return self._inactivity_intervals_histogram
+        elif key == 'SHUTDOWN_TIME':
+            return self._off_intervals_histogram
+        raise KeyError('Invalid key for histogram.')
 
     def __load_and_fit(self, filename, distr=None, do_filter=False):
         """Parses the CSV with the trace formatted {day, hour, inactivity+}."""

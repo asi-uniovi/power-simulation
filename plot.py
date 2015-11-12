@@ -56,6 +56,21 @@ class Plot(object):
             fig.set_tight_layout(True)
             fig.savefig('%s_%s.png' % (histogram.lower(), s))
 
+    def plot_hourly_histogram_count(self, histogram):
+        hist = self._stats.get_all_hourly_count(histogram)
+        data = self._activity_distribution.get_all_hourly_count(histogram)
+
+        fig, ax = plt.subplots()
+        ax.set_title('%s (count)' % histogram)
+        ax.set_xlim(0, 7 * 24 - 1)
+
+        ax.plot(numpy.linspace(1, len(hist), len(hist)), hist, label='simulation')
+        ax.plot(numpy.linspace(1, len(data), len(data)), hist, label='data')
+
+        _format_ax_line(ax)
+        fig.set_size_inches(6, 5)
+        fig.set_tight_layout(True)
+        fig.savefig('%s_count.png' % histogram.lower())
 
 def _format_ax_line(ax):
     """Common format for each of the axes."""

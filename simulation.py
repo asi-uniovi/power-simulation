@@ -45,6 +45,9 @@ class Simulation(Base):
         self._plot.plot_mean_medians_comparison('INACTIVITY_TIME_ACCURATE')
         self._plot.plot_mean_medians_comparison('SHUTDOWN_TIME')
         self._plot.plot_mean_medians_comparison('ACTIVITY_TIME')
+        self._plot.plot_hourly_histogram_count('INACTIVITY_TIME_ACCURATE')
+        self._plot.plot_hourly_histogram_count('SHUTDOWN_TIME')
+        self._plot.plot_hourly_histogram_count('ACTIVITY_TIME')
 
     def __monitor_time(self):
         """Indicates how te simulation is progressing."""

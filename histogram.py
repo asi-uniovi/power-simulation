@@ -88,6 +88,20 @@ class Histogram(Base):
             l.append(d)
         return l
 
+    @lru_cache()
+    def get_all_hourly_count(self):
+        """Gets all the count per hour."""
+        self.flush()
+        self.__cursor.execute(
+            '''SELECT hour, COUNT(*) AS count
+                 FROM histogram
+                WHERE histogram = ?
+             GROUP BY hour
+             ORDER BY hour ASC;''',
+            (self.__name,))
+        d = dict(self.__cursor.fetchall())
+        return [d.get(i, 0) for i in range(168)]
+
     def __fetch_hourly(self):
         """Groups by hour and fills in the hours with no data."""
         d = {i: numpy.asarray(list(g)) for i, g in itertools.groupby(
@@ -99,6 +113,7 @@ class Histogram(Base):
         cls.get_hourly_histogram.cache_clear()
         cls.get_all_hourly_histograms.cache_clear()
         cls.get_all_hourly_summaries.cache_clear()
+        cls.get_all_hourly_count.cache_clear()
 
 
 @injector.inject(conn=sqlite3.Connection)

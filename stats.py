@@ -36,3 +36,7 @@ class Stats(dict):
     def get_all_hourly_summaries(self, key, summaries=('mean', 'median')):
         """Gets all the summaries per hour."""
         return self[key].get_all_hourly_summaries(summaries)
+
+    def get_all_hourly_count(self, key):
+        """Gets all the count per hour."""
+        return self[key].get_all_hourly_count()
