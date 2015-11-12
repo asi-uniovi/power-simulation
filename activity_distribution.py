@@ -181,8 +181,10 @@ class ActivityDistribution(Base):
                 for i in _flatten_histogram(self._resolve_histogram(key))]
 
     def get_all_hourly_count(self, key):
-        return [i.sample_size for i in _flatten_histogram(
+        ret = [i.sample_size for i in _flatten_histogram(
             self._resolve_histogram(key))]
+        assert len(ret) == 168, len(168)
+        return ret
 
     def _resolve_histogram(self, key):
         if key == 'ACTIVITY_TIME':
