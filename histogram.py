@@ -104,8 +104,9 @@ class Histogram(Base):
 
     def __fetch_hourly(self):
         """Groups by hour and fills in the hours with no data."""
-        d = {i: numpy.asarray(list(g)) for i, g in itertools.groupby(
-            self.__cursor.fetchall(), operator.itemgetter(0))}
+        d = {i: numpy.asarray(list(i[1] for i in g))
+             for i, g in itertools.groupby(
+                     self.__cursor.fetchall(), operator.itemgetter(0))}
         return [d.get(i, []) for i in range(168)]
 
     @classmethod
