@@ -65,7 +65,7 @@ class Plot(object):
         ax.set_xlim(0, 7 * 24 - 1)
 
         ax.plot(numpy.linspace(1, len(hist), len(hist)), hist, label='simulation')
-        ax.plot(numpy.linspace(1, len(data), len(data)), hist, label='data')
+        ax.plot(numpy.linspace(1, len(data), len(data)), data, label='data')
 
         _format_ax_line(ax)
         fig.set_size_inches(6, 5)
