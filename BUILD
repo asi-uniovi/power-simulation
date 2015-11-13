@@ -28,7 +28,6 @@ py_library(
     srcs = ["computer.py"],
     deps = [
         ":activity_distribution",
-        ":agent",
         ":base",
         ":stats",
     ],
@@ -128,6 +127,7 @@ py_library(
     srcs = ["user.py"],
     deps = [
         ":activity_distribution",
+        ":agent",
         ":base",
         ":computer",
         ":module",

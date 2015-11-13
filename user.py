@@ -4,8 +4,9 @@ import injector
 import logging
 
 from activity_distribution import ActivityDistribution
+from agent import Agent
 from base import Base
-from computer import Computer, ComputerStatus
+from computer import Computer
 from module import Binder, CustomInjector
 from stats import Stats
 
@@ -13,6 +14,7 @@ logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
 
 @injector.inject(_activity_distribution=ActivityDistribution,
+                 _agent=Agent,
                  _stats=Stats,
                  _computer=Computer)
 class User(Base):
@@ -35,8 +37,10 @@ class User(Base):
     def run(self):
         """Generates requests af the defined frequency."""
         while True:
-            if self._computer.status == ComputerStatus.on:
-                yield self._env.process(self._computer.serve())
-                yield self._env.timeout(self.interarrival_time)
-            else:
-                self._env.step()
+            yield self._env.process(self._computer.serve())
+            yield self._env.timeout(self.interarrival_time)
+            if self._agent.indicate_shutdown():
+                logger.debug('Shutting down PC.')
+                shutdown_time = self._agent.shutdown_interval()
+                self._stats.append('SHUTDOWN_TIME', shutdown_time)
+                yield self._env.timeout(shutdown_time)
