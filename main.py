@@ -11,6 +11,7 @@ from __future__ import with_statement
 import argparse
 import logging
 import os
+import signal
 import sys
 
 try:
@@ -19,6 +20,11 @@ except ImportError:
     import ConfigParser as configparser
 
 from simulation import runner
+
+
+def sigterm_handler(signal, frame):
+    import pdb
+    pdb.set_trace()
 
 
 def config_logging(debug):
@@ -65,4 +71,5 @@ def main():
 
 
 if __name__ == '__main__':
+    signal.signal(signal.SIGTERM, sigterm_handler)
     sys.exit(main())
