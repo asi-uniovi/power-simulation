@@ -15,6 +15,11 @@ from static import DAYS
 class Plot(object):
     """Generates plots from the Stats modules."""
 
+    def plot_all(self, histogram):
+        self.plot_hourly_histogram_count(histogram)
+        self.plot_mean_medians_comparison(histogram)
+        self.plot_hourly_histogram_quantiles(histogram)
+
     def plot_hourly_histogram_quantiles(
             self, histogram, quantiles=(50, 75, 80, 90, 95, 99)):
         fig, ax = plt.subplots()

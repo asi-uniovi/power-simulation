@@ -39,15 +39,9 @@ class Simulation(Base):
     def __log_results(self):
         """Prints the final results of the simulation run."""
         logger.info('Simulation ended at %d s', self._env.now)
-        self._plot.plot_hourly_histogram_quantiles('INACTIVITY_TIME_ACCURATE')
-        self._plot.plot_hourly_histogram_quantiles('SHUTDOWN_TIME')
-        self._plot.plot_hourly_histogram_quantiles('ACTIVITY_TIME')
-        self._plot.plot_mean_medians_comparison('INACTIVITY_TIME_ACCURATE')
-        self._plot.plot_mean_medians_comparison('SHUTDOWN_TIME')
-        self._plot.plot_mean_medians_comparison('ACTIVITY_TIME')
-        self._plot.plot_hourly_histogram_count('INACTIVITY_TIME_ACCURATE')
-        self._plot.plot_hourly_histogram_count('SHUTDOWN_TIME')
-        self._plot.plot_hourly_histogram_count('ACTIVITY_TIME')
+        self._plot.plot_all('INACTIVITY_TIME_ACCURATE')
+        self._plot.plot_all('SHUTDOWN_TIME')
+        self._plot.plot_all('ACTIVITY_TIME')
 
     def __monitor_time(self):
         """Indicates how te simulation is progressing."""
