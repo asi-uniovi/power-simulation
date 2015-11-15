@@ -21,7 +21,6 @@ class Computer(Base):
 
     def __init__(self):
         super(Computer, self).__init__()
-        self._serving_rate = self.get_config_float('serving_rate')
         self._monitoring_interval = self.get_config_int('monitoring_interval')
         self._last_user_access = self._env.now
         self._env.process(self.__monitor_loop())
