@@ -81,7 +81,7 @@ def _format_ax_line(ax):
     """Common format for each of the axes."""
     ax.legend(loc='upper center', fontsize=8)
     ax.grid(True)
-    ax.set_xticks(numpy.arange(7) * 24)  # pylint: disable=no-member
+    ax.set_xticks(numpy.arange(7) * 24)
     ax.set_xticklabels(
         [key for key, _ in sorted(DAYS.items(),
                                   key=operator.itemgetter(1))], rotation=60)

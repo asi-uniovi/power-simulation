@@ -8,11 +8,10 @@ import sqlite3
 from singleton import Singleton
 from static import KB, MB
 
-config_key = injector.Key('config')  # pylint: disable=invalid-name
-env_key = injector.Key('env')  # pylint: disable=invalid-name
+config_key = injector.Key('config')
+env_key = injector.Key('env')
 
 
-# pylint: disable=too-few-public-methods
 class Binder(six.with_metaclass(Singleton, injector.Module)):
     """This binds all the types needed on the simulation."""
 
@@ -26,7 +25,6 @@ class Binder(six.with_metaclass(Singleton, injector.Module)):
         binder.bind(config_key, to=injector.InstanceProvider(self._config))
         binder.bind(env_key, to=injector.InstanceProvider(self._env))
 
-    # pylint: disable=no-self-use
     @injector.singleton
     @injector.provides(sqlite3.Connection)
     @injector.inject(config=config_key)

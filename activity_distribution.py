@@ -14,12 +14,7 @@ from distribution import DiscreteUniformDistribution
 from distribution import EmpiricalDistribution
 from static import HOUR, DAY, DAYS, WEEK
 
-logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
-
-
-def float_es(string):
-    """Parse a Spanish float from string (converting the ,)."""
-    return float(string.replace(',', '.'))
+logger = logging.getLogger(__name__)
 
 
 def timestamp_to_day(timestamp):
@@ -40,8 +35,8 @@ def _flatten_histogram(histogram):
     """Makes a histogram be a list of 168 elements."""
     null = collections.namedtuple('null', ['mean', 'median', 'sample_size'])
     ret = []
-    for d in range(7):  # pylint: disable=invalid-name
-        for h in range(24):  # pylint: disable=invalid-name
+    for d in range(7):
+        for h in range(24):
             ret.append(histogram.get(d, {}).get(h, null(mean=0,
                                                         median=0,
                                                         sample_size=0)))
@@ -94,21 +89,6 @@ class ActivityDistribution(Base):
         """Queries the activity distribution and generates a random sample."""
         return self.random_activity_for_hour(*timestamp_to_day(timestamp))
 
-    def activity_means(self):
-        """Calculates the mean of the activity distribution per hour."""
-        return [i.mean for i in _flatten_histogram(
-            self._activity_intervals_histogram)]
-
-    def activity_medians(self):
-        """Calculates the median of the activity distribution per hour."""
-        return [i.median for i in _flatten_histogram(
-            self._activity_intervals_histogram)]
-
-    def activity_counts(self):
-        """Calculates the counts of the activity distribution per hour."""
-        return [i.sample_size for i in _flatten_histogram(
-            self._activity_intervals_histogram)]
-
     def random_inactivity_for_hour(self, day, hour):
         """Queries the activity distribution and generates a random sample."""
         distribution = _distribution_for_hour(
@@ -126,28 +106,6 @@ class ActivityDistribution(Base):
     def random_inactivity_for_timestamp(self, timestamp):
         """Queries the activity distribution and generates a random sample."""
         return self.random_inactivity_for_hour(*timestamp_to_day(timestamp))
-
-    def inactivity_means(self):
-        """Calculates the mean of the inactivity distribution per hour."""
-        return [i.mean for i in _flatten_histogram(
-            self._inactivity_intervals_histogram)]
-
-    def inactivity_medians(self):
-        """Calculates the median of the inactivity distribution per hour."""
-        return [i.median for i in _flatten_histogram(
-            self._inactivity_intervals_histogram)]
-
-    def inactivity_counts(self):
-        """Calculates the counts of the inactivity distribution per hour."""
-        return [i.sample_size for i in _flatten_histogram(
-            self._inactivity_intervals_histogram)]
-
-    def shutdown_counts(self):
-        """Calculates the counts of the shutdown distribution per hour."""
-        ret = [i.sample_size for i in _flatten_histogram(
-            self._off_intervals_histogram)]
-        assert len(ret) == 168, len(ret)
-        return ret
 
     def shutdown_for_hour(self, day, hour):
         """Determines whether a computer should turndown or not."""
@@ -177,16 +135,19 @@ class ActivityDistribution(Base):
         return self.off_interval_for_hour(*timestamp_to_day(timestamp))
 
     def get_all_hourly_summaries(self, key, summaries=('mean', 'median')):
+        """Returns the summaries per hour."""
         return [{s: getattr(i, s) for s in summaries}
                 for i in _flatten_histogram(self._resolve_histogram(key))]
 
     def get_all_hourly_count(self, key):
+        """Returns the count of items per hourly subhistogram."""
         ret = [i.sample_size for i in _flatten_histogram(
             self._resolve_histogram(key))]
         assert len(ret) == 168, len(168)
         return ret
 
     def _resolve_histogram(self, key):
+        """Matches histograms and keys."""
         if key == 'ACTIVITY_TIME':
             return self._activity_intervals_histogram
         elif key == 'INACTIVITY_TIME_ACCURATE':
@@ -206,7 +167,6 @@ class ActivityDistribution(Base):
                 for item in reader:
                     day = DAYS[item[0]]
                     hour = int(item[1])
-                    # pylint: disable=no-member,invalid-name
                     s = [float(j) for j in item[2:]]
                     if do_filter:
                         s = [i for i in s if self._xmin <= i <= self._xmax]

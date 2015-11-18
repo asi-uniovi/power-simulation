@@ -1,6 +1,5 @@
 """A simulation process of the computer."""
 
-import enum
 import injector
 import logging
 
@@ -8,7 +7,7 @@ from activity_distribution import ActivityDistribution
 from base import Base
 from stats import Stats
 
-logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
+logger = logging.getLogger(__name__)
 
 
 @injector.inject(_activity_distribution=ActivityDistribution,
@@ -28,7 +27,6 @@ class Computer(Base):
     @property
     def serving_time(self):
         """Exponential serving time based on serving ratio."""
-        # pylint: disable=no-member
         time = self._activity_distribution.random_activity_for_timestamp(
             self._env.now)
         logger.debug('Activity time: %f', time)

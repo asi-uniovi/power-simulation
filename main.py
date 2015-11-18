@@ -65,7 +65,7 @@ def main():
     """Just starts the simulation."""
     try:
         runner(configure())
-    except:  # pylint: disable=bare-except
+    except:
         logging.exception('Unexpected exception')
         return 1
 

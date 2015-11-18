@@ -33,7 +33,7 @@ class Histogram(Base):
         self.__write_cache_ts.append(timestamp)
         self.__write_cache_val.append(value)
         if (len(self.__write_cache_ts)
-            >= self.get_config_int('cache_size', section='stats')):
+                >= self.get_config_int('cache_size', section='stats')):
             self.flush()
         assert len(self.__write_cache_ts) == len(self.__write_cache_val)
 
@@ -49,18 +49,6 @@ class Histogram(Base):
             Histogram.__cache_invalidate()
             gc.collect()
         assert len(self.__write_cache_ts) == len(self.__write_cache_val)
-
-    @lru_cache()
-    def get_hourly_histogram(self, hour):
-        """Gets the subhistogram for one particular hour."""
-        self.flush()
-        self.__cursor.execute(
-            '''SELECT value
-                 FROM histogram
-                WHERE histogram = ?
-                      AND hour = ?;''',
-            (self.__name, hour))
-        return numpy.asarray(self.__cursor.fetchall())
 
     @lru_cache()
     def get_all_hourly_histograms(self):
@@ -106,12 +94,12 @@ class Histogram(Base):
         """Groups by hour and fills in the hours with no data."""
         d = {i: numpy.asarray(list(i[1] for i in g))
              for i, g in itertools.groupby(
-                     self.__cursor.fetchall(), operator.itemgetter(0))}
+                 self.__cursor.fetchall(), operator.itemgetter(0))}
         return [d.get(i, []) for i in range(168)]
 
     @classmethod
     def __cache_invalidate(cls):
-        cls.get_hourly_histogram.cache_clear()
+        """Invalidates all the memoizing caches."""
         cls.get_all_hourly_histograms.cache_clear()
         cls.get_all_hourly_summaries.cache_clear()
         cls.get_all_hourly_count.cache_clear()

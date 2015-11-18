@@ -10,7 +10,7 @@ from computer import Computer
 from module import Binder, CustomInjector
 from stats import Stats
 
-logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
+logger = logging.getLogger(__name__)
 
 
 @injector.inject(_activity_distribution=ActivityDistribution,

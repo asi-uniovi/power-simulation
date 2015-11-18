@@ -29,14 +29,11 @@ class Distribution(six.with_metaclass(abc.ABCMeta)):
         """This samples the distribution for one value."""
         raise NotImplementedError
 
-    # pylint: disable=invalid-name
     def xrvs(self, n):
         """Sample the distribution several times."""
-        # pylint: disable=no-member
         return numpy.asarray([self.rvs() for _ in range(n)])
 
 
-# pylint: disable=abstract-method
 class DiscreteUniformDistribution(Distribution):
     """Uniform distribution over a set of values."""
 
@@ -58,7 +55,6 @@ class EmpiricalDistribution(Distribution):
     """Empirical distribution according to the data provided."""
 
     def __init__(self, *data):
-        # pylint: disable=no-member
         ecdf = sm.distributions.ECDF(numpy.array(data, copy=True))
         self._inverse = sm.distributions.monotone_fn_inverter(ecdf, ecdf.x)
         self._mean = numpy.mean(data)
@@ -81,12 +77,10 @@ class EmpiricalDistribution(Distribution):
         return float(self._inverse(numpy.random.random()))
 
 
-# pylint: disable=abstract-method
 class BinomialDistribution(Distribution):
     """The binomial distribution."""
 
     def __init__(self, N, p):
-        # pylint: disable=invalid-name
         self._N = N
         self._p = p
 
@@ -103,7 +97,6 @@ class BinomialDistribution(Distribution):
         return self.xrvs(1)[0]
 
     def xrvs(self, n):
-        # pylint: disable=no-member
         return numpy.random.binomial(self._N, self._p, n)
 
 

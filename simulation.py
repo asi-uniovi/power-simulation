@@ -11,7 +11,7 @@ from plot import Plot
 from stats import Stats
 from user import User
 
-logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
+logger = logging.getLogger(__name__)
 
 
 @injector.inject(_activity_distribution=ActivityDistribution,
