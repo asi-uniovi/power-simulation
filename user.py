@@ -7,7 +7,7 @@ from activity_distribution import ActivityDistribution
 from agent import Agent
 from base import Base
 from computer import Computer
-from module import Binder, CustomInjector
+from module import Binder
 from stats import Stats
 
 logger = logging.getLogger(__name__)
