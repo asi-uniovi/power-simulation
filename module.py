@@ -1,9 +1,11 @@
 """Module for the dependency injection binding."""
 
+import os
+import sqlite3
+
 import injector
 import simpy
 import six
-import sqlite3
 
 from singleton import Singleton
 from static import KB, MB
@@ -30,7 +32,12 @@ class Binder(six.with_metaclass(Singleton, injector.Module)):
     @injector.inject(config=config_key)
     def provide_db_connection(self, config):
         """Sets the database up for the module to work."""
-        conn = sqlite3.connect(config.get('stats', 'database_name'))
+        db_name = config.get('stats', 'database_name')
+        try:
+            os.remove(db_name)
+        except FileNotFoundError:
+            pass
+        conn = sqlite3.connect(db_name)
         conn.isolation_level = None
         conn.row_factory = sqlite3.Row
         conn.enable_load_extension(True)
