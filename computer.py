@@ -1,13 +1,24 @@
 """A simulation process of the computer."""
 
-import injector
+import enum
 import logging
+
+import injector
+import simpy
 
 from activity_distribution import ActivityDistribution
 from base import Base
 from stats import Stats
 
 logger = logging.getLogger(__name__)
+
+
+@enum.unique
+class ComputerStatus(enum.Enum):
+    on = 1
+    stand_by = 2
+    hibernated = 3
+    off = 4
 
 
 @injector.inject(_activity_distribution=ActivityDistribution,
@@ -20,9 +31,17 @@ class Computer(Base):
 
     def __init__(self):
         super(Computer, self).__init__()
+        self._status = ComputerStatus.on
         self._monitoring_interval = self.get_config_int('monitoring_interval')
+        self._idle_timeout = self.get_config_int(
+            'idle_timeout', section='computer')
+        self._idle_timer = self._env.process(self.idle_timer())
         self._last_user_access = self._env.now
         self._env.process(self.__monitor_loop())
+
+    def change_status(self, status):
+        logger.debug('change status %s -> %s', self._status, status)
+        self._status = status
 
     @property
     def serving_time(self):
@@ -40,8 +59,23 @@ class Computer(Base):
 
     def serve(self):
         """Serve and count the amount of requests completed."""
+        if self._status != ComputerStatus.on:
+            self.change_status(ComputerStatus.on)
         self._last_user_access = self._env.now
+        if self._idle_timer.is_alive:
+            self._idle_timer.interrupt()
+        self._idle_timer = self._env.process(self.idle_timer())
         yield self._env.timeout(self.serving_time)
+
+    def idle_timer(self):
+        while True:
+            try:
+                yield self._env.timeout(self._idle_timeout)
+                self._stats.append('IDLE_TIMEOUT', 1)
+                self.change_status(ComputerStatus.off)
+                self._env.exit()
+            except simpy.Interrupt:
+                self._env.exit()
 
     def __monitor_loop(self):
         """Runs the monitoring loop for this server."""

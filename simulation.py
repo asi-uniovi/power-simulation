@@ -42,6 +42,7 @@ class Simulation(Base):
         self._plot.plot_all('INACTIVITY_TIME_ACCURATE')
         self._plot.plot_all('SHUTDOWN_TIME')
         self._plot.plot_all('ACTIVITY_TIME')
+        self._plot.plot_all('IDLE_TIMEOUT')
 
     def __monitor_time(self):
         """Indicates how te simulation is progressing."""

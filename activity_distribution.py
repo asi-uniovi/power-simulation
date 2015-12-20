@@ -33,6 +33,9 @@ def _distribution_for_hour(histogram, day, hour):
 
 def _flatten_histogram(histogram):
     """Makes a histogram be a list of 168 elements."""
+    if histogram is None:
+        return []
+
     null = collections.namedtuple('null', ['mean', 'median', 'sample_size'])
     ret = []
     for d in range(7):
@@ -143,7 +146,6 @@ class ActivityDistribution(Base):
         """Returns the count of items per hourly subhistogram."""
         ret = [i.sample_size for i in _flatten_histogram(
             self._resolve_histogram(key))]
-        assert len(ret) == 168, len(168)
         return ret
 
     def _resolve_histogram(self, key):
@@ -154,6 +156,8 @@ class ActivityDistribution(Base):
             return self._inactivity_intervals_histogram
         elif key == 'SHUTDOWN_TIME':
             return self._off_intervals_histogram
+        elif key == 'IDLE_TIMEOUT':
+            return None
         raise KeyError('Invalid key for histogram.')
 
     def __load_and_fit(self, filename, distr=None, do_filter=False):

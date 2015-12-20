@@ -6,8 +6,7 @@ import logging
 from activity_distribution import ActivityDistribution
 from agent import Agent
 from base import Base
-from computer import Computer
-from module import Binder
+from computer import Computer, ComputerStatus
 from stats import Stats
 
 logger = logging.getLogger(__name__)
@@ -40,7 +39,8 @@ class User(Base):
             yield self._env.process(self._computer.serve())
             yield self._env.timeout(self.interarrival_time)
             if self._agent.indicate_shutdown():
-                logger.debug('Shutting down PC.')
+                logger.debug('User is shutting down PC.')
+                self._computer.change_status(ComputerStatus.off)
                 shutdown_time = self._agent.shutdown_interval()
                 self._stats.append('SHUTDOWN_TIME', shutdown_time)
                 yield self._env.timeout(shutdown_time)
