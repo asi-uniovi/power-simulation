@@ -43,7 +43,7 @@ class Binder(six.with_metaclass(Singleton, injector.Module)):
         conn.enable_load_extension(True)
         conn.execute('PRAGMA journal_mode = OFF;')
         conn.execute('PRAGMA foreign_keys = OFF;')
-        conn.execute('PRAGMA cache_size = %d;' % -int(MB(128) / KB(1)))
+        conn.execute('PRAGMA cache_size = %d;' % -int(MB(512) / KB(1)))
         conn.execute('PRAGMA synchronous = OFF;')
         conn.execute('PRAGMA temp_store = MEMORY;')
         return conn
