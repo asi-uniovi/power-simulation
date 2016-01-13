@@ -10,6 +10,12 @@ import six
 from singleton import Singleton
 from static import KB, MB
 
+try:
+    FileNotFoundError
+except NameError:
+    FileNotFoundError = EnvironmentError
+
+
 config_key = injector.Key('config')
 env_key = injector.Key('env')
 
