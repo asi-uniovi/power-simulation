@@ -36,9 +36,13 @@ class Computer(Base):
             'idle_timeout', section='computer')
         self._idle_timer = self._env.process(self.idle_timer())
         self._last_user_access = self._env.now
+        self._last_auto_shutdown = self._env.now
 
     def change_status(self, status):
         logger.debug('change status %s -> %s', self._status, status)
+        if status == ComputerStatus.on:
+            self._stats.append('AUTO_SHUTDOWN_TIME',
+                               self._env.now - self._last_auto_shutdown)
         self._status = status
 
     @property
@@ -68,9 +72,13 @@ class Computer(Base):
     def idle_timer(self):
         while True:
             try:
+                idle_start = self._env.now
                 yield self._env.timeout(self._idle_timeout)
                 self._stats.append('IDLE_TIMEOUT', self._idle_timeout)
                 self.change_status(ComputerStatus.off)
-                self._env.exit()
+                self._last_auto_shutdown = self._env.now
             except simpy.Interrupt:
+                pass
+            finally:
+                self._stats.append('IDLE_TIME', self._env.now - idle_start)
                 self._env.exit()

@@ -42,5 +42,5 @@ class User(Base):
                 logger.debug('User is shutting down PC.')
                 self._computer.change_status(ComputerStatus.off)
                 shutdown_time = self._agent.shutdown_interval()
-                self._stats.append('SHUTDOWN_TIME', shutdown_time)
+                self._stats.append('USER_SHUTDOWN_TIME', shutdown_time)
                 yield self._env.timeout(shutdown_time)
