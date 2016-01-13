@@ -69,7 +69,7 @@ class Computer(Base):
         while True:
             try:
                 yield self._env.timeout(self._idle_timeout)
-                self._stats.append('IDLE_TIMEOUT', 1)
+                self._stats.append('IDLE_TIMEOUT', self._idle_timeout)
                 self.change_status(ComputerStatus.off)
                 self._env.exit()
             except simpy.Interrupt:
