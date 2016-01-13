@@ -35,7 +35,6 @@ class Computer(Base):
         self._idle_timeout = self.get_config_int(
             'idle_timeout', section='computer')
         self._idle_timer = self._env.process(self.idle_timer())
-        self._last_user_access = self._env.now
         self._last_auto_shutdown = self._env.now
 
     def change_status(self, status):
@@ -54,16 +53,10 @@ class Computer(Base):
         self._stats.append('ACTIVITY_TIME', time)
         return time
 
-    @property
-    def inactivity(self):
-        """This simulates Window's LastUserTime()."""
-        return self._env.now - self._last_user_access
-
     def serve(self):
         """Serve and count the amount of requests completed."""
         if self._status != ComputerStatus.on:
             self.change_status(ComputerStatus.on)
-        self._last_user_access = self._env.now
         if self._idle_timer.is_alive:
             self._idle_timer.interrupt()
         self._idle_timer = self._env.process(self.idle_timer())
