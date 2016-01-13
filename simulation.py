@@ -39,9 +39,9 @@ class Simulation(Base):
     def __log_results(self):
         """Prints the final results of the simulation run."""
         logger.info('Simulation ended at %d s', self._env.now)
-        self._plot.plot_all('INACTIVITY_TIME_ACCURATE')
         self._plot.plot_all('SHUTDOWN_TIME')
         self._plot.plot_all('ACTIVITY_TIME')
+        self._plot.plot_all('INACTIVITY_TIME')
         self._plot.plot_all('IDLE_TIMEOUT')
 
     def __monitor_time(self):

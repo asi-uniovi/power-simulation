@@ -152,7 +152,7 @@ class ActivityDistribution(Base):
         """Matches histograms and keys."""
         if key == 'ACTIVITY_TIME':
             return self._activity_intervals_histogram
-        elif key == 'INACTIVITY_TIME_ACCURATE':
+        elif key == 'INACTIVITY_TIME':
             return self._inactivity_intervals_histogram
         elif key == 'SHUTDOWN_TIME':
             return self._off_intervals_histogram

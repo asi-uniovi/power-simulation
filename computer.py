@@ -32,12 +32,10 @@ class Computer(Base):
     def __init__(self):
         super(Computer, self).__init__()
         self._status = ComputerStatus.on
-        self._monitoring_interval = self.get_config_int('monitoring_interval')
         self._idle_timeout = self.get_config_int(
             'idle_timeout', section='computer')
         self._idle_timer = self._env.process(self.idle_timer())
         self._last_user_access = self._env.now
-        self._env.process(self.__monitor_loop())
 
     def change_status(self, status):
         logger.debug('change status %s -> %s', self._status, status)
@@ -76,10 +74,3 @@ class Computer(Base):
                 self._env.exit()
             except simpy.Interrupt:
                 self._env.exit()
-
-    def __monitor_loop(self):
-        """Runs the monitoring loop for this server."""
-        while True:
-            logger.debug('__monitor_loop running')
-            self._stats.append('INACTIVITY_TIME_MONITORED', self.inactivity)
-            yield self._env.timeout(self._monitoring_interval)
