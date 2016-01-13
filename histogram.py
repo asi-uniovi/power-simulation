@@ -71,7 +71,7 @@ class Histogram(Base):
             for s in summaries:
                 try:
                     d[s] = getattr(numpy, s)(h)
-                except IndexError:
+                except (IndexError, RuntimeWarning):
                     d[s] = 0
             l.append(d)
         return l
