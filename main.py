@@ -13,6 +13,7 @@ import logging
 import os
 import signal
 import sys
+import warnings
 
 try:
     import configparser
@@ -72,5 +73,6 @@ def main():
 
 
 if __name__ == '__main__':
+    warnings.simplefilter('error')
     signal.signal(signal.SIGTERM, sigterm_handler)
     sys.exit(main())
