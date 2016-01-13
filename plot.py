@@ -42,6 +42,7 @@ class Plot(object):
         fig.set_size_inches(6, 5)
         fig.set_tight_layout(True)
         fig.savefig('%s_percentiles.png' % histogram.lower())
+        plt.close(fig)
 
     def plot_mean_medians_comparison(self, histogram):
         hist = self._stats.get_all_hourly_summaries(histogram)
@@ -60,6 +61,7 @@ class Plot(object):
             fig.set_size_inches(6, 5)
             fig.set_tight_layout(True)
             fig.savefig('%s_%s.png' % (histogram.lower(), s))
+            plt.close(fig)
 
     def plot_hourly_histogram_count(self, histogram):
         hist = self._stats.get_all_hourly_count(histogram)
@@ -76,6 +78,7 @@ class Plot(object):
         fig.set_size_inches(6, 5)
         fig.set_tight_layout(True)
         fig.savefig('%s_count.png' % histogram.lower())
+        plt.close(fig)
 
 def _format_ax_line(ax):
     """Common format for each of the axes."""
