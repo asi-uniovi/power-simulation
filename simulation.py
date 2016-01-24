@@ -44,11 +44,11 @@ class Simulation(Base):
 
     def __log_results(self):
         """Prints the final results of the simulation run."""
-        at = self._stats.sum_histograms('ACTIVITY_TIME') / self.servers
-        ust = self._stats.sum_histograms('USER_SHUTDOWN_TIME') / self.servers
-        it = self._stats.sum_histograms('INACTIVITY_TIME') / self.servers
-        ast = self._stats.sum_histograms('AUTO_SHUTDOWN_TIME') / self.servers
-        idt = self._stats.sum_histograms('IDLE_TIME') / self.servers
+        at = self._stats.sum_histogram('ACTIVITY_TIME') / self.servers
+        ust = self._stats.sum_histogram('USER_SHUTDOWN_TIME') / self.servers
+        it = self._stats.sum_histogram('INACTIVITY_TIME') / self.servers
+        ast = self._stats.sum_histogram('AUTO_SHUTDOWN_TIME') / self.servers
+        idt = self._stats.sum_histogram('IDLE_TIME') / self.servers
 
         logger.info('Total = AT + IT + UST (1): %.2f%%',
                     ((ust + at + it) / self.simulation_time - 1) * 100)
