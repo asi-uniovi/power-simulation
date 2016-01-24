@@ -34,24 +34,23 @@ class Computer(Base):
         self._status = ComputerStatus.on
         self._idle_timeout = self.get_config_int(
             'idle_timeout', section='computer')
+        self._last_auto_shutdown = None
         self._idle_timer = self._env.process(self.idle_timer())
-        self._last_auto_shutdown = self._env.now
-
-    def change_status(self, status):
-        logger.debug('change status %s -> %s', self._status, status)
-        if status == ComputerStatus.on:
-            self._stats.append('AUTO_SHUTDOWN_TIME',
-                               self._env.now - self._last_auto_shutdown)
-        self._status = status
 
     @property
-    def serving_time(self):
-        """Exponential serving time based on serving ratio."""
-        time = self._activity_distribution.random_activity_for_timestamp(
-            self._env.now)
-        logger.debug('Activity time: %f', time)
-        self._stats.append('ACTIVITY_TIME', time)
-        return time
+    def status(self):
+        return self._status
+
+    def change_status(self, status, interrupt_idle_timer=True):
+        assert status != self.status
+        logger.debug('change status %s -> %s', self._status, status)
+        if interrupt_idle_timer and self._idle_timer.is_alive:
+           self._idle_timer.interrupt()
+        if status == ComputerStatus.on and self._last_auto_shutdown is not None:
+            self._stats.append('AUTO_SHUTDOWN_TIME',
+                               self._env.now - self._last_auto_shutdown)
+            self._last_auto_shutdown = None
+        self._status = status
 
     def serve(self):
         """Serve and count the amount of requests completed."""
@@ -59,19 +58,23 @@ class Computer(Base):
             self.change_status(ComputerStatus.on)
         if self._idle_timer.is_alive:
             self._idle_timer.interrupt()
+        activity_time = (
+            self._activity_distribution.random_activity_for_timestamp(
+                self._env.now))
+        yield self._env.timeout(activity_time)
+        self._stats.append('ACTIVITY_TIME', activity_time)
         self._idle_timer = self._env.process(self.idle_timer())
-        yield self._env.timeout(self.serving_time)
 
     def idle_timer(self):
         while True:
             try:
                 idle_start = self._env.now
                 yield self._env.timeout(self._idle_timeout)
-                self._stats.append('IDLE_TIMEOUT', self._idle_timeout)
-                self.change_status(ComputerStatus.off)
+                self.change_status(ComputerStatus.off,
+                                   interrupt_idle_timer=False)
                 self._last_auto_shutdown = self._env.now
             except simpy.Interrupt:
                 pass
             finally:
                 self._stats.append('IDLE_TIME', self._env.now - idle_start)
-                self._env.exit()
+                return
