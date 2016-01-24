@@ -158,8 +158,6 @@ class ActivityDistribution(Base):
             return self._off_intervals_histogram
         elif key == 'AUTO_SHUTDOWN_TIME':
             return None
-        elif key == 'IDLE_TIMEOUT':
-            return None
         elif key == 'IDLE_TIME':
             return None
         raise KeyError('Invalid key for histogram.')
