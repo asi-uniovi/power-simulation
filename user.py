@@ -24,23 +24,20 @@ class User(Base):
       - The average interarrival time.
     """
 
-    @property
-    def interarrival_time(self):
-        """Calcualtes a random reflexion or interarrival time for the user."""
-        time = self._activity_distribution.random_inactivity_for_timestamp(
-            self._env.now)
-        logger.debug('Inactivity time: %f', time)
-        self._stats.append('INACTIVITY_TIME', time)
-        return time
-
     def run(self):
         """Generates requests af the defined frequency."""
         while True:
             yield self._env.process(self._computer.serve())
-            yield self._env.timeout(self.interarrival_time)
+            assert self._computer.status == ComputerStatus.on
             if self._agent.indicate_shutdown():
                 logger.debug('User is shutting down PC.')
-                self._computer.change_status(ComputerStatus.off)
                 shutdown_time = self._agent.shutdown_interval()
-                self._stats.append('USER_SHUTDOWN_TIME', shutdown_time)
+                self._computer.change_status(ComputerStatus.off)
                 yield self._env.timeout(shutdown_time)
+                self._stats.append('USER_SHUTDOWN_TIME', shutdown_time)
+            else:
+                inactivity_time = (
+                    self._activity_distribution.random_inactivity_for_timestamp(
+                        self._env.now))
+                yield self._env.timeout(inactivity_time)
+                self._stats.append('INACTIVITY_TIME', inactivity_time)
