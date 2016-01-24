@@ -2,7 +2,6 @@ injector
 matplotlib<1.5
 numpy
 pandas
-patsy
 scipy
 simpy
 six
