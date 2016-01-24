@@ -19,11 +19,13 @@ class Stats(dict):
         self.__builder = CustomInjector(Binder()).get(
             injector.AssistedBuilder(cls=Histogram))
 
-    def append(self, key, value):
+    def append(self, key, value, timestamp=None):
         """Inserts a new value for a key at now.."""
         if key not in self:
             self[key] = self.__builder.build(name=key)
-        self[key].append(self._env.now, value)
+        if timestamp is None:
+            timestamp = self._env.now
+        self[key].append(timestamp, value)
 
     def get_all_hourly_histograms(self, key):
         """Gets all the subhistograms per hour."""

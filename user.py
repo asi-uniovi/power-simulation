@@ -29,15 +29,18 @@ class User(Base):
         while True:
             yield self._env.process(self._computer.serve())
             assert self._computer.status == ComputerStatus.on
+            now = self._env.now
             if self._agent.indicate_shutdown():
                 logger.debug('User is shutting down PC.')
                 shutdown_time = self._agent.shutdown_interval()
                 self._computer.change_status(ComputerStatus.off)
                 yield self._env.timeout(shutdown_time)
-                self._stats.append('USER_SHUTDOWN_TIME', shutdown_time)
+                self._stats.append('USER_SHUTDOWN_TIME', shutdown_time,
+                                   timestamp=now)
             else:
                 inactivity_time = (
                     self._activity_distribution.random_inactivity_for_timestamp(
                         self._env.now))
                 yield self._env.timeout(inactivity_time)
-                self._stats.append('INACTIVITY_TIME', inactivity_time)
+                self._stats.append('INACTIVITY_TIME', inactivity_time,
+                                   timestamp=now)
