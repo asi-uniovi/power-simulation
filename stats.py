@@ -36,3 +36,10 @@ class Stats(dict):
     def get_all_hourly_count(self, key):
         """Gets all the count per hour."""
         return self[key].get_all_hourly_count()
+
+    def sum_histogram(self, key):
+        """Sums one histogram elements."""
+        try:
+            return self[key].sum_histogram()
+        except KeyError:
+            return 0.0

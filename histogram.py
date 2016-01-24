@@ -90,6 +90,17 @@ class Histogram(Base):
         d = dict(self.__cursor.fetchall())
         return [d.get(i, 0) for i in range(168)]
 
+    @lru_cache()
+    def sum_histogram(self):
+        """Sums up all the elements of this histogram."""
+        self.flush()
+        self.__cursor.execute(
+            '''SELECT SUM(value) AS sum
+                 FROM histogram
+                WHERE histogram = ?;''',
+            (self.__name,))
+        return float(self.__cursor.fetchone()['sum'])
+
     def __fetch_hourly(self):
         """Groups by hour and fills in the hours with no data."""
         d = {i: numpy.asarray(list(i[1] for i in g))
@@ -120,6 +131,8 @@ def create_histogram_tables(conn):
           timestamp REAL    NOT NULL,
           value     REAL    NOT NULL
         );''')
+    cursor.execute(
+        'CREATE INDEX i_histogram ON histogram(histogram);')
     cursor.execute(
         'CREATE INDEX i_histogram_hour ON histogram(histogram, hour);')
     cursor.execute('''
