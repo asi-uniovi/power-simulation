@@ -1,7 +1,8 @@
 """A very simple simuation of a 1/M/c queuing system."""
 
-import injector
 import logging
+
+import injector
 
 from activity_distribution import ActivityDistribution
 from base import Base
@@ -62,6 +63,7 @@ class Simulation(Base):
         self._plot.plot_all('IDLE_TIME')
 
     def __validate_results(self):
+        """Performs vaidations on the simulation results and warns on errors."""
         at = self._stats.sum_histogram('ACTIVITY_TIME') / self.servers
         ust = self._stats.sum_histogram('USER_SHUTDOWN_TIME') / self.servers
         it = self._stats.sum_histogram('INACTIVITY_TIME') / self.servers

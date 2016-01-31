@@ -14,6 +14,7 @@ from simulation import runner
 
 
 def sigterm_handler(signal, frame):
+    """Enter debug when a singal is not controlled."""
     import pdb
     pdb.set_trace()
 

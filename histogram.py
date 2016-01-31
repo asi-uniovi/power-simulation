@@ -3,11 +3,12 @@
 import array
 import functools
 import gc
-import injector
 import itertools
-import numpy
 import operator
 import sqlite3
+
+import injector
+import numpy
 
 from base import Base
 from static import WEEK
@@ -76,16 +77,16 @@ class Histogram(Base):
     @functools.lru_cache()
     def get_all_hourly_summaries(self, summaries):
         """Gets all the summaries per hour."""
-        l = []
-        for h in self.get_all_hourly_histograms():
-            d = {}
-            for s in summaries:
+        ret = []
+        for hist in self.get_all_hourly_histograms():
+            dct = {}
+            for summary in summaries:
                 try:
-                    d[s] = getattr(numpy, s)(h)
+                    dct[summary] = getattr(numpy, summary)(hist)
                 except (IndexError, RuntimeWarning):
-                    d[s] = 0
-            l.append(d)
-        return l
+                    dct[summary] = 0
+            ret.append(dct)
+        return ret
 
     @functools.lru_cache()
     def get_all_hourly_count(self):
@@ -98,8 +99,8 @@ class Histogram(Base):
              GROUP BY hour
              ORDER BY hour ASC;''',
             (self.__name,))
-        d = dict(self.__cursor.fetchall())
-        return [d.get(i, 0) for i in range(168)]
+        dct = dict(self.__cursor.fetchall())
+        return [dct.get(i, 0) for i in range(168)]
 
     def sum_histogram(self):
         """Sums up all the elements of this histogram."""
@@ -123,10 +124,10 @@ class Histogram(Base):
 
     def __fetch_hourly(self):
         """Groups by hour and fills in the hours with no data."""
-        d = {i: numpy.asarray(list(i[1] for i in g))
-             for i, g in itertools.groupby(
-                 self.__cursor.fetchall(), operator.itemgetter(0))}
-        return [d.get(i, []) for i in range(168)]
+        dct = {i: numpy.asarray(list(i[1] for i in g))
+               for i, g in itertools.groupby(
+                   self.__cursor.fetchall(), operator.itemgetter(0))}
+        return [dct.get(i, []) for i in range(168)]
 
     @classmethod
     def __cache_invalidate(cls):

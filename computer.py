@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 
 @enum.unique
 class ComputerStatus(enum.Enum):
+    """States of a computer along the simulation."""
     on = 1
     stand_by = 2
     hibernated = 3
@@ -37,17 +38,20 @@ class Computer(Base):
 
     @property
     def status(self):
+        """Indicates the computer status."""
         return self._status
 
     @property
     def _idle_timeout(self):
+        """Indicates this computer idle time."""
         return self._activity_distribution.optimal_idle_timeout
 
     def change_status(self, status, interrupt_idle_timer=True):
+        """Changes the state of the computer, and takes any side action."""
         assert status != self.status
         logger.debug('change status %s -> %s', self._status, status)
         if interrupt_idle_timer and self._idle_timer.is_alive:
-           self._idle_timer.interrupt()
+            self._idle_timer.interrupt()
         if status == ComputerStatus.on and self._last_auto_shutdown is not None:
             self._stats.append('AUTO_SHUTDOWN_TIME',
                                self._env.now - self._last_auto_shutdown,
@@ -70,6 +74,7 @@ class Computer(Base):
         self._idle_timer = self._env.process(self.idle_timer())
 
     def idle_timer(self):
+        """Process for the idle timer control."""
         while True:
             try:
                 idle_start = self._env.now

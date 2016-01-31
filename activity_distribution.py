@@ -3,10 +3,11 @@
 import collections
 import csv
 import functools
-import injector
+import logging
 import math
 import numpy
-import logging
+
+import injector
 
 from base import Base
 from distribution import BernoulliDistribution
@@ -38,11 +39,11 @@ def _flatten_histogram(histogram):
 
     null = collections.namedtuple('null', ['mean', 'median', 'sample_size'])
     ret = []
-    for d in range(7):
-        for h in range(24):
-            ret.append(histogram.get(d, {}).get(h, null(mean=0,
-                                                        median=0,
-                                                        sample_size=0)))
+    for day in range(7):
+        for hour in range(24):
+            ret.append(histogram.get(day, {}).get(hour, null(mean=0,
+                                                             median=0,
+                                                             sample_size=0)))
     assert len(ret) == 168, len(ret)
     return ret
 
@@ -187,18 +188,19 @@ class ActivityDistribution(Base):
                 for item in reader:
                     day = DAYS[item[0]]
                     hour = int(item[1])
-                    s = [float(j) for j in item[2:]]
+                    data = [float(j) for j in item[2:]]
                     if do_filter:
-                        s = [i for i in s if self._xmin <= i <= self._xmax]
-                    s = numpy.asarray(s)
-                    if len(s) == 0:
+                        data = [i for i in data
+                                if self._xmin <= i <= self._xmax]
+                    data = numpy.asarray(data)
+                    if len(data) == 0:
                         continue
                     if distr is None:
-                        if len(s) > 1:
+                        if len(data) > 1:
                             distr = EmpiricalDistribution
-                        elif len(s) == 1:
+                        elif len(data) == 1:
                             distr = DiscreteUniformDistribution
-                    histogram.setdefault(day, {})[hour] = distr(*s)
+                    histogram.setdefault(day, {})[hour] = distr(*data)
                     logger.debug('Fitted distribution for %s %s', day, hour)
                 return histogram
             except csv.Error as error:

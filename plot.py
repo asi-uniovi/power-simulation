@@ -1,10 +1,11 @@
 """Summarizes the stats collected during the simulation in plots."""
 
+import operator
+
 import injector
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 import numpy
-import operator
 
 from activity_distribution import ActivityDistribution
 from stats import Stats
@@ -16,12 +17,14 @@ class Plot(object):
     """Generates plots from the Stats modules."""
 
     def plot_all(self, histogram):
+        """Plots all the available plots."""
         self.plot_hourly_histogram_count(histogram)
         self.plot_mean_medians_comparison(histogram)
         self.plot_hourly_histogram_quantiles(histogram)
 
     def plot_hourly_histogram_quantiles(
             self, histogram, quantiles=(50, 75, 80, 90, 95, 99)):
+        """Generates a plot to see the hourly quantiles."""
         fig, ax = plt.subplots()
         ax.set_title(histogram + ' (percentiles)')
         ax.set_xlim(0, 7 * 24 - 1)
@@ -45,6 +48,7 @@ class Plot(object):
         plt.close(fig)
 
     def plot_mean_medians_comparison(self, histogram):
+        """Generates a plot to compare means and medians."""
         hist = self._stats.get_all_hourly_summaries(histogram)
         data = self._activity_distribution.get_all_hourly_summaries(histogram)
 
@@ -64,6 +68,7 @@ class Plot(object):
             plt.close(fig)
 
     def plot_hourly_histogram_count(self, histogram):
+        """Generates a plot to show the hourly counts."""
         hist = self._stats.get_all_hourly_count(histogram)
         data = self._activity_distribution.get_all_hourly_count(histogram)
 
@@ -71,7 +76,8 @@ class Plot(object):
         ax.set_title('%s (count)' % histogram)
         ax.set_xlim(0, 7 * 24 - 1)
 
-        ax.plot(numpy.linspace(1, len(hist), len(hist)), hist, label='simulation')
+        ax.plot(numpy.linspace(1, len(hist), len(hist)), hist,
+                label='simulation')
         ax.plot(numpy.linspace(1, len(data), len(data)), data, label='data')
 
         _format_ax_line(ax)

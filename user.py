@@ -1,7 +1,8 @@
 """User simulation process."""
 
-import injector
 import logging
+
+import injector
 
 from activity_distribution import ActivityDistribution
 from agent import Agent

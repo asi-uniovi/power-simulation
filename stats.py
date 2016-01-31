@@ -5,7 +5,7 @@ import injector
 from activity_distribution import ActivityDistribution
 from base import Base
 from histogram import Histogram
-from module import Binder, CustomInjector, env_key
+from module import Binder, CustomInjector
 
 
 @injector.singleton
@@ -21,6 +21,7 @@ class Stats(Base):
 
     @property
     def _idle_timeout(self):
+        """Indicates the global idle timeout."""
         return self._activity_distribution.optimal_idle_timeout
 
     def user_satisfaction(self):

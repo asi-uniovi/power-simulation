@@ -1,8 +1,9 @@
 """Some useful statistical distributions."""
 
 import abc
-import numpy
 import random
+
+import numpy
 import statsmodels.api as sm
 
 
@@ -75,6 +76,7 @@ class EmpiricalDistribution(Distribution):
 
     @property
     def data(self):
+        """Returns the raw data of this distribution."""
         return self._data
 
     def rvs(self):
