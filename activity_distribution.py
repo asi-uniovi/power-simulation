@@ -2,11 +2,15 @@
 
 import collections
 import csv
-import functools
 import injector
 import math
 import numpy
 import logging
+
+try:
+    import functools
+except ImportError:
+    import functools32 as functools
 
 from base import Base
 from distribution import BernoulliDistribution
@@ -45,6 +49,11 @@ def _flatten_histogram(histogram):
                                                         sample_size=0)))
     assert len(ret) == 168, len(ret)
     return ret
+
+
+def _flatten_all_histogram(histogram):
+    """Makes a histogram completely flat."""
+    return [d for h in histogram.values() for i in h.values() for d in i.data]
 
 
 @injector.singleton
@@ -147,6 +156,15 @@ class ActivityDistribution(Base):
         ret = [i.sample_size for i in _flatten_histogram(
             self._resolve_histogram(key))]
         return ret
+
+    @property
+    @functools.lru_cache()
+    def optimal_idle_timeout(self):
+        """Calculates the value of the idle timer for a given satisfaction."""
+        hist = sorted(
+            _flatten_all_histogram(self._inactivity_intervals_histogram))
+        return hist[int(
+            self.get_config_int('target_satisfaction') * len(hist) / 100)]
 
     def _resolve_histogram(self, key):
         """Matches histograms and keys."""

@@ -2,22 +2,26 @@
 
 import injector
 
+from activity_distribution import ActivityDistribution
 from base import Base
 from histogram import Histogram
 from module import Binder, CustomInjector, env_key
 
 
 @injector.singleton
+@injector.inject(_activity_distribution=ActivityDistribution)
 class Stats(Base):
     """This is just a singleton dict with some helpers."""
 
     def __init__(self):
         super(Stats, self).__init__()
         self.__storage = {}
-        self._idle_timeout = self.get_config_int(
-            'idle_timeout', section='computer')
         self.__builder = CustomInjector(Binder()).get(
             injector.AssistedBuilder(cls=Histogram))
+
+    @property
+    def _idle_timeout(self):
+        return self._activity_distribution.optimal_idle_timeout
 
     def user_satisfaction(self):
         """Calculates de user satisfaction."""

@@ -60,6 +60,7 @@ class EmpiricalDistribution(Distribution):
         self._mean = numpy.mean(data)
         self._median = numpy.median(data)
         self._sample_size = len(data)
+        self._data = data
 
     @property
     def mean(self):
@@ -72,6 +73,10 @@ class EmpiricalDistribution(Distribution):
     @property
     def sample_size(self):
         return self._sample_size
+
+    @property
+    def data(self):
+        return self._data
 
     def rvs(self):
         return float(self._inverse(numpy.random.random()))

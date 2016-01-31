@@ -34,6 +34,10 @@ class Simulation(Base):
         """Sets up and starts a new simulation."""
         servers = self.get_config_int('servers')
         logger.info('Simulating %d users (%d s)', servers, self.simulation_time)
+        logger.info('Target user satisfaction %d%%',
+                    self.get_config_int('target_satisfaction'))
+        logger.info('Idle timeout will be %.2f s',
+                    self._activity_distribution.optimal_idle_timeout)
         self._env.process(self.__monitor_time())
         for _ in range(servers):
             self._env.process(CustomInjector(Binder()).get(User).run())

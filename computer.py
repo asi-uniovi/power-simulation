@@ -32,14 +32,16 @@ class Computer(Base):
     def __init__(self):
         super(Computer, self).__init__()
         self._status = ComputerStatus.on
-        self._idle_timeout = self.get_config_int(
-            'idle_timeout', section='computer')
         self._last_auto_shutdown = None
         self._idle_timer = self._env.process(self.idle_timer())
 
     @property
     def status(self):
         return self._status
+
+    @property
+    def _idle_timeout(self):
+        return self._activity_distribution.optimal_idle_timeout
 
     def change_status(self, status, interrupt_idle_timer=True):
         assert status != self.status
