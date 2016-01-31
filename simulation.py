@@ -40,27 +40,38 @@ class Simulation(Base):
         logger.info('Simulation starting')
         self._env.run(until=self.simulation_time)
         logger.info('Simulation ended at %d s', self._env.now)
+        self.__validate_results()
         self.__log_results()
+        logger.info('Run complete.')
 
     def __log_results(self):
         """Prints the final results of the simulation run."""
+        logger.info('User Satisfaction (US) = %.2f%%',
+                    self._stats.user_satisfaction())
+        logger.info('Removed Inactivity (RI) = %.2f%%',
+                    self._stats.removed_inactivity())
+        logger.info('Storing plots.')
+        self._plot.plot_all('USER_SHUTDOWN_TIME')
+        self._plot.plot_all('AUTO_SHUTDOWN_TIME')
+        self._plot.plot_all('ACTIVITY_TIME')
+        self._plot.plot_all('INACTIVITY_TIME')
+        self._plot.plot_all('IDLE_TIME')
+
+    def __validate_results(self):
         at = self._stats.sum_histogram('ACTIVITY_TIME') / self.servers
         ust = self._stats.sum_histogram('USER_SHUTDOWN_TIME') / self.servers
         it = self._stats.sum_histogram('INACTIVITY_TIME') / self.servers
         ast = self._stats.sum_histogram('AUTO_SHUTDOWN_TIME') / self.servers
         idt = self._stats.sum_histogram('IDLE_TIME') / self.servers
 
-        logger.info('Total = AT + IT + UST (1): %.2f%%',
-                    ((ust + at + it) / self.simulation_time - 1) * 100)
-        logger.info('Total = AT + IdT + AST + UST (2): %.2f%%',
-                    ((ust + at + idt + ast) / self.simulation_time - 1) * 100)
-        logger.info('IT = IdT + AST (3): %.2f%%', ((ast + idt) / it - 1)* 100.0)
+        if abs((ust + at + it) / self.simulation_time - 1) > 0.1:
+            logger.warning('Validation of total time (1) failed.')
 
-        self._plot.plot_all('USER_SHUTDOWN_TIME')
-        self._plot.plot_all('AUTO_SHUTDOWN_TIME')
-        self._plot.plot_all('ACTIVITY_TIME')
-        self._plot.plot_all('INACTIVITY_TIME')
-        self._plot.plot_all('IDLE_TIME')
+        if abs((ust + at + idt + ast) / self.simulation_time - 1) > 0.1:
+            logger.warning('Validation of total time (2) failed.')
+
+        if abs((ast + idt) / it - 1) > 0.01:
+            logger.warning('Validation of total inactivity failed.')
 
     def __monitor_time(self):
         """Indicates how te simulation is progressing."""

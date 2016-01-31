@@ -25,11 +25,15 @@ class Histogram(Base):
         super(Histogram, self).__init__()
         self.__cursor = conn.cursor()
         self.__name = name
+        self.__sum = 0
+        self.__count = 0
         self.__write_cache_ts = array.array('f')
         self.__write_cache_val = array.array('f')
 
     def append(self, timestamp, value):
         """Inserts into the histogram, just in cache for now."""
+        self.__sum += value
+        self.__count += 1
         self.__write_cache_ts.append(timestamp)
         self.__write_cache_val.append(value)
         if (len(self.__write_cache_ts)
@@ -63,6 +67,17 @@ class Histogram(Base):
         return self.__fetch_hourly()
 
     @lru_cache()
+    def get_all_histogram(self):
+        """Gets all the data from the histogram."""
+        self.flush()
+        self.__cursor.execute(
+            '''SELECT value
+                 FROM histogram
+                WHERE histogram = ?;''',
+            (self.__name,))
+        return [i['value'] for i in self.__cursor.fetchall()]
+
+    @lru_cache()
     def get_all_hourly_summaries(self, summaries):
         """Gets all the summaries per hour."""
         l = []
@@ -90,16 +105,25 @@ class Histogram(Base):
         d = dict(self.__cursor.fetchall())
         return [d.get(i, 0) for i in range(168)]
 
-    @lru_cache()
     def sum_histogram(self):
         """Sums up all the elements of this histogram."""
+        return self.__sum
+
+    def count_histogram(self):
+        """Counts the number of elements in this histogram."""
+        return self.__count
+
+    @lru_cache()
+    def get_count_lower_than(self, x):
+        """Counts the number of elements with value lower than x."""
         self.flush()
         self.__cursor.execute(
-            '''SELECT SUM(value) AS sum
+            '''SELECT COUNT(*) AS count
                  FROM histogram
-                WHERE histogram = ?;''',
-            (self.__name,))
-        return float(self.__cursor.fetchone()['sum'])
+                WHERE histogram = ?
+                      AND value < ?;''',
+            (self.__name, x))
+        return int(self.__cursor.fetchone()['count'])
 
     def __fetch_hourly(self):
         """Groups by hour and fills in the hours with no data."""
@@ -133,8 +157,6 @@ def create_histogram_tables(conn):
         );''')
     cursor.execute(
         'CREATE INDEX i_histogram ON histogram(histogram);')
-    cursor.execute(
-        'CREATE INDEX i_histogram_hour ON histogram(histogram, hour);')
     cursor.execute('''
         CREATE TRIGGER t_hour AFTER INSERT ON histogram
         FOR EACH ROW BEGIN
