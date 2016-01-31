@@ -3,11 +3,10 @@
 import abc
 import numpy
 import random
-import six
 import statsmodels.api as sm
 
 
-class Distribution(six.with_metaclass(abc.ABCMeta)):
+class Distribution(object, metaclass=abc.ABCMeta):
     """Base distribution class."""
 
     @property

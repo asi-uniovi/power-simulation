@@ -1,17 +1,13 @@
 """Database backed histogram."""
 
 import array
+import functools
 import gc
 import injector
 import itertools
 import numpy
 import operator
 import sqlite3
-
-try:
-    from functools import lru_cache
-except ImportError:
-    from functools32 import lru_cache
 
 from base import Base
 from static import WEEK
@@ -54,7 +50,7 @@ class Histogram(Base):
             gc.collect()
         assert len(self.__write_cache_ts) == len(self.__write_cache_val)
 
-    @lru_cache()
+    @functools.lru_cache()
     def get_all_hourly_histograms(self):
         """Gets all the subhistograms per hour."""
         self.flush()
@@ -66,7 +62,7 @@ class Histogram(Base):
             (self.__name,))
         return self.__fetch_hourly()
 
-    @lru_cache()
+    @functools.lru_cache()
     def get_all_histogram(self):
         """Gets all the data from the histogram."""
         self.flush()
@@ -77,7 +73,7 @@ class Histogram(Base):
             (self.__name,))
         return [i['value'] for i in self.__cursor.fetchall()]
 
-    @lru_cache()
+    @functools.lru_cache()
     def get_all_hourly_summaries(self, summaries):
         """Gets all the summaries per hour."""
         l = []
@@ -91,7 +87,7 @@ class Histogram(Base):
             l.append(d)
         return l
 
-    @lru_cache()
+    @functools.lru_cache()
     def get_all_hourly_count(self):
         """Gets all the count per hour."""
         self.flush()
@@ -113,7 +109,7 @@ class Histogram(Base):
         """Counts the number of elements in this histogram."""
         return self.__count
 
-    @lru_cache()
+    @functools.lru_cache()
     def get_count_lower_than(self, x):
         """Counts the number of elements with value lower than x."""
         self.flush()

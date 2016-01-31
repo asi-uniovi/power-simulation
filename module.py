@@ -5,22 +5,16 @@ import sqlite3
 
 import injector
 import simpy
-import six
 
 from singleton import Singleton
 from static import KB, MB
-
-try:
-    FileNotFoundError
-except NameError:
-    FileNotFoundError = EnvironmentError
 
 
 config_key = injector.Key('config')
 env_key = injector.Key('env')
 
 
-class Binder(six.with_metaclass(Singleton, injector.Module)):
+class Binder(injector.Module, metaclass=Singleton):
     """This binds all the types needed on the simulation."""
 
     def __init__(self, config=None):
@@ -55,5 +49,5 @@ class Binder(six.with_metaclass(Singleton, injector.Module)):
         return conn
 
 
-class CustomInjector(six.with_metaclass(Singleton, injector.Injector)):
+class CustomInjector(injector.Injector, metaclass=Singleton):
     """This is just a singleton Injector."""

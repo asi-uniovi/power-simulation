@@ -2,15 +2,11 @@
 
 import collections
 import csv
+import functools
 import injector
 import math
 import numpy
 import logging
-
-try:
-    import functools
-except ImportError:
-    import functools32 as functools
 
 from base import Base
 from distribution import BernoulliDistribution
