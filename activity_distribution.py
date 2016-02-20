@@ -195,12 +195,15 @@ class ActivityDistribution(Base):
                     data = numpy.asarray(data)
                     if len(data) == 0:
                         continue
-                    if distr is None:
+                    fdistr = distr
+                    if fdistr is None:
                         if len(data) > 1:
-                            distr = EmpiricalDistribution
+                            fdistr = EmpiricalDistribution
                         elif len(data) == 1:
-                            distr = DiscreteUniformDistribution
-                    histogram.setdefault(day, {})[hour] = distr(*data)
+                            fdistr = DiscreteUniformDistribution
+                        else:
+                            raise RuntimeError('Cannot fit non-intervals.')
+                    histogram.setdefault(day, {})[hour] = fdistr(*data)
                     logger.debug('Fitted distribution for %s %s', day, hour)
                 return histogram
             except csv.Error as error:

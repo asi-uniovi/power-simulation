@@ -48,6 +48,14 @@ class DiscreteUniformDistribution(Distribution):
         super(DiscreteUniformDistribution, self).__init__()
         self._data = data
 
+    @property
+    def mean(self):
+        return numpy.mean(self._data)
+
+    @property
+    def median(self):
+        return numpy.median(self._data)
+
     def rvs(self):
         return self.xrvs(1)[0]
 
