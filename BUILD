@@ -40,7 +40,10 @@ filegroup(
 
 filegroup(
     name = "data",
-    srcs = glob(["data/*.csv"]),
+    srcs = glob([
+        "data/*.csv",
+        "data/*.json",
+    ]),
 )
 
 py_library(
