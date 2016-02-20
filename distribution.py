@@ -34,6 +34,13 @@ class Distribution(object, metaclass=abc.ABCMeta):
         return numpy.asarray([self.rvs() for _ in range(n)])
 
 
+class NullDistribution(Distribution):
+    """Undefined distribution."""
+
+    def __init__(self, *data):
+        super(NullDistribution, self).__init__()
+
+
 class DiscreteUniformDistribution(Distribution):
     """Uniform distribution over a set of values."""
 
