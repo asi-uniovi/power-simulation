@@ -3,6 +3,7 @@
 import collections
 import csv
 import functools
+import json
 import logging
 import math
 import numpy
@@ -13,6 +14,7 @@ from base import Base
 from distribution import BernoulliDistribution
 from distribution import DiscreteUniformDistribution
 from distribution import EmpiricalDistribution
+from distribution import NullDistribution
 from static import HOUR, DAY, DAYS, WEEK
 
 logger = logging.getLogger(__name__)
@@ -73,14 +75,26 @@ class ActivityDistribution(Base):
         self._xmin = float(inactivity('xmin'))
         self._xmax = float(inactivity('xmax'))
         self._noise_threshold = float(inactivity('noise_threshold'))
+
+        if self.simulating_per_pc:
+            self._inactivity_intervals_histogram = self.__load_and_fit2(
+                inactivity('per_pc_file'), do_filter=True)
+        else:
+            self._inactivity_intervals_histogram = self.__load_and_fit(
+                inactivity('intervals_file'), do_filter=True)
+
         self._activity_intervals_histogram = self.__load_and_fit(
             activity('intervals_file'))
-        self._inactivity_intervals_histogram = self.__load_and_fit(
-            inactivity('intervals_file'), do_filter=True)
         self._off_intervals_histogram = self.__load_and_fit(
             shutdown('intervals_file'), do_filter=True)
         self._off_probability_histogram = self.__load_and_fit(
             shutdown('probability_file'), BernoulliDistribution)
+
+    @property
+    def servers(self):
+        if self.simulating_per_pc:
+            return self._servers
+        return self.get_config_int('servers')
 
     def random_activity_for_hour(self, day, hour):
         """Queries the activity distribution and generates a random sample."""
@@ -98,10 +112,10 @@ class ActivityDistribution(Base):
         """Queries the activity distribution and generates a random sample."""
         return self.random_activity_for_hour(*timestamp_to_day(timestamp))
 
-    def random_inactivity_for_hour(self, day, hour):
+    def random_inactivity_for_hour(self, cid, day, hour):
         """Queries the activity distribution and generates a random sample."""
-        distribution = _distribution_for_hour(
-            self._inactivity_intervals_histogram, day, hour)
+        hist = self._get_histogram(self._inactivity_intervals_histogram, cid)
+        distribution = _distribution_for_hour(hist, day, hour)
         if distribution is not None:
             rnd_inactivity = distribution.rvs()
             if self._noise_threshold is not None:
@@ -112,9 +126,10 @@ class ActivityDistribution(Base):
 
         raise RuntimeError('Distribution undefined for {} {}'.format(day, hour))
 
-    def random_inactivity_for_timestamp(self, timestamp):
+    def random_inactivity_for_timestamp(self, cid, timestamp):
         """Queries the activity distribution and generates a random sample."""
-        return self.random_inactivity_for_hour(*timestamp_to_day(timestamp))
+        return self.random_inactivity_for_hour(
+            cid, *timestamp_to_day(timestamp))
 
     def shutdown_for_hour(self, day, hour):
         """Determines whether a computer should turndown or not."""
@@ -154,12 +169,13 @@ class ActivityDistribution(Base):
             self._resolve_histogram(key))]
         return ret
 
-    @property
     @functools.lru_cache()
-    def optimal_idle_timeout(self):
+    def optimal_idle_timeout(self, cid):
         """Calculates the value of the idle timer for a given satisfaction."""
-        hist = sorted(
-            _flatten_all_histogram(self._inactivity_intervals_histogram))
+        hist = sorted(_flatten_all_histogram(
+            self._get_histogram(self._inactivity_intervals_histogram, cid)))
+        if len(hist) == 0:
+            return self.get_config_int('default_timeout')
         return hist[int(
             self.get_config_int('target_satisfaction') * len(hist) / 100)]
 
@@ -176,6 +192,12 @@ class ActivityDistribution(Base):
         elif key == 'IDLE_TIME':
             return None
         raise KeyError('Invalid key for histogram.')
+
+    def _get_histogram(self, hist, cid):
+        """Resolves histogram on a per PC world."""
+        if self.simulating_per_pc:
+            return hist[cid]
+        return hist
 
     def __load_and_fit(self, filename, distr=None, do_filter=False):
         """Parses the CSV with the trace formatted {day, hour, inactivity+}."""
@@ -209,3 +231,33 @@ class ActivityDistribution(Base):
             except csv.Error as error:
                 raise RuntimeError(('Error reading {}:{}: {}'
                                     .format(filename, trace.line_num, error)))
+
+    def __load_and_fit2(self, filename, distr=None, do_filter=False):
+        """Parses the JSON with the trace per PC. Experimental."""
+        logger.info('Parsing and fitting per PC distributions.')
+        with open(filename) as raw_trace:
+            trace = json.load(raw_trace)
+            self._servers = len(trace)
+            histograms = []
+            for pc in trace:
+                histogram = {}
+                for item in pc['data']:
+                    day = DAYS[item['Day']]
+                    hour = int(item['Hour'])
+                    data = [float(j) for j in item['Intervals']]
+                    if do_filter:
+                        data = [i for i in data
+                                if self._xmin <= i <= self._xmax]
+                    data = numpy.asarray(data)
+                    fdistr = distr
+                    if fdistr is None:
+                        if len(data) > 1:
+                            fdistr = EmpiricalDistribution
+                        elif len(data) == 1:
+                            fdistr = DiscreteUniformDistribution
+                        else:
+                            fdistr = NullDistribution
+                    histogram.setdefault(day, {})[hour] = fdistr(*data)
+                    logger.debug('Fitted distribution for %s %s', day, hour)
+                histograms.append(histogram)
+            return histograms

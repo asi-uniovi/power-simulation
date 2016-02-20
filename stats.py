@@ -1,6 +1,7 @@
 """Simulation stats container."""
 
 import injector
+import numpy
 
 from activity_distribution import ActivityDistribution
 from base import Base
@@ -22,7 +23,8 @@ class Stats(Base):
     @property
     def _idle_timeout(self):
         """Indicates the global idle timeout."""
-        return self._activity_distribution.optimal_idle_timeout
+        return numpy.mean([self._activity_distribution.optimal_idle_timeout(cid)
+                           for cid in range(self._activity_distribution.servers)])
 
     def user_satisfaction(self):
         """Calculates de user satisfaction."""

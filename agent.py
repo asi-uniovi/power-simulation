@@ -39,7 +39,7 @@ class Agent(Base):
     def __fraction_to_shutdown(self):
         """Indicates how many PCs we should be turning down right now."""
         return round(self._activity_distribution.shutdown_for_timestamp(
-            self._env.now) * self.get_config_int('servers'))
+            self._env.now) * self._activity_distribution.servers)
 
     def __upgrade_loop(self):
         """Upgrades the configuration for the target turndown for this hour."""

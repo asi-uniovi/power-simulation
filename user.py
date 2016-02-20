@@ -41,7 +41,7 @@ class User(Base):
             else:
                 inactivity_time = (
                     self._activity_distribution.random_inactivity_for_timestamp(
-                        self._env.now))
+                        self._computer.id, self._env.now))
                 yield self._env.timeout(inactivity_time)
                 self._stats.append('INACTIVITY_TIME', inactivity_time,
                                    timestamp=now)

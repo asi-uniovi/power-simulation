@@ -40,6 +40,25 @@ class NullDistribution(Distribution):
     def __init__(self, *data):
         super(NullDistribution, self).__init__()
 
+    @property
+    def mean(self):
+        return 0
+
+    @property
+    def median(self):
+        return 0
+
+    def rvs(self):
+        return 0
+
+    @property
+    def sample_size(self):
+        return 0
+
+    @property
+    def data(self):
+        return []
+
 
 class DiscreteUniformDistribution(Distribution):
     """Uniform distribution over a set of values."""
@@ -61,6 +80,11 @@ class DiscreteUniformDistribution(Distribution):
 
     def xrvs(self, n):
         return random.sample(self._data, n)
+
+    @property
+    def data(self):
+        """Returns the raw data of this distribution."""
+        return self._data
 
     @property
     def sample_size(self):

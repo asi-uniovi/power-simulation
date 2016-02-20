@@ -29,9 +29,11 @@ class Computer(Base):
 
     Server with configurable exponential serving rate.
     """
+    __computer_id_count = -1
 
     def __init__(self):
         super(Computer, self).__init__()
+        self.__computer_id = Computer.new_computer_id()
         self._status = ComputerStatus.on
         self._last_auto_shutdown = None
         self._idle_timer = self._env.process(self.idle_timer())
@@ -42,9 +44,14 @@ class Computer(Base):
         return self._status
 
     @property
+    def id(self):
+        return self.__computer_id
+
+    @property
     def _idle_timeout(self):
         """Indicates this computer idle time."""
-        return self._activity_distribution.optimal_idle_timeout
+        return self._activity_distribution.optimal_idle_timeout(
+            self.__computer_id)
 
     def change_status(self, status, interrupt_idle_timer=True):
         """Changes the state of the computer, and takes any side action."""
@@ -89,3 +96,9 @@ class Computer(Base):
                 self._stats.append('IDLE_TIME', self._env.now - idle_start,
                                    timestamp=idle_start)
                 return
+
+    @classmethod
+    def new_computer_id(cls):
+        """Creates a new computer ID."""
+        cls.__computer_id_count += 1
+        return cls.__computer_id_count

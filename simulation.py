@@ -28,19 +28,16 @@ class Simulation(Base):
 
     @property
     def servers(self):
-        """Gets the server count from the config."""
-        return self.get_config_int('servers')
+        return self._activity_distribution.servers
 
     def run(self):
         """Sets up and starts a new simulation."""
-        servers = self.get_config_int('servers')
-        logger.info('Simulating %d users (%d s)', servers, self.simulation_time)
+        logger.info('Simulating %d users (%d s)',
+                    self.servers, self.simulation_time)
         logger.info('Target user satisfaction %d%%',
                     self.get_config_int('target_satisfaction'))
-        logger.info('Idle timeout will be %.2f s',
-                    self._activity_distribution.optimal_idle_timeout)
         self._env.process(self.__monitor_time())
-        for _ in range(servers):
+        for _ in range(self.servers):
             self._env.process(CustomInjector(Binder()).get(User).run())
         logger.info('Simulation starting')
         self._env.run(until=self.simulation_time)
