@@ -10,9 +10,15 @@ from module import config_key, env_key
 class Base(object, metaclass=abc.ABCMeta):
     """An abstract class with all the basic methods we need across."""
 
-    def config_exists(self, key):
+    @property
+    def simulating_per_pc(self):
         """Indicates if a config key is defined."""
-        return key in self._config
+        return self.config_exists('per_pc_file',
+                                  section='inactivity_distribution')
+
+    def config_exists(self, key, section='simulation'):
+        """Indicates if a config key is defined."""
+        return key in self._config[section]
 
     def get_config(self, key, section='simulation'):
         """Retrieves a key from the configuration."""
