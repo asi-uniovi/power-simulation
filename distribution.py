@@ -45,6 +45,7 @@ class DiscreteUniformDistribution(Distribution):
     """Uniform distribution over a set of values."""
 
     def __init__(self, *data):
+        super(DiscreteUniformDistribution, self).__init__()
         self._data = data
 
     def rvs(self):
@@ -62,6 +63,7 @@ class EmpiricalDistribution(Distribution):
     """Empirical distribution according to the data provided."""
 
     def __init__(self, *data):
+        super(EmpiricalDistribution, self).__init__()
         ecdf = sm.distributions.ECDF(numpy.array(data, copy=True))
         self._inverse = sm.distributions.monotone_fn_inverter(ecdf, ecdf.x)
         self._mean = numpy.mean(data)
@@ -94,6 +96,7 @@ class BinomialDistribution(Distribution):
     """The binomial distribution."""
 
     def __init__(self, N, p):
+        super(BinomialDistribution, self).__init__()
         self._N = N
         self._p = p
 
