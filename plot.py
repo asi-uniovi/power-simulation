@@ -1,5 +1,6 @@
 """Summarizes the stats collected during the simulation in plots."""
 
+import logging
 import operator
 
 import injector
@@ -11,6 +12,8 @@ from activity_distribution import ActivityDistribution
 from stats import Stats
 from static import DAYS
 
+logger = logging.getLogger(__name__)
+
 
 @injector.inject(_activity_distribution=ActivityDistribution, _stats=Stats)
 class Plot(object):
@@ -18,9 +21,12 @@ class Plot(object):
 
     def plot_all(self, histogram):
         """Plots all the available plots."""
-        self.plot_hourly_histogram_count(histogram)
-        self.plot_mean_medians_comparison(histogram)
-        self.plot_hourly_histogram_quantiles(histogram)
+        try:
+            self.plot_hourly_histogram_count(histogram)
+            self.plot_mean_medians_comparison(histogram)
+            self.plot_hourly_histogram_quantiles(histogram)
+        except KeyError:
+            logger.warning('Histogram %s produced no plot.', histogram)
 
     def plot_hourly_histogram_quantiles(
             self, histogram, quantiles=(50, 75, 80, 90, 95, 99)):

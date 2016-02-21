@@ -36,6 +36,8 @@ class Simulation(Base):
                     self.servers, self.simulation_time)
         logger.info('Target user satisfaction %d%%',
                     self.get_config_int('target_satisfaction'))
+        logger.info('Global timeout will be %.2f s',
+                    self._activity_distribution.global_idle_timeout())
         self._env.process(self.__monitor_time())
         for _ in range(self.servers):
             self._env.process(CustomInjector(Binder()).get(User).run())

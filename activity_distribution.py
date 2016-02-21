@@ -39,6 +39,7 @@ def _flatten_histogram(histogram):
     if histogram is None:
         return []
 
+    # TODO: use distributions.NullDistrbution for this.
     null = collections.namedtuple('null', ['mean', 'median', 'sample_size'])
     ret = []
     for day in range(7):
@@ -48,11 +49,6 @@ def _flatten_histogram(histogram):
                                                              sample_size=0)))
     assert len(ret) == 168, len(ret)
     return ret
-
-
-def _flatten_all_histogram(histogram):
-    """Makes a histogram completely flat."""
-    return [d for h in histogram.values() for i in h.values() for d in i.data]
 
 
 @injector.singleton
@@ -160,22 +156,36 @@ class ActivityDistribution(Base):
 
     def get_all_hourly_summaries(self, key, summaries=('mean', 'median')):
         """Returns the summaries per hour."""
+        if isinstance(self._resolve_histogram(key), list):
+            return [{s: getattr(i, s) for s in summaries}
+                    for i in _flatten_histogram(self._resolve_histogram(key)[0])]
         return [{s: getattr(i, s) for s in summaries}
                 for i in _flatten_histogram(self._resolve_histogram(key))]
 
     def get_all_hourly_count(self, key):
         """Returns the count of items per hourly subhistogram."""
-        ret = [i.sample_size for i in _flatten_histogram(
-            self._resolve_histogram(key))]
-        return ret
+        if isinstance(self._resolve_histogram(key), list):
+            return [i.sample_size
+                    for h in self._resolve_histogram(key)
+                    for i in _flatten_histogram(h)]
+        return [i.sample_size
+                for i in _flatten_histogram(self._resolve_histogram(key))]
 
     @functools.lru_cache()
     def optimal_idle_timeout(self, cid):
         """Calculates the value of the idle timer for a given satisfaction."""
-        hist = sorted(_flatten_all_histogram(
+        hist = sorted(self._flatten_all_histogram(
             self._get_histogram(self._inactivity_intervals_histogram, cid)))
         if len(hist) == 0:
             return self.get_config_int('default_timeout')
+        return hist[int(
+            self.get_config_int('target_satisfaction') * len(hist) / 100)]
+
+    @functools.lru_cache()
+    def global_idle_timeout(self):
+        """Calculates the value of the idle timer for a given satisfaction."""
+        hist = sorted(self._flatten_all_histogram(
+            self._inactivity_intervals_histogram))
         return hist[int(
             self.get_config_int('target_satisfaction') * len(hist) / 100)]
 
@@ -198,6 +208,13 @@ class ActivityDistribution(Base):
         if self.simulating_per_pc:
             return hist[cid]
         return hist
+
+    def _flatten_all_histogram(self, hist):
+        """Makes a histogram completely flat."""
+        if isinstance(hist, list):
+            return [d for pc in hist for h in pc.values() for i in h.values()
+                    for d in i.data]
+        return [d for h in hist.values() for i in h.values() for d in i.data]
 
     def __load_and_fit(self, filename, distr=None, do_filter=False):
         """Parses the CSV with the trace formatted {day, hour, inactivity+}."""

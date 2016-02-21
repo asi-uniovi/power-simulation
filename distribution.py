@@ -49,7 +49,7 @@ class NullDistribution(Distribution):
         return 0
 
     def rvs(self):
-        return 0
+        return 0.001
 
     @property
     def sample_size(self):
