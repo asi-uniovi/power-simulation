@@ -61,6 +61,7 @@ class Computer(Base):
 
     def serve(self):
         """Serve and count the amount of requests completed."""
+        logger.debug('TEST of CI, revert')
         if self._status != ComputerStatus.on:
             self.change_status(ComputerStatus.on)
         if self._idle_timer.is_alive:
