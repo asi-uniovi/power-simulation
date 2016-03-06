@@ -9,15 +9,6 @@ py_library(
 )
 
 py_library(
-    name = "agent",
-    srcs = ["agent.py"],
-    deps = [
-        ":activity_distribution",
-        ":base",
-    ],
-)
-
-py_library(
     name = "base",
     srcs = ["base.py"],
     deps = [":module"],
@@ -41,7 +32,6 @@ filegroup(
 filegroup(
     name = "data",
     srcs = glob([
-        "data/*.csv",
         "data/*.json",
     ]),
 )
@@ -128,7 +118,6 @@ py_library(
     srcs = ["user.py"],
     deps = [
         ":activity_distribution",
-        ":agent",
         ":base",
         ":computer",
         ":module",

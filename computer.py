@@ -33,72 +33,75 @@ class Computer(Base):
 
     def __init__(self):
         super(Computer, self).__init__()
-        self.__computer_id = Computer.new_computer_id()
-        self._status = ComputerStatus.on
-        self._last_auto_shutdown = None
-        self._idle_timer = self._env.process(self.idle_timer())
+        self.__computer_id = self._activity_distribution.servers[
+            Computer.__new_computer_id()]
+        self.__status = ComputerStatus.on
+        self.__last_auto_shutdown = None
+        self.__idle_timer = self._env.process(self.__idle_timer_runner())
 
     @property
     def status(self):
         """Indicates the computer status."""
-        return self._status
+        return self.__status
 
     @property
-    def id(self):
+    def cid(self):
+        """Read only computer ID."""
         return self.__computer_id
-
-    @property
-    def _idle_timeout(self):
-        """Indicates this computer idle time."""
-        return self._activity_distribution.optimal_idle_timeout(
-            self.__computer_id)
 
     def change_status(self, status, interrupt_idle_timer=True):
         """Changes the state of the computer, and takes any side action."""
-        assert status != self.status
-        logger.debug('change status %s -> %s', self._status, status)
-        if interrupt_idle_timer and self._idle_timer.is_alive:
-            self._idle_timer.interrupt()
-        if status == ComputerStatus.on and self._last_auto_shutdown is not None:
+        assert status != self.__status
+        logger.debug('change status %s -> %s', self.__status, status)
+        if interrupt_idle_timer and self.__idle_timer.is_alive:
+            self.__idle_timer.interrupt()
+        if (status == ComputerStatus.on
+            and self.__last_auto_shutdown is not None):
             self._stats.append('AUTO_SHUTDOWN_TIME',
-                               self._env.now - self._last_auto_shutdown,
-                               timestamp=self._last_auto_shutdown)
-            self._last_auto_shutdown = None
-        self._status = status
+                               self._env.now - self.__last_auto_shutdown,
+                               timestamp=self.__last_auto_shutdown)
+            self.__last_auto_shutdown = None
+        self.__status = status
 
     def serve(self):
         """Serve and count the amount of requests completed."""
-        logger.debug('TEST of CI, revert')
-        if self._status != ComputerStatus.on:
+        if self.__status != ComputerStatus.on:
             self.change_status(ComputerStatus.on)
-        if self._idle_timer.is_alive:
-            self._idle_timer.interrupt()
+        if self.__idle_timer.is_alive:
+            self.__idle_timer.interrupt()
         activity_time = (
             self._activity_distribution.random_activity_for_timestamp(
-                self._env.now))
+                self.__computer_id, self._env.now))
+        assert activity_time > 0, activity_time
         now = self._env.now
         yield self._env.timeout(activity_time)
         self._stats.append('ACTIVITY_TIME', activity_time, timestamp=now)
-        self._idle_timer = self._env.process(self.idle_timer())
+        self.__idle_timer = self._env.process(self.__idle_timer_runner())
 
-    def idle_timer(self):
+    @property
+    def __idle_timeout(self):
+        """Indicates this computer idle time."""
+        idle = self._activity_distribution.optimal_idle_timeout(
+            self.__computer_id)
+        assert idle > 0, idle
+        return idle
+
+    def __idle_timer_runner(self):
         """Process for the idle timer control."""
-        while True:
-            try:
-                idle_start = self._env.now
-                yield self._env.timeout(self._idle_timeout)
-                self.change_status(ComputerStatus.off,
-                                   interrupt_idle_timer=False)
-                self._last_auto_shutdown = self._env.now
-            except simpy.Interrupt:
-                pass
-            finally:
-                self._stats.append('IDLE_TIME', self._env.now - idle_start,
-                                   timestamp=idle_start)
-                return
+        try:
+            idle_start = self._env.now
+            yield self._env.timeout(self.__idle_timeout)
+            self.change_status(ComputerStatus.off,
+                               interrupt_idle_timer=False)
+            self.__last_auto_shutdown = self._env.now
+        except simpy.Interrupt:
+            pass
+        finally:
+            self._stats.append('IDLE_TIME', self._env.now - idle_start,
+                               timestamp=idle_start)
 
     @classmethod
-    def new_computer_id(cls):
+    def __new_computer_id(cls):
         """Creates a new computer ID."""
         cls.__computer_id_count += 1
         return cls.__computer_id_count

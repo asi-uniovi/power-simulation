@@ -10,20 +10,24 @@ import statsmodels.api as sm
 class Distribution(object, metaclass=abc.ABCMeta):
     """Base distribution class."""
 
+    def __init__(self, sample_size, data):
+        self.__data = data
+        self.__sample_size = sample_size
+
     @property
     def mean(self):
-        """Expected value for the distribution."""
-        raise NotImplementedError
+        """Expected value of the distribution."""
+        return numpy.mean(self.data)
 
     @property
     def median(self):
-        """Expected 50th percentile for the distribution."""
-        raise NotImplementedError
+        """Median of the distribution."""
+        return numpy.median(self.data)
 
     @property
     def sample_size(self):
-        """Number of items used for the fit."""
-        raise NotImplementedError
+        """How much data we got for this distribution."""
+        return self.__sample_size
 
     def rvs(self):
         """This samples the distribution for one value."""
@@ -33,119 +37,65 @@ class Distribution(object, metaclass=abc.ABCMeta):
         """Sample the distribution several times."""
         return numpy.asarray([self.rvs() for _ in range(n)])
 
-
-class NullDistribution(Distribution):
-    """Undefined distribution."""
-
-    def __init__(self, *data):
-        super(NullDistribution, self).__init__()
-
-    @property
-    def mean(self):
-        return 0
-
-    @property
-    def median(self):
-        return 0
-
-    def rvs(self):
-        return 0.001
-
-    @property
-    def sample_size(self):
-        return 0
-
     @property
     def data(self):
-        return []
+        """Returns the sample data used for the fitting."""
+        return self.__data
 
 
 class DiscreteUniformDistribution(Distribution):
     """Uniform distribution over a set of values."""
 
-    def __init__(self, *data):
-        super(DiscreteUniformDistribution, self).__init__()
-        self._data = data
-
-    @property
-    def mean(self):
-        return numpy.mean(self._data)
-
-    @property
-    def median(self):
-        return numpy.median(self._data)
+    def __init__(self, sample_size, *data):
+        super(DiscreteUniformDistribution, self).__init__(sample_size, data)
 
     def rvs(self):
+        """One item from the sample."""
         return self.xrvs(1)[0]
 
     def xrvs(self, n):
-        return random.sample(self._data, n)
-
-    @property
-    def data(self):
-        """Returns the raw data of this distribution."""
-        return self._data
-
-    @property
-    def sample_size(self):
-        return len(self._data)
+        """Just get a sample with the repetition from the data."""
+        return random.sample(self.data, n)
 
 
 class EmpiricalDistribution(Distribution):
     """Empirical distribution according to the data provided."""
 
-    def __init__(self, *data):
-        super(EmpiricalDistribution, self).__init__()
+    def __init__(self, sample_size, *data):
+        super(EmpiricalDistribution, self).__init__(sample_size, data)
         ecdf = sm.distributions.ECDF(numpy.array(data, copy=True))
-        self._inverse = sm.distributions.monotone_fn_inverter(ecdf, ecdf.x)
-        self._mean = numpy.mean(data)
-        self._median = numpy.median(data)
-        self._sample_size = len(data)
-        self._data = data
-
-    @property
-    def mean(self):
-        return self._mean
-
-    @property
-    def median(self):
-        return self._median
-
-    @property
-    def sample_size(self):
-        return self._sample_size
-
-    @property
-    def data(self):
-        """Returns the raw data of this distribution."""
-        return self._data
+        self.__inverse = sm.distributions.monotone_fn_inverter(ecdf, ecdf.x)
 
     def rvs(self):
-        return float(self._inverse(numpy.random.random()))
+        """Sample the inverse and try again in nan."""
+        ret = float(self.__inverse(numpy.random.random()))
+        while numpy.isnan(ret):
+            ret = float(self.__inverse(numpy.random.random()))
+        return ret
 
 
 class BinomialDistribution(Distribution):
     """The binomial distribution."""
 
     def __init__(self, N, p):
-        super(BinomialDistribution, self).__init__()
-        self._N = N
-        self._p = p
+        super(BinomialDistribution, self).__init__(0, [])
+        self.__N = N
+        self.__p = p
 
     @property
     def mean(self):
-        return self._N * self._p
+        return self.__N * self.__p
 
     @property
     def median(self):
         # https://dx.doi.org/10.1111%2Fj.1467-9574.1980.tb00681.x
-        return round(self._N * self._p)
+        return round(self.__N * self.__p)
 
     def rvs(self):
         return self.xrvs(1)[0]
 
     def xrvs(self, n):
-        return numpy.random.binomial(self._N, self._p, n)
+        return numpy.random.binomial(self.__N, self.__p, n)
 
 
 class BernoulliDistribution(BinomialDistribution):

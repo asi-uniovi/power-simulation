@@ -21,28 +21,28 @@ logger = logging.getLogger(__name__)
 class Simulation(Base):
     """Constructs the system and runs the simulation."""
 
-    @property
-    def simulation_time(self):
-        """Gets the simulation time from the config."""
-        return self.get_config_int('simulation_time')
+    def __init__(self):
+        super(Simulation, self).__init__()
+        self.__simulation_time = self.get_config_int('simulation_time')
+        self.__target_satisfaction = self.get_config_int('target_satisfaction')
 
     @property
     def servers(self):
-        return self._activity_distribution.servers
+        """Number of servers being simulated."""
+        return len(self._activity_distribution.servers)
 
     def run(self):
         """Sets up and starts a new simulation."""
         logger.info('Simulating %d users (%d s)',
-                    self.servers, self.simulation_time)
-        logger.info('Target user satisfaction %d%%',
-                    self.get_config_int('target_satisfaction'))
-        logger.info('Global timeout will be %.2f s',
+                    self.servers, self.__simulation_time)
+        logger.info('Target user satisfaction %d%%', self.__target_satisfaction)
+        logger.info('Average global timeout would be %.2f s',
                     self._activity_distribution.global_idle_timeout())
         self._env.process(self.__monitor_time())
         for _ in range(self.servers):
             self._env.process(CustomInjector(Binder()).get(User).run())
         logger.info('Simulation starting')
-        self._env.run(until=self.simulation_time)
+        self._env.run(until=self.__simulation_time)
         logger.info('Simulation ended at %d s', self._env.now)
         self.__validate_results()
         self.__log_results()
@@ -69,10 +69,10 @@ class Simulation(Base):
         ast = self._stats.sum_histogram('AUTO_SHUTDOWN_TIME') / self.servers
         idt = self._stats.sum_histogram('IDLE_TIME') / self.servers
 
-        if abs((ust + at + it) / self.simulation_time - 1) > 0.1:
+        if abs((ust + at + it) / self.__simulation_time - 1) > 0.1:
             logger.warning('Validation of total time (1) failed.')
 
-        if abs((ust + at + idt + ast) / self.simulation_time - 1) > 0.1:
+        if abs((ust + at + idt + ast) / self.__simulation_time - 1) > 0.1:
             logger.warning('Validation of total time (2) failed.')
 
         if abs((ast + idt) / it - 1) > 0.01:
@@ -82,8 +82,8 @@ class Simulation(Base):
         """Indicates how te simulation is progressing."""
         while True:
             logger.info('%.2f%% completed',
-                        self._env.now / self.simulation_time * 100.0)
-            yield self._env.timeout(self.simulation_time / 10.0)
+                        self._env.now / self.__simulation_time * 100.0)
+            yield self._env.timeout(self.__simulation_time / 10.0)
 
 
 def runner(config):
