@@ -31,7 +31,7 @@ def previous_hour(day, hour):
         hour = 23
         day -= 1
         if day < 0:
-            day = 0
+            day = 6
     assert 0 <= day <= 6, day
     assert 0 <= hour <= 23, hour
     return day, hour
@@ -316,9 +316,8 @@ class ActivityDistribution(Base):
         if sample_size != len(data):
             logger.debug('process(): elements filtered out: %d -> %d',
                          sample_size, len(data))
-        if len(data) > 1:
+        if len(set(data)) > 1:
             return EmpiricalDistribution(sample_size, *data)
-        elif len(data) == 1:
+        elif len(data) > 0:
             return DiscreteUniformDistribution(sample_size, *data)
-        else:
-            return None
+        return None

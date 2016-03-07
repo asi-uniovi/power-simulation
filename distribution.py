@@ -68,6 +68,8 @@ class EmpiricalDistribution(Distribution):
 
     def rvs(self):
         """Sample the inverse and try again in nan."""
+        # TODO(m3drano): This might just block in a NaN if the distribution is
+        # malformed, for instance when it has only one value.
         ret = float(self.__inverse(numpy.random.random()))
         while numpy.isnan(ret):
             ret = float(self.__inverse(numpy.random.random()))
