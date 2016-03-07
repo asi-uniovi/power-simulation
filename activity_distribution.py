@@ -117,7 +117,7 @@ class ActivityDistribution(Base):
         """Samples an off interval for the day and hour provided"""
         return self.off_interval_for_hour(cid, *timestamp_to_day(timestamp))
 
-    @functools.lru_cache()
+    @functools.lru_cache(maxsize=None)
     def optimal_idle_timeout(self, cid):
         """Calculates the value of the idle timer for a given satisfaction."""
         hist = sorted(self.__flatten_histogram(
