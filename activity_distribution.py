@@ -120,20 +120,28 @@ class ActivityDistribution(Base):
     @functools.lru_cache(maxsize=None)
     def optimal_idle_timeout(self, cid):
         """Calculates the value of the idle timer for a given satisfaction."""
-        hist = sorted(self.__flatten_histogram(
-            self.__inactivity_intervals_histograms, cid))
+        hist = self.__flatten_histogram(
+            self.__inactivity_intervals_histograms, cid)
         if len(hist) == 0:
             return self.__default_timeout
-        timeout = hist[int(self.__target_satisfaction * len(hist) / 100)]
-        if timeout < self.__default_timeout:
-            logger.debug('timeout smaller than default timeout for %s', cid)
-            return self.__default_timeout
+        timeout = numpy.percentile(
+            hist, self.__target_satisfaction, interpolation='lower')
+        logger.debug('Timeout for %s: %d items, %.3f s timeout',
+                     cid, len(hist), timeout)
         return timeout
 
+    @functools.lru_cache()
     def global_idle_timeout(self):
         """Calculates the value of the idle timer for a given satisfaction."""
-        return numpy.mean(
-            [self.optimal_idle_timeout(cid) for cid in self.__servers])
+        hist = []
+        for cid in self.__servers:
+            hist.extend(self.__flatten_histogram(
+                self.__inactivity_intervals_histograms, cid))
+        if len(hist) == 0:
+            return self.__default_timeout
+        timeout = numpy.percentile(
+            hist, self.__target_satisfaction, interpolation='lower')
+        return timeout
 
     def get_all_hourly_summaries(self, key, summaries=('mean', 'median')):
         """Returns the summaries per hour."""
