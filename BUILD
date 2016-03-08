@@ -110,6 +110,7 @@ py_library(
         ":base",
         ":histogram",
         ":module",
+        ":static",
     ],
 )
 

@@ -1,12 +1,14 @@
 """Simulation stats container."""
 
+import math
+
 import injector
-import numpy
 
 from activity_distribution import ActivityDistribution
 from base import Base
 from histogram import Histogram
 from module import Binder, CustomInjector
+from static import weighted_user_satisfaction
 
 
 @injector.singleton
@@ -27,9 +29,9 @@ class Stats(Base):
 
     def user_satisfaction(self):
         """Calculates de user satisfaction."""
-        return (
-            self.get_count_lower_than('INACTIVITY_TIME', self._idle_timeout)
-            / self.count_histogram('INACTIVITY_TIME') * 100)
+        return (sum(weighted_user_satisfaction(i, self._idle_timeout)
+                    for i in self.get_all_histogram('INACTIVITY_TIME'))
+                / self.count_histogram('INACTIVITY_TIME') * 100)
 
     def removed_inactivity(self):
         """Calculates how much inactive has been removed."""
