@@ -11,6 +11,7 @@ from base import Base
 from distribution import DiscreteUniformDistribution
 from distribution import EmpiricalDistribution
 from static import HOUR, DAY, DAYS, WEEK
+from static import weighted_user_satisfaction
 
 logger = logging.getLogger(__name__)
 
@@ -120,8 +121,9 @@ class ActivityDistribution(Base):
     @functools.lru_cache(maxsize=None)
     def optimal_idle_timeout(self, cid):
         """Calculates the value of the idle timer for a given satisfaction."""
-        hist = self.__flatten_histogram(
-            self.__inactivity_intervals_histograms, cid)
+        hist = [weighted_user_satisfaction(i, 0) * i
+                for i in self.__flatten_histogram(
+                        self.__inactivity_intervals_histograms, cid)]
         if len(hist) == 0:
             return self.__default_timeout
         timeout = numpy.percentile(
@@ -135,8 +137,9 @@ class ActivityDistribution(Base):
         """Calculates the value of the idle timer for a given satisfaction."""
         hist = []
         for cid in self.__servers:
-            hist.extend(self.__flatten_histogram(
-                self.__inactivity_intervals_histograms, cid))
+            hist.extend(weighted_user_satisfaction(i, 0) * i
+                        for i in self.__flatten_histogram(
+                                self.__inactivity_intervals_histograms, cid))
         if len(hist) == 0:
             return self.__default_timeout
         timeout = numpy.percentile(
