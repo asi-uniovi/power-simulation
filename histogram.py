@@ -1,8 +1,6 @@
 """Database backed histogram."""
 
-import array
 import functools
-import gc
 import itertools
 import operator
 import sqlite3
@@ -20,36 +18,29 @@ class Histogram(Base):
     @injector.inject(conn=sqlite3.Connection)
     def __init__(self, conn, name):
         super(Histogram, self).__init__()
+        self.__cache_size = self.get_config_int('cache_size', section='stats')
         self.__cursor = conn.cursor()
         self.__name = name
         self.__sum = 0
         self.__count = 0
-        self.__write_cache_ts = array.array('f')
-        self.__write_cache_val = array.array('f')
+        self.__write_cache = []
 
-    def append(self, timestamp, value):
+    def append(self, timestamp, cid, value):
         """Inserts into the histogram, just in cache for now."""
         self.__sum += value
         self.__count += 1
-        self.__write_cache_ts.append(timestamp)
-        self.__write_cache_val.append(value)
-        if (len(self.__write_cache_ts)
-                >= self.get_config_int('cache_size', section='stats')):
+        self.__write_cache.append((timestamp, cid, float(value)))
+        if (len(self.__write_cache) >= self.__cache_size):
             self.flush()
-        assert len(self.__write_cache_ts) == len(self.__write_cache_val)
 
     def flush(self):
         """Dump the cache to the database."""
-        if len(self.__write_cache_ts) > 0:
+        if len(self.__write_cache) > 0:
             self.__cursor.executemany(
-                ('INSERT INTO histogram(histogram, timestamp, value) '
-                 "VALUES('%s', ?, ?);") % self.__name,
-                zip(self.__write_cache_ts, self.__write_cache_val))
-            self.__write_cache_ts = array.array('f')
-            self.__write_cache_val = array.array('f')
+                ('INSERT INTO histogram(histogram, timestamp, computer, value) '
+                 "VALUES('%s', ?, ?, ?);") % self.__name, self.__write_cache)
+            self.__write_cache = []
             Histogram.__cache_invalidate()
-            gc.collect()
-        assert len(self.__write_cache_ts) == len(self.__write_cache_val)
 
     @functools.lru_cache()
     def get_all_hourly_histograms(self):
@@ -149,11 +140,16 @@ def create_histogram_tables(conn):
           id        INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
           hour      INTEGER,
           histogram TEXT    NOT NULL,
+          computer  TEXT    NOT NULL,
           timestamp REAL    NOT NULL,
           value     REAL    NOT NULL
         );''')
     cursor.execute(
         'CREATE INDEX i_histogram ON histogram(histogram);')
+    cursor.execute(
+        'CREATE INDEX i_computer ON histogram(computer);')
+    cursor.execute(
+        'CREATE INDEX i_hour ON histogram(hour);')
     cursor.execute('''
         CREATE TRIGGER t_hour AFTER INSERT ON histogram
         FOR EACH ROW BEGIN

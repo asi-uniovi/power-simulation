@@ -59,6 +59,7 @@ class Computer(Base):
             and self.__last_auto_shutdown is not None):
             self._stats.append('AUTO_SHUTDOWN_TIME',
                                self._env.now - self.__last_auto_shutdown,
+                               self.__computer_id,
                                timestamp=self.__last_auto_shutdown)
             self.__last_auto_shutdown = None
         self.__status = status
@@ -75,7 +76,8 @@ class Computer(Base):
         assert activity_time > 0, activity_time
         now = self._env.now
         yield self._env.timeout(activity_time)
-        self._stats.append('ACTIVITY_TIME', activity_time, timestamp=now)
+        self._stats.append('ACTIVITY_TIME', activity_time, self.__computer_id,
+                           timestamp=now)
         self.__idle_timer = self._env.process(self.__idle_timer_runner())
 
     @property
@@ -98,7 +100,7 @@ class Computer(Base):
             pass
         finally:
             self._stats.append('IDLE_TIME', self._env.now - idle_start,
-                               timestamp=idle_start)
+                               self.__computer_id, timestamp=idle_start)
 
     @classmethod
     def __new_computer_id(cls):

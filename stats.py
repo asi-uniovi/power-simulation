@@ -40,13 +40,13 @@ class Stats(Base):
                     if i > self._idle_timeout)
                 / self.sum_histogram('INACTIVITY_TIME') * 100)
 
-    def append(self, key, value, timestamp=None):
+    def append(self, key, value, cid, timestamp=None):
         """Inserts a new value for a key at now.."""
         if key not in self.__storage:
             self.__storage[key] = self.__builder.build(name=key)
         if timestamp is None:
             timestamp = self._env.now
-        self.__storage[key].append(timestamp, value)
+        self.__storage[key].append(timestamp, cid, value)
 
     def get_all_hourly_histograms(self, key):
         """Gets all the subhistograms per hour."""

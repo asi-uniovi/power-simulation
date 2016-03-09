@@ -43,7 +43,7 @@ class User(Base):
                 self._computer.change_status(ComputerStatus.off)
                 yield self._env.timeout(shutdown_time)
                 self._stats.append('USER_SHUTDOWN_TIME', shutdown_time,
-                                   timestamp=now)
+                                   self._computer.cid, timestamp=now)
             else:
                 inactivity_time = (
                     self._activity_distribution.random_inactivity_for_timestamp(
@@ -51,7 +51,7 @@ class User(Base):
                 assert inactivity_time > 0, inactivity_time
                 yield self._env.timeout(inactivity_time)
                 self._stats.append('INACTIVITY_TIME', inactivity_time,
-                                   timestamp=now)
+                                   self._computer.cid, timestamp=now)
 
     def __indicate_shutdown(self):
         """Indicates whether we need to shutdown or not."""
