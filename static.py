@@ -20,16 +20,3 @@ WEEK = lambda x: x * DAY(7)
 # And these to bytes.
 KB = lambda x: x << 10
 MB = lambda x: x << 20
-
-
-def weight(x, ip, fp):
-    """Linear increment between ip and fp function."""
-    return max(0, min(1, (ip - x) / (ip - fp)))
-
-
-def weighted_user_satisfaction(t, timeout):
-    """Calculates the weighted satisfaction with a sigmoid."""
-    if t <= timeout:
-        return 1
-    else:
-        return weight(t - timeout, 1, 300)

@@ -55,14 +55,22 @@ class Histogram(Base):
         return self.__fetch_hourly()
 
     @functools.lru_cache()
-    def get_all_histogram(self):
+    def get_all_histogram(self, cid=None):
         """Gets all the data from the histogram."""
         self.flush()
-        self.__cursor.execute(
-            '''SELECT value
-                 FROM histogram
-                WHERE histogram = ?;''',
-            (self.__name,))
+        if cid is None:
+            self.__cursor.execute(
+                '''SELECT value
+                     FROM histogram
+                    WHERE histogram = ?;''',
+                (self.__name,))
+        else:
+            self.__cursor.execute(
+                '''SELECT value
+                     FROM histogram
+                    WHERE histogram = ?
+                          AND computer = ?;''',
+                (self.__name, cid))
         return [i['value'] for i in self.__cursor.fetchall()]
 
     @functools.lru_cache()
@@ -93,13 +101,31 @@ class Histogram(Base):
         dct = dict(self.__cursor.fetchall())
         return [dct.get(i, 0) for i in range(168)]
 
-    def sum_histogram(self):
+    def sum_histogram(self, cid=None):
         """Sums up all the elements of this histogram."""
-        return self.__sum
+        if cid is None:
+            return self.__sum
+        self.flush()
+        self.__cursor.execute(
+            '''SELECT SUM(value) AS sum
+                 FROM histogram
+                WHERE histogram = ?
+                      AND computer = ?;''',
+            (self.__name, cid))
+        return int(self.__cursor.fetchone()['sum'])
 
-    def count_histogram(self):
+    def count_histogram(self, cid=None):
         """Counts the number of elements in this histogram."""
-        return self.__count
+        if cid is None:
+            return self.__count
+        self.flush()
+        self.__cursor.execute(
+            '''SELECT COUNT(*) AS count
+                 FROM histogram
+                WHERE histogram = ?
+                      AND computer = ?;''',
+            (self.__name, cid))
+        return int(self.__cursor.fetchone()['count'])
 
     @functools.lru_cache()
     def get_count_lower_than(self, x):

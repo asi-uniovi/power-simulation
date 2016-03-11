@@ -11,7 +11,6 @@ from base import Base
 from distribution import DiscreteUniformDistribution
 from distribution import EmpiricalDistribution
 from static import HOUR, DAY, DAYS, WEEK
-from static import weighted_user_satisfaction
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +35,11 @@ def previous_hour(day, hour):
     assert 0 <= day <= 6, day
     assert 0 <= hour <= 23, hour
     return day, hour
+
+
+def weight(x, ip, fp):
+    """Linear increment between ip and fp function."""
+    return max(0, min(1, (ip - x) / (ip - fp)))
 
 
 @injector.singleton
@@ -67,7 +71,7 @@ class ActivityDistribution(Base):
     @property
     def servers(self):
         """Read only servers list."""
-        return self.__servers
+        return sorted(self.__servers)
 
     def random_activity_for_hour(self, cid, day, hour):
         """Queries the activity distribution and generates a random sample."""
@@ -121,30 +125,24 @@ class ActivityDistribution(Base):
     @functools.lru_cache(maxsize=None)
     def optimal_idle_timeout(self, cid):
         """Calculates the value of the idle timer for a given satisfaction."""
-        hist = [weighted_user_satisfaction(i, 0) * i
-                for i in self.__flatten_histogram(
-                        self.__inactivity_intervals_histograms, cid)]
+        hist = self.__flatten_histogram(
+            self.__inactivity_intervals_histograms, cid)
         if len(hist) == 0:
+            logger.warning('Using default timeout for %s (lack of data)', cid)
             return self.__default_timeout
         timeout = numpy.percentile(
             hist, self.__target_satisfaction, interpolation='lower')
-        logger.debug('Timeout for %s: %d items, %.3f s timeout',
+        timeout = min(weight(timeout, 1, self.__default_timeout) * timeout,
+                      self.__default_timeout)
+        logger.debug('Timeout for %s: %d items, %.0f s timeout',
                      cid, len(hist), timeout)
         return timeout
 
     @functools.lru_cache()
     def global_idle_timeout(self):
         """Calculates the value of the idle timer for a given satisfaction."""
-        hist = []
-        for cid in self.__servers:
-            hist.extend(weighted_user_satisfaction(i, 0) * i
-                        for i in self.__flatten_histogram(
-                                self.__inactivity_intervals_histograms, cid))
-        if len(hist) == 0:
-            return self.__default_timeout
-        timeout = numpy.percentile(
-            hist, self.__target_satisfaction, interpolation='lower')
-        return timeout
+        return numpy.mean([self.optimal_idle_timeout(cid)
+                           for cid in self.__servers])
 
     def get_all_hourly_summaries(self, key, summaries=('mean', 'median')):
         """Returns the summaries per hour."""
