@@ -6,12 +6,14 @@ py_library(
         ":distribution",
         ":static",
     ],
+    srcs_version = "PY3",
 )
 
 py_library(
     name = "base",
     srcs = ["base.py"],
     deps = [":module"],
+    srcs_version = "PY3",
 )
 
 py_library(
@@ -22,6 +24,7 @@ py_library(
         ":base",
         ":stats",
     ],
+    srcs_version = "PY3",
 )
 
 filegroup(
@@ -39,6 +42,7 @@ filegroup(
 py_library(
     name = "distribution",
     srcs = ["distribution.py"],
+    srcs_version = "PY3",
 )
 
 py_library(
@@ -48,6 +52,7 @@ py_library(
         ":base",
         ":static",
     ],
+    srcs_version = "PY3",
 )
 
 py_binary(
@@ -57,7 +62,9 @@ py_binary(
         ":config",
         ":data",
     ],
+    default_python_version = "PY3",
     deps = [":simulation"],
+    srcs_version = "PY3",
 )
 
 py_library(
@@ -67,6 +74,7 @@ py_library(
         ":singleton",
         ":static",
     ],
+    srcs_version = "PY3",
 )
 
 py_library(
@@ -77,6 +85,7 @@ py_library(
         ":static",
         ":stats",
     ],
+    srcs_version = "PY3",
 )
 
 py_library(
@@ -91,16 +100,19 @@ py_library(
         ":stats",
         ":user",
     ],
+    srcs_version = "PY3",
 )
 
 py_library(
     name = "singleton",
     srcs = ["singleton.py"],
+    srcs_version = "PY3",
 )
 
 py_library(
     name = "static",
     srcs = ["static.py"],
+    srcs_version = "PY2AND3",
 )
 
 py_library(
@@ -112,6 +124,7 @@ py_library(
         ":module",
         ":static",
     ],
+    srcs_version = "PY3",
 )
 
 py_library(
@@ -124,4 +137,5 @@ py_library(
         ":module",
         ":stats",
     ],
+    srcs_version = "PY3",
 )
