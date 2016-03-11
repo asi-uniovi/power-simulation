@@ -37,9 +37,8 @@ class User(Base):
             assert self._computer.status == ComputerStatus.on
             now = self._env.now
             if self.__indicate_shutdown():
-                logger.debug('User is shutting down PC.')
+                logger.debug('User is shutting down PC %s', self._computer.cid)
                 shutdown_time = self.__shutdown_interval()
-                logger.debug(shutdown_time)
                 self._computer.change_status(ComputerStatus.off)
                 yield self._env.timeout(shutdown_time)
                 self._stats.append('USER_SHUTDOWN_TIME', shutdown_time,

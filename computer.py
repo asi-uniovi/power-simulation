@@ -52,7 +52,6 @@ class Computer(Base):
     def change_status(self, status, interrupt_idle_timer=True):
         """Changes the state of the computer, and takes any side action."""
         assert status != self.__status
-        logger.debug('change status %s -> %s', self.__status, status)
         if interrupt_idle_timer and self.__idle_timer.is_alive:
             self.__idle_timer.interrupt()
         if (status == ComputerStatus.on
