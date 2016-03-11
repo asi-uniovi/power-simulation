@@ -6,17 +6,10 @@ import argparse
 import configparser
 import logging
 import os
-import signal
 import sys
 import warnings
 
 from simulation import runner
-
-
-def sigterm_handler(signal, frame):
-    """Enter debug when a singal is not controlled."""
-    import pdb
-    pdb.set_trace()
 
 
 def config_logging(debug):
@@ -60,5 +53,4 @@ def main():
 
 if __name__ == '__main__':
     warnings.simplefilter('error')
-    signal.signal(signal.SIGTERM, sigterm_handler)
     sys.exit(main())
