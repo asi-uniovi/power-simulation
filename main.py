@@ -34,30 +34,25 @@ def parse_arguments():
     parser.add_argument("-d", "--debug", help="show debug information",
                         action="store_true")
     parser.add_argument('--config', dest='config_file', default='config.ini')
+    parser.add_argument('--noplot', dest='plot', action='store_false')
     return parser.parse_args()
 
 
-def parse_config(config_file):
+def parse_config(args):
     """Get the config file as a dict of dicts."""
-    if not os.path.isfile(config_file):
+    if not os.path.isfile(args.config_file):
         raise ValueError('The configuration file does not exist')
 
     config = configparser.ConfigParser()
-    config.read(config_file)
+    config.read(args.config_file)
     return config
-
-
-def configure():
-    """Sets the basic configuration and dependency injections."""
-    args = parse_arguments()
-    config_logging(args.debug)
-    return parse_config(args.config_file)
-
 
 def main():
     """Just starts the simulation."""
     try:
-        runner(configure())
+        args = parse_arguments()
+        config_logging(args.debug)
+        runner(parse_config(args), plot=args.plot)
     except:
         logging.exception('Unexpected exception')
         return 1

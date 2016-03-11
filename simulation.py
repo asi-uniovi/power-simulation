@@ -31,7 +31,7 @@ class Simulation(Base):
         """Number of servers being simulated."""
         return len(self._activity_distribution.servers)
 
-    def run(self):
+    def run(self, plot):
         """Sets up and starts a new simulation."""
         logger.info('Simulating %d users (%d s)',
                     self.servers, self.__simulation_time)
@@ -46,6 +46,8 @@ class Simulation(Base):
         logger.info('Simulation ended at %d s', self._env.now)
         self.__validate_results()
         self.__log_results()
+        if plot:
+            self.__plot_results()
         logger.info('Run complete.')
 
     def __log_results(self):
@@ -54,6 +56,9 @@ class Simulation(Base):
                     self._stats.user_satisfaction())
         logger.info('Removed Inactivity (RI) = %.2f%%',
                     self._stats.removed_inactivity())
+
+    def __plot_results(self):
+        """Plots the results."""
         logger.info('Storing plots.')
         self._plot.plot_all('USER_SHUTDOWN_TIME')
         self._plot.plot_all('AUTO_SHUTDOWN_TIME')
@@ -86,8 +91,8 @@ class Simulation(Base):
             yield self._env.timeout(self.__simulation_time / 10.0)
 
 
-def runner(config):
+def runner(config, plot=True):
     """Bind all and launch the simulation!"""
     custom_injector = CustomInjector(Binder(config))
     custom_injector.get(create_histogram_tables)()
-    custom_injector.get(Simulation).run()
+    custom_injector.get(Simulation).run(plot)
