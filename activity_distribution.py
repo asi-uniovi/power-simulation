@@ -122,11 +122,15 @@ class ActivityDistribution(Base):
         """Samples an off interval for the day and hour provided"""
         return self.off_interval_for_hour(cid, *timestamp_to_day(timestamp))
 
-    @functools.lru_cache(maxsize=None)
-    def optimal_idle_timeout(self, cid):
+    def optimal_idle_timeout(self, cid, all_timespan=False):
         """Calculates the value of the idle timer for a given satisfaction."""
-        hist = self.__flatten_histogram(
-            self.__inactivity_intervals_histograms, cid)
+        hist = self.__get(self.__inactivity_intervals_histograms, cid,
+                          *timestamp_to_day(self._env.now))
+        if hist is None or all_timespan:
+            hist = self.__flatten_histogram(
+                self.__inactivity_intervals_histograms, cid)
+        else:
+            hist = [i for i in hist.data]
         if len(hist) == 0:
             logger.warning('Using default timeout for %s (lack of data)', cid)
             return self.__default_timeout
@@ -134,14 +138,14 @@ class ActivityDistribution(Base):
             hist, self.__target_satisfaction, interpolation='lower')
         timeout = min(weight(timeout, 1, self.__default_timeout) * timeout,
                       self.__default_timeout)
-        logger.debug('Timeout for %s: %d items, %.0f s timeout',
-                     cid, len(hist), timeout)
+        # logger.debug('Timeout for %s: %d items, %.0f s timeout',
+        #              cid, len(hist), timeout)
         return timeout
 
     @functools.lru_cache()
     def global_idle_timeout(self):
         """Calculates the value of the idle timer for a given satisfaction."""
-        return numpy.mean([self.optimal_idle_timeout(cid)
+        return numpy.mean([self.optimal_idle_timeout(cid, all_timespan=True)
                            for cid in self.__servers])
 
     def get_all_hourly_summaries(self, key, summaries=('mean', 'median')):
