@@ -54,8 +54,12 @@ class Simulation(Base):
         """Prints the final results of the simulation run."""
         logger.info('User Satisfaction (US) = %.2f%%',
                     self._stats.user_satisfaction())
+        logger.info('User Satisfaction 2 (US2) = %.2f%%',
+                    self._stats.user_satisfaction2())
         logger.info('Removed Inactivity (RI) = %.2f%%',
                     self._stats.removed_inactivity())
+        logger.info('Removed Inactivity 2 (RI2) = %.2f%%',
+                    self._stats.removed_inactivity2())
 
     def __plot_results(self):
         """Plots the results."""

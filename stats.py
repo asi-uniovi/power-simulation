@@ -50,6 +50,15 @@ class Stats(Base):
         logger.debug('user_satisfaction = %s', lst)
         return numpy.mean(lst)
 
+    def user_satisfaction2(self):
+        """Calculates de user satisfaction."""
+        lst = (sum(weighted_user_satisfaction(i, self._idle_timeout(),
+                                              self.__default_timeout)
+                   for i in self.get_all_histogram('INACTIVITY_TIME'))
+               / self.count_histogram('INACTIVITY_TIME') * 100)
+        logger.debug('user_satisfaction 2 = %.2f', lst)
+        return lst
+
     def removed_inactivity(self):
         """Calculates how much inactive has been removed."""
         lst = [(sum(i - self._idle_timeout(cid)
@@ -59,6 +68,15 @@ class Stats(Base):
              for cid in self._activity_distribution.servers]
         logger.debug('removed_inactivity = %s', lst)
         return numpy.mean(lst)
+
+    def removed_inactivity2(self):
+        """Calculates how much inactive has been removed."""
+        lst = (sum(i - self._idle_timeout()
+                   for i in self.get_all_histogram('INACTIVITY_TIME')
+                   if i > self._idle_timeout())
+               / self.sum_histogram('INACTIVITY_TIME') * 100)
+        logger.debug('removed_inactivity 2 = %s', lst)
+        return lst
 
     def append(self, key, value, cid, timestamp=None):
         """Inserts a new value for a key at now.."""
