@@ -1,7 +1,9 @@
+git-pylint-commit-hook
 injector
 matplotlib<1.5
 numpy
 pandas
+pylint
 scipy
 simpy
 statsmodels
