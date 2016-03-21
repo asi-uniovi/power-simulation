@@ -4,6 +4,7 @@
 
 import argparse
 import configparser
+import cProfile
 import logging
 import os
 import sys
@@ -28,6 +29,7 @@ def parse_arguments():
                         action="store_true")
     parser.add_argument('--config', dest='config_file', default='config.ini')
     parser.add_argument('--noplot', dest='plot', action='store_false')
+    parser.add_argument('--trace', dest='trace', action='store_true')
     return parser.parse_args()
 
 
@@ -45,7 +47,13 @@ def main():
     try:
         args = parse_arguments()
         config_logging(args.debug)
+        if args.trace:
+            pr = cProfile.Profile()
+            pr.enable()
         runner(parse_config(args), plot=args.plot)
+        if args.trace:
+            pr.create_stats()
+            pr.dump_stats('trace')
     except:
         logging.exception('Unexpected exception')
         return 1
