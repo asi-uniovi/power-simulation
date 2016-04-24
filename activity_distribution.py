@@ -136,10 +136,6 @@ class ActivityDistribution(Base):
             return self.__default_timeout
         timeout = numpy.percentile(
             hist, self.__target_satisfaction, interpolation='lower')
-        timeout = min(weight(timeout, 1, self.__default_timeout) * timeout,
-                      self.__default_timeout)
-        # logger.debug('Timeout for %s: %d items, %.0f s timeout',
-        #              cid, len(hist), timeout)
         return timeout
 
     @functools.lru_cache()
