@@ -5,6 +5,7 @@ import logging
 import injector
 
 from activity_distribution import ActivityDistribution
+from activity_distribution import TrainingDistribution
 from base import Base
 from histogram import create_histogram_tables
 from module import Binder, CustomInjector
@@ -16,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 @injector.inject(_activity_distribution=ActivityDistribution,
+                 _training_distribution=TrainingDistribution,
                  _plot=Plot,
                  _stats=Stats)
 class Simulation(Base):
@@ -29,15 +31,17 @@ class Simulation(Base):
     @property
     def servers(self):
         """Number of servers being simulated."""
-        return len(self._activity_distribution.servers)
+        return len(self._training_distribution.servers)
 
     def run(self, plot):
         """Sets up and starts a new simulation."""
+        self._activity_distribution.remove_servers(
+            self._training_distribution.empty_servers)
         logger.info('Simulating %d users (%d s)',
                     self.servers, self.__simulation_time)
         logger.info('Target user satisfaction %d%%', self.__target_satisfaction)
         logger.info('Average global timeout would be %.2f s',
-                    self._activity_distribution.global_idle_timeout())
+                    self._training_distribution.global_idle_timeout())
         self._env.process(self.__monitor_time())
         for _ in range(self.servers):
             self._env.process(CustomInjector(Binder()).get(User).run())

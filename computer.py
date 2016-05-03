@@ -7,6 +7,7 @@ import injector
 import simpy
 
 from activity_distribution import ActivityDistribution
+from activity_distribution import TrainingDistribution
 from base import Base
 from stats import Stats
 
@@ -23,6 +24,7 @@ class ComputerStatus(enum.Enum):
 
 
 @injector.inject(_activity_distribution=ActivityDistribution,
+                 _training_distribution=TrainingDistribution,
                  _stats=Stats)
 class Computer(Base):
     """A simple server.
@@ -33,7 +35,7 @@ class Computer(Base):
 
     def __init__(self):
         super(Computer, self).__init__()
-        self.__computer_id = self._activity_distribution.servers[
+        self.__computer_id = self._training_distribution.servers[
             Computer.__new_computer_id()]
         self.__status = ComputerStatus.on
         self.__last_auto_shutdown = None
@@ -82,7 +84,7 @@ class Computer(Base):
     @property
     def __idle_timeout(self):
         """Indicates this computer idle time."""
-        idle = self._activity_distribution.optimal_idle_timeout(
+        idle = self._training_distribution.optimal_idle_timeout(
             self.__computer_id)
         assert idle > 0, idle
         return idle

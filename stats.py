@@ -5,7 +5,7 @@ import logging
 import injector
 import numpy
 
-from activity_distribution import ActivityDistribution
+from activity_distribution import TrainingDistribution
 from activity_distribution import weight
 from base import Base
 from histogram import Histogram
@@ -23,7 +23,7 @@ def weighted_user_satisfaction(t, timeout, fp):
 
 
 @injector.singleton
-@injector.inject(_activity_distribution=ActivityDistribution)
+@injector.inject(_training_distribution=TrainingDistribution)
 class Stats(Base):
     """This is just a singleton dict with some helpers."""
 
@@ -37,8 +37,8 @@ class Stats(Base):
     def _idle_timeout(self, cid=None):
         """Indicates the global idle timeout."""
         if cid is None:
-            return self._activity_distribution.global_idle_timeout()
-        return self._activity_distribution.optimal_idle_timeout(cid)
+            return self._training_distribution.global_idle_timeout()
+        return self._training_distribution.optimal_idle_timeout(cid)
 
     def user_satisfaction(self):
         """Calculates de user satisfaction."""
@@ -46,7 +46,7 @@ class Stats(Base):
                                                self.__default_timeout)
                     for i in self.get_all_histogram('INACTIVITY_TIME', cid))
                 / self.count_histogram('INACTIVITY_TIME', cid) * 100)
-               for cid in self._activity_distribution.servers]
+               for cid in self._training_distribution.servers]
         logger.debug('user_satisfaction = %s', lst)
         return numpy.mean(lst)
 
@@ -65,7 +65,7 @@ class Stats(Base):
                     for i in self.get_all_histogram('INACTIVITY_TIME', cid)
                     if i > self._idle_timeout(cid))
                 / self.sum_histogram('INACTIVITY_TIME', cid) * 100)
-             for cid in self._activity_distribution.servers]
+             for cid in self._training_distribution.servers]
         logger.debug('removed_inactivity = %s', lst)
         return numpy.mean(lst)
 

@@ -62,16 +62,26 @@ class ActivityDistribution(Base):
         assert 0 < self.__noise_threshold > self.__xmin
         assert 0 < self.__xmin < self.__xmax
         self.__servers = []
+        self.__empty_servers = []
         self.__inactivity_intervals_histograms = {}
         self.__activity_intervals_histograms = {}
         self.__off_intervals_histograms = {}
         self.__off_fractions_histograms = {}
-        self.__parse_trace(self.get_config('trace_file', section='trace'))
+        self.__parse_trace(self.trace_file)
+
+    @property
+    def trace_file(self):
+        return self.get_config('trace_file', section='trace')
 
     @property
     def servers(self):
         """Read only servers list."""
         return sorted(self.__servers)
+
+    @property
+    def empty_servers(self):
+        """Read only empty servers list."""
+        return sorted(self.__empty_servers)
 
     def random_activity_for_hour(self, cid, day, hour):
         """Queries the activity distribution and generates a random sample."""
@@ -158,6 +168,11 @@ class ActivityDistribution(Base):
                 for day in self.__transpose_histogram(
                     self.__resolve_histogram(key)).values()
                 for values in day.values()]
+
+    def remove_servers(self, empty_servers):
+        """Blacklist some of the servers."""
+        self.__servers = sorted(set(self.__servers) - set(empty_servers))
+        self.__empty_servers = empty_servers
 
     def __resolve_histogram(self, key):
         """Matches histograms and keys."""
@@ -277,6 +292,7 @@ class ActivityDistribution(Base):
                         self.__off_fractions_histograms, cid)):
                 empty_servers.add(cid)
         self.__servers = sorted(set(self.__servers) - empty_servers)
+        self.__empty_servers = list(empty_servers)
         logger.info('%d servers have been filtered out.', len(empty_servers))
 
     def __is_empty_histogram(self, histogram, cid):
@@ -330,3 +346,12 @@ class ActivityDistribution(Base):
         elif len(data) > 0:
             return DiscreteUniformDistribution(sample_size, *data)
         return None
+
+
+@injector.singleton
+class TrainingDistribution(ActivityDistribution):
+    """Activity distribution for training purposes."""
+
+    @property
+    def trace_file(self):
+        return self.get_config('training_file', section='trace')

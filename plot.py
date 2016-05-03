@@ -8,14 +8,14 @@ import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 import numpy
 
-from activity_distribution import ActivityDistribution
+from activity_distribution import TrainingDistribution
 from stats import Stats
 from static import DAYS
 
 logger = logging.getLogger(__name__)
 
 
-@injector.inject(_activity_distribution=ActivityDistribution, _stats=Stats)
+@injector.inject(_training_distribution=TrainingDistribution, _stats=Stats)
 class Plot(object):
     """Generates plots from the Stats modules."""
 
@@ -56,7 +56,7 @@ class Plot(object):
     def plot_mean_medians_comparison(self, histogram):
         """Generates a plot to compare means and medians."""
         hist = self._stats.get_all_hourly_summaries(histogram)
-        data = self._activity_distribution.get_all_hourly_summaries(histogram)
+        data = self._training_distribution.get_all_hourly_summaries(histogram)
 
         for s in ('mean', 'median'):
             fig, ax = plt.subplots()
@@ -76,7 +76,7 @@ class Plot(object):
     def plot_hourly_histogram_count(self, histogram):
         """Generates a plot to show the hourly counts."""
         hist = self._stats.get_all_hourly_count(histogram)
-        data = self._activity_distribution.get_all_hourly_count(histogram)
+        data = self._training_distribution.get_all_hourly_count(histogram)
 
         fig, ax = plt.subplots()
         ax.set_title('%s (count)' % histogram)
