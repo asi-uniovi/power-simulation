@@ -14,12 +14,12 @@ from module import Binder, CustomInjector
 logger = logging.getLogger(__name__)
 
 
-def weighted_user_satisfaction(t, timeout, fp):
+def weighted_user_satisfaction(t, timeout, threshold):
     """Calculates the weighted satisfaction with a sigmoid."""
-    if t <= timeout:
+    if t < timeout:
         return 1
     else:
-        return weight(t - timeout, 1, fp)
+        return weight(t - timeout, 60, threshold)
 
 
 @injector.singleton
@@ -32,6 +32,8 @@ class Stats(Base):
         self.__builder = CustomInjector(Binder()).get(
             injector.AssistedBuilder(cls=Histogram))
         self.__default_timeout = self.get_config_int('default_timeout')
+        self.__satisfaction_threshold = self.get_config_int(
+            'satisfaction_threshold', section='stats')
         self.__storage = {}
 
     def _idle_timeout(self, cid=None):
@@ -43,11 +45,10 @@ class Stats(Base):
     def user_satisfaction(self):
         """Calculates de user satisfaction."""
         lst = [(sum(weighted_user_satisfaction(i, self._idle_timeout(cid),
-                                               1800)
+                                               self.__satisfaction_threshold)
                     for i in self.get_all_histogram('INACTIVITY_TIME', cid))
                 / self.count_histogram('INACTIVITY_TIME', cid) * 100)
                for cid in self._training_distribution.servers]
-        logger.debug('user_satisfaction = %s', lst)
         return numpy.mean(lst)
 
     def removed_inactivity(self):
@@ -97,9 +98,9 @@ class Stats(Base):
         except KeyError:
             return 0
 
-    def get_count_lower_than(self, key, x):
+    def get_count_lower_than(self, key, x, cid=None):
         """Counts the number of elements with value lower than x."""
         try:
-            return self.__storage[key].get_count_lower_than(x)
+            return self.__storage[key].get_count_lower_than(x, cid)
         except KeyError:
             return 0
