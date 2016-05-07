@@ -3,25 +3,27 @@
 import abc
 import injector
 
-from module import config_key, env_key
+from configuration import Configuration
+from module import env_key
 
 
-@injector.inject(_config=config_key, _env=env_key)
+@injector.inject(_config=Configuration, _env=env_key)
 class Base(object, metaclass=abc.ABCMeta):
     """An abstract class with all the basic methods we need across."""
 
-    def config_exists(self, key, section='simulation'):
-        """Indicates if a config key is defined."""
-        return key in self._config[section]
-
     def get_config(self, key, section='simulation'):
         """Retrieves a key from the configuration."""
-        return self._config.get(section, key)
+        # pylint: disable=no-member
+        return self._config.get_config(key, section)
 
     def get_config_int(self, key, section='simulation'):
         """Retrieves a key from the configuration (converts to int)."""
-        return self._config.getint(section, key)
+        return int(self.get_config(key, section))
 
     def get_config_float(self, key, section='simulation'):
         """Retrieves a key from the configuration (converts to float)."""
-        return self._config.getfloat(section, key)
+        return float(self.get_config(key, section))
+
+    def get_arg(self, key):
+        """Gets the value of a command line argument."""
+        return self._config.get_arg(key)  # pylint: disable=no-member

@@ -12,7 +12,10 @@ py_library(
 py_library(
     name = "base",
     srcs = ["base.py"],
-    deps = [":module"],
+    deps = [
+        ":configuration",
+        ":module",
+    ],
     srcs_version = "PY3",
 )
 
@@ -25,6 +28,12 @@ py_library(
         ":stats",
     ],
     srcs_version = "PY3",
+)
+
+py_library(
+    name = "configuration",
+    srcs = ["configuration.py"],
+    srcs_version = "PY2AND3",
 )
 
 filegroup(
@@ -64,13 +73,14 @@ py_binary(
     ],
     default_python_version = "PY3",
     deps = [":simulation"],
-    srcs_version = "PY3",
+    srcs_version = "PY2AND3",
 )
 
 py_library(
     name = "module",
     srcs = ["module.py"],
     deps = [
+        ":configuration",
         ":singleton",
         ":static",
     ],
@@ -97,6 +107,7 @@ py_library(
         ":histogram",
         ":module",
         ":plot",
+        ":static",
         ":stats",
         ":user",
     ],
@@ -112,7 +123,8 @@ py_library(
 py_library(
     name = "static",
     srcs = ["static.py"],
-    srcs_version = "PY2AND3",
+    deps = [":configuration"],
+    srcs_version = "PY3",
 )
 
 py_library(

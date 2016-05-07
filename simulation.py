@@ -1,4 +1,4 @@
-"""A very simple simuation of a 1/M/c queuing system."""
+"""A very simple simuation of several 1/M/c queuing systems."""
 
 import logging
 
@@ -10,16 +10,18 @@ from base import Base
 from histogram import create_histogram_tables
 from module import Binder, CustomInjector
 from plot import Plot
+from static import config_logging, profile
 from stats import Stats
 from user import User
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
 
 @injector.inject(_activity_distribution=ActivityDistribution,
                  _training_distribution=TrainingDistribution,
                  _plot=Plot,
                  _stats=Stats)
+# pylint: disable=no-member
 class Simulation(Base):
     """Constructs the system and runs the simulation."""
 
@@ -33,7 +35,7 @@ class Simulation(Base):
         """Number of servers being simulated."""
         return len(self._training_distribution.servers)
 
-    def run(self, plot):
+    def run(self):
         """Sets up and starts a new simulation."""
         self._activity_distribution.remove_servers(
             self._training_distribution.empty_servers)
@@ -50,7 +52,7 @@ class Simulation(Base):
         logger.info('Simulation ended at %d s', self._env.now)
         self.__validate_results()
         self.__log_results()
-        if plot:
+        if self.get_arg('plot'):
             self.__plot_results()
         logger.info('Run complete.')
 
@@ -72,6 +74,7 @@ class Simulation(Base):
 
     def __validate_results(self):
         """Performs vaidations on the simulation results and warns on errors."""
+        # pylint: disable=invalid-name,no-member
         at = self._stats.sum_histogram('ACTIVITY_TIME') / self.servers
         ust = self._stats.sum_histogram('USER_SHUTDOWN_TIME') / self.servers
         it = self._stats.sum_histogram('INACTIVITY_TIME') / self.servers
@@ -99,8 +102,9 @@ class Simulation(Base):
             yield self._env.timeout(self.__simulation_time / 10.0)
 
 
-def runner(config, plot=True):
+def runner():
     """Bind all and launch the simulation!"""
-    custom_injector = CustomInjector(Binder(config))
+    custom_injector = CustomInjector(Binder())
+    custom_injector.get(config_logging)()
     custom_injector.get(create_histogram_tables)()
-    custom_injector.get(Simulation).run(plot)
+    custom_injector.get(profile)(custom_injector.get(Simulation).run)()

@@ -1,5 +1,14 @@
 """Static definitions, such as constants."""
 
+import cProfile
+import functools
+import logging
+
+import injector
+
+from configuration import Configuration
+
+
 DAYS = {
     'Sunday': 0,
     'Monday': 1,
@@ -20,3 +29,36 @@ WEEK = lambda x: x * DAY(7)
 # And these to bytes.
 KB = lambda x: x << 10
 MB = lambda x: x << 20
+
+
+@injector.inject(config=Configuration)
+def config_logging(config):
+    """Sets logging basic config"""
+    logging.basicConfig(
+        format='%(asctime)s %(levelname)s(%(name)s): %(message)s',
+        datefmt='%d/%m/%Y %H:%M:%S',
+        level=logging.DEBUG if config.get_arg('debug') else logging.INFO)
+    logging.captureWarnings(True)
+
+
+@injector.inject(_config=Configuration)
+# pylint: disable=invalid-name,too-few-public-methods
+class profile(object):
+    """Decorator to run a function and generate a trace."""
+
+    def __call__(self, func):
+
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            """Wraps the function generating a trace."""
+            if self._config.get_arg('trace'):  # pylint: disable=no-member
+                profiler = cProfile.Profile()
+                profiler.enable()
+
+            func(*args, **kwargs)
+
+            if self._config.get_arg('trace'):  # pylint: disable=no-member
+                profiler.create_stats()
+                profiler.dump_stats('trace')
+
+        return wrapper

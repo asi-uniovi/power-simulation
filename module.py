@@ -6,33 +6,32 @@ import sqlite3
 import injector
 import simpy
 
+from configuration import Configuration
 from singleton import Singleton
 from static import KB, MB
 
 
-config_key = injector.Key('config')
-env_key = injector.Key('env')
+env_key = injector.Key('env')  # pylint: disable=invalid-name
 
 
 class Binder(injector.Module, metaclass=Singleton):
     """This binds all the types needed on the simulation."""
 
-    def __init__(self, config=None):
-        """config is optional to allow second constructions."""
-        self._config = config
+    def __init__(self):
+        super(Binder, self).__init__()
         self._env = simpy.Environment()
 
     def configure(self, binder):
         """Sets the basic configuration and dependency injections."""
-        binder.bind(config_key, to=injector.InstanceProvider(self._config))
         binder.bind(env_key, to=injector.InstanceProvider(self._env))
 
     @injector.singleton
     @injector.provides(sqlite3.Connection)
-    @injector.inject(config=config_key)
+    @injector.inject(config=Configuration)
+    # pylint: disable=no-self-use
     def provide_db_connection(self, config):
         """Sets the database up for the module to work."""
-        db_name = config.get('stats', 'database_name')
+        db_name = config.get_config('database_name', 'stats')
         try:
             os.remove(db_name)
         except FileNotFoundError:
