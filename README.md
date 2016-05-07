@@ -23,16 +23,16 @@ packages, for instance, in the case of Debian/Ubuntu:
 
 Run the simulation with a config file:
 
-`$ python main.py --config config.ini`
+`$ python main.py --config config/dev.ini`
 
 ### (Experimental) Using Bazel
 
 You can as well use [Bazel](http://bazel.io) for reproducible builds and faster
 clean ups. After [installing it](), run with:
 
-`$ bazel run -c opt :main -- --config config.ini`
+`$ bazel run -c opt :main -- --config=config/dev.ini`
 
-Results will be found on the `bazel-out` directory.
+Results will be found on the `bazel-bin/main.runfiles` directory.
 
 ## References
 
