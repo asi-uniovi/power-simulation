@@ -280,13 +280,53 @@ class ActivityDistribution(Base):
     def __parse_histograms(self, trace, hist_key, do_filter=False,
                            do_reduce=True):
         """Parses the histogram to get a {PC: hist} dict."""
-        histograms = {i['PC']: self.__parse_histogram(i, do_filter, do_reduce)
+        histograms = {i['PC']: self.__parse_histogram(i)
                       for i in trace if i['Type'] == hist_key}
         if set(histograms.keys()) != set(self.__servers):
             raise ValueError('PCs on Key %s are not consistent' % hist_key)
-        return histograms
+        return self.__filter(
+            self.__merge_histograms(histograms), do_filter, do_reduce)
 
-    def __parse_histogram(self, trace, do_filter, do_reduce):
+    def __merge_histograms(self, hist):
+        """Merges histograms to be global or per PC/hour."""
+        if not self.get_arg('per_pc'):
+            hist = self.__merge_per_pc(hist)
+        if not self.get_arg('per_hour'):
+            hist = self.__merge_per_hour(hist)
+        return hist
+
+    def __merge_per_pc(self, hist):
+        logger.warning('__merge_per_pc')
+        merged_subhist = {}
+        for _, days in hist.items():
+            for day, hours in days.items():
+                for hour, data in hours.items():
+                    new = merged_subhist.get(day, {}).get(hour)
+                    new = [] if new is None else list(new.data)
+                    new.extend([] if data is None else list(data.data))
+                    merged_subhist.setdefault(day, {})[hour] = (
+                        self.__process(new))
+        for cid in hist:
+            hist[cid] = merged_subhist
+        return hist
+
+    def __merge_per_hour(self, hist):
+        logger.warning('__merge_per_hour')
+        new_hist = {}
+        for cid, days in hist.items():
+            merged_data = []
+            for day, hours in days.items():
+                for hour, data in hours.items():
+                    if data is not None:
+                        merged_data.extend(data.data)
+            merged_data = self.__process(merged_data)
+            for day, hours in days.items():
+                for hour in hours:
+                    new_hist.setdefault(cid, {}).setdefault(day, {}).setdefault(
+                        hour, merged_data)
+        return new_hist
+
+    def __parse_histogram(self, trace):
         """Generic parser of a histogram element."""
         if len(trace.get('data', [])) > 168:
             raise ValueError('The trace contains more than 168 objects')
@@ -299,27 +339,40 @@ class ActivityDistribution(Base):
             assert 0 <= day <= 6
             assert 0 <= hour <= 23
             histogram.setdefault(day, {})[hour] = self.__process(
-                d['Intervals'], do_filter, do_reduce)
+                d['Intervals'])
         return histogram
 
-    def __process(self, data, do_filter, do_reduce):
+    def __process(self, data):
         """Process one data unit."""
+        data = numpy.asarray(data)
+        if len(set(data)) > 1:
+            return EmpiricalDistribution(len(data), *data)
+        elif len(data) == 1:
+            return DiscreteUniformDistribution(len(data), *data)
+        return None
+
+    def __filter(self, histogram, do_filter, do_reduce):
+        if not do_filter and not do_reduce:
+            return histogram
+        for days in histogram.values():
+            for hours in days.values():
+                for hour in hours:
+                    if hours[hour] is not None:
+                        hours[hour] = self.__filter_histogram(
+                            hours[hour].data, do_filter, do_reduce)
+        return histogram
+
+    def __filter_histogram(self, data, do_filter, do_reduce):
         sample_size = len(data)
         if do_filter:
             data = numpy.asarray([i for i in data
                                   if self.__xmin <= i <= self.__xmax])
         elif do_reduce:
             data = numpy.asarray([i for i in data if i > 0])
-        else:
-            data = numpy.asarray(data)
         if sample_size != len(data):
-            logger.debug('process(): elements filtered out: %d -> %d',
+            logger.debug('filter(): elements filtered out: %d -> %d',
                          sample_size, len(data))
-        if len(set(data)) > 1:
-            return EmpiricalDistribution(sample_size, *data)
-        elif len(data) > 0:
-            return DiscreteUniformDistribution(sample_size, *data)
-        return None
+        return self.__process(data)
 
 
 @injector.singleton
