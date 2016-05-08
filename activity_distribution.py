@@ -296,7 +296,6 @@ class ActivityDistribution(Base):
         return hist
 
     def __merge_per_pc(self, hist):
-        logger.warning('__merge_per_pc')
         merged_subhist = {}
         for _, days in hist.items():
             for day, hours in days.items():
@@ -311,7 +310,6 @@ class ActivityDistribution(Base):
         return hist
 
     def __merge_per_hour(self, hist):
-        logger.warning('__merge_per_hour')
         new_hist = {}
         for cid, days in hist.items():
             merged_data = []

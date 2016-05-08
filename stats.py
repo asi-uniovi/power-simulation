@@ -59,12 +59,10 @@ class Stats(Base):
 
     def removed_inactivity(self):
         """Calculates how much inactive has been removed."""
-        lst = (sum(i - self._idle_timeout()
-                   for i in self.get_all_histogram('INACTIVITY_TIME')
-                   if i > self._idle_timeout())
-               / self.sum_histogram('INACTIVITY_TIME') * 100)
-        logger.debug('removed_inactivity 2 = %s', lst)
-        return lst
+        return (sum(i - self._idle_timeout()
+                    for i in self.get_all_histogram('INACTIVITY_TIME')
+                    if i > self._idle_timeout())
+                / self.sum_histogram('INACTIVITY_TIME') * 100)
 
     def append(self, key, value, cid, timestamp=None):
         """Inserts a new value for a key at now.."""
