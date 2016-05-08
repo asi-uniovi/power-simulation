@@ -46,11 +46,15 @@ class Stats(Base):
 
     def user_satisfaction(self):
         """Calculates de user satisfaction."""
-        lst = [(sum(weighted_user_satisfaction(i, self._idle_timeout(cid),
-                                               self.__satisfaction_threshold)
-                    for i in self.get_all_histogram('INACTIVITY_TIME', cid))
-                / self.count_histogram('INACTIVITY_TIME', cid) * 100)
-               for cid in self._training_distribution.servers]
+        lst = []
+        for cid in self._training_distribution.servers:
+            count = self.count_histogram('INACTIVITY_TIME', cid)
+            if count > 0:
+                lst.append(
+                    sum(weighted_user_satisfaction(i, self._idle_timeout(cid),
+                                                   self.__satisfaction_threshold)
+                        for i in self.get_all_histogram('INACTIVITY_TIME', cid))
+                    / count * 100)
         return numpy.mean(lst)
 
     def removed_inactivity(self):
