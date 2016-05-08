@@ -33,10 +33,6 @@ class Distribution(object, metaclass=abc.ABCMeta):
         """This samples the distribution for one value."""
         raise NotImplementedError
 
-    def xrvs(self, n):  # pylint: disable=invalid-name
-        """Sample the distribution several times."""
-        return numpy.asarray([self.rvs() for _ in range(n)])
-
     @property
     def data(self):
         """Returns the sample data used for the fitting."""
@@ -51,11 +47,7 @@ class DiscreteUniformDistribution(Distribution):
 
     def rvs(self):
         """One item from the sample."""
-        return self.xrvs(1)[0]
-
-    def xrvs(self, n):
-        """Just get a sample with the repetition from the data."""
-        return random.sample(self.data, n)
+        return random.sample(self.data, 1)[0]
 
 
 class EmpiricalDistribution(Distribution):
@@ -94,11 +86,8 @@ class BinomialDistribution(Distribution):
         return round(self.__N * self.__p)
 
     def rvs(self):
-        return self.xrvs(1)[0]
-
-    def xrvs(self, n):
         # pylint: disable=no-member
-        return numpy.random.binomial(self.__N, self.__p, n)
+        return numpy.random.binomial(self.__N, self.__p)
 
 
 class BernoulliDistribution(BinomialDistribution):

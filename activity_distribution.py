@@ -95,10 +95,6 @@ class ActivityDistribution(Base):
             self.__distribution_for_hour(
                 self.__off_fractions_histograms, cid, day, hour))
 
-    def off_fraction_for_timestamp(self, cid, timestamp):
-        """Determines whether a computer should turndown or not."""
-        return self.off_fraction_for_hour(cid, *timestamp_to_day(timestamp))
-
     def off_interval_for_hour(self, cid, day, hour):
         """Samples an off interval for the day and hour provided"""
         return self.__draw_from_distribution(

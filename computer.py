@@ -18,10 +18,8 @@ logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 # pylint: disable=invalid-name
 class ComputerStatus(enum.Enum):
     """States of a computer along the simulation."""
+    off = 0
     on = 1
-    stand_by = 2
-    hibernated = 3
-    off = 4
 
 
 @injector.inject(_activity_distribution=ActivityDistribution,

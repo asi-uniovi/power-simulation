@@ -127,27 +127,6 @@ class Histogram(Base):
             (self.__name, cid))
         return int(self.__cursor.fetchone()['count'])
 
-    @functools.lru_cache()
-    def get_count_lower_than(self, x, cid=None):  # pylint: disable=invalid-name
-        """Counts the number of elements with value lower than x."""
-        self.flush()
-        if cid is None:
-            self.__cursor.execute(
-                '''SELECT COUNT(*) AS count
-                     FROM histogram
-                    WHERE histogram = ?
-                          AND value < ?;''',
-                (self.__name, x))
-        else:
-            self.__cursor.execute(
-                '''SELECT COUNT(*) AS count
-                     FROM histogram
-                    WHERE histogram = ?
-                          AND value < ?
-                          AND computer = ?;''',
-                (self.__name, x, cid))
-        return int(self.__cursor.fetchone()['count'])
-
     def __fetch_hourly(self):
         """Groups by hour and fills in the hours with no data."""
         dct = {i: numpy.asarray(list(i[1] for i in g))

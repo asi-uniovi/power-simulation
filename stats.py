@@ -99,10 +99,3 @@ class Stats(Base):
             return self.__storage[key].count_histogram(cid)
         except KeyError:
             return 0
-
-    def get_count_lower_than(self, key, x, cid=None):
-        """Counts the number of elements with value lower than x."""
-        try:
-            return self.__storage[key].get_count_lower_than(x, cid)
-        except KeyError:
-            return 0
