@@ -11,12 +11,13 @@ from base import Base
 from computer import Computer, ComputerStatus
 from stats import Stats
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
 
 @injector.inject(_activity_distribution=ActivityDistribution,
                  _stats=Stats,
                  _computer=Computer)
+# pylint: disable=no-member
 class User(Base):
     """A user model.
 

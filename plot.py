@@ -9,13 +9,14 @@ import matplotlib.pyplot as plt
 import numpy
 
 from activity_distribution import TrainingDistribution
-from stats import Stats
 from static import DAYS
+from stats import Stats
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
 
 @injector.inject(_training_distribution=TrainingDistribution, _stats=Stats)
+# pylint: disable=invalid-name,no-member
 class Plot(object):
     """Generates plots from the Stats modules."""
 
@@ -92,6 +93,7 @@ class Plot(object):
         fig.savefig('%s_count.png' % histogram.lower())
         plt.close(fig)
 
+# pylint: disable=invalid-name
 def _format_ax_line(ax):
     """Common format for each of the axes."""
     ax.legend(loc='upper center', fontsize=8)

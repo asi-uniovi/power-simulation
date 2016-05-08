@@ -6,14 +6,15 @@ import injector
 import numpy
 
 from activity_distribution import TrainingDistribution
-from activity_distribution import weight
 from base import Base
 from histogram import Histogram
 from module import Binder, CustomInjector
+from static import weight
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
 
+# pylint: disable=invalid-name
 def weighted_user_satisfaction(t, timeout, threshold):
     """Calculates the weighted satisfaction with a sigmoid."""
     if t < timeout:
@@ -24,6 +25,7 @@ def weighted_user_satisfaction(t, timeout, threshold):
 
 @injector.singleton
 @injector.inject(_training_distribution=TrainingDistribution)
+# pylint: disable=no-member
 class Stats(Base):
     """This is just a singleton dict with some helpers."""
 

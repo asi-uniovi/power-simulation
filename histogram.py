@@ -30,7 +30,7 @@ class Histogram(Base):
         self.__sum += value
         self.__count += 1
         self.__write_cache.append((timestamp, cid, float(value)))
-        if (len(self.__write_cache) >= self.__cache_size):
+        if len(self.__write_cache) >= self.__cache_size:
             self.flush()
 
     def flush(self):
@@ -128,7 +128,7 @@ class Histogram(Base):
         return int(self.__cursor.fetchone()['count'])
 
     @functools.lru_cache()
-    def get_count_lower_than(self, x, cid=None):
+    def get_count_lower_than(self, x, cid=None):  # pylint: disable=invalid-name
         """Counts the number of elements with value lower than x."""
         self.flush()
         if cid is None:
@@ -158,6 +158,7 @@ class Histogram(Base):
     @classmethod
     def __cache_invalidate(cls):
         """Invalidates all the memoizing caches."""
+        # pylint: disable=no-member
         cls.get_all_hourly_histograms.cache_clear()
         cls.get_all_hourly_summaries.cache_clear()
         cls.get_all_hourly_count.cache_clear()

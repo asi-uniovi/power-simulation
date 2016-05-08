@@ -11,10 +11,11 @@ from activity_distribution import TrainingDistribution
 from base import Base
 from stats import Stats
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
 
 @enum.unique
+# pylint: disable=invalid-name
 class ComputerStatus(enum.Enum):
     """States of a computer along the simulation."""
     on = 1
@@ -26,6 +27,7 @@ class ComputerStatus(enum.Enum):
 @injector.inject(_activity_distribution=ActivityDistribution,
                  _training_distribution=TrainingDistribution,
                  _stats=Stats)
+# pylint: disable=no-member
 class Computer(Base):
     """A simple server.
 
@@ -57,7 +59,7 @@ class Computer(Base):
         if interrupt_idle_timer and self.__idle_timer.is_alive:
             self.__idle_timer.interrupt()
         if (status == ComputerStatus.on
-            and self.__last_auto_shutdown is not None):
+                and self.__last_auto_shutdown is not None):
             self._stats.append('AUTO_SHUTDOWN_TIME',
                                self._env.now - self.__last_auto_shutdown,
                                self.__computer_id,

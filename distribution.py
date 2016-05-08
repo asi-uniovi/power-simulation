@@ -22,7 +22,7 @@ class Distribution(object, metaclass=abc.ABCMeta):
     @property
     def median(self):
         """Median of the distribution."""
-        return numpy.median(self.data)
+        return numpy.median(self.data)  # pylint: disable=no-member
 
     @property
     def sample_size(self):
@@ -33,7 +33,7 @@ class Distribution(object, metaclass=abc.ABCMeta):
         """This samples the distribution for one value."""
         raise NotImplementedError
 
-    def xrvs(self, n):
+    def xrvs(self, n):  # pylint: disable=invalid-name
         """Sample the distribution several times."""
         return numpy.asarray([self.rvs() for _ in range(n)])
 
@@ -71,7 +71,7 @@ class EmpiricalDistribution(Distribution):
         # TODO(m3drano): This might just block in a NaN if the distribution is
         # malformed, for instance when it has only one value.
         ret = float(self.__inverse(numpy.random.random()))
-        while numpy.isnan(ret):
+        while numpy.isnan(ret):  # pylint: disable=no-member
             ret = float(self.__inverse(numpy.random.random()))
         return ret
 
@@ -81,7 +81,7 @@ class BinomialDistribution(Distribution):
 
     def __init__(self, N, p):
         super(BinomialDistribution, self).__init__(0, [])
-        self.__N = N
+        self.__N = N  # pylint: disable=invalid-name
         self.__p = p
 
     @property
@@ -97,6 +97,7 @@ class BinomialDistribution(Distribution):
         return self.xrvs(1)[0]
 
     def xrvs(self, n):
+        # pylint: disable=no-member
         return numpy.random.binomial(self.__N, self.__p, n)
 
 

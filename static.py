@@ -62,3 +62,31 @@ class profile(object):
                 profiler.dump_stats('trace')
 
         return wrapper
+
+
+def timestamp_to_day(timestamp):
+    """Converts from a simulation timestamp to the pair (day, hour)."""
+    day = int((timestamp % WEEK(1)) // DAY(1))
+    hour = int((timestamp % DAY(1)) // HOUR(1))
+    assert 0 <= day <= 6, day
+    assert 0 <= hour <= 23, hour
+    return day, hour
+
+
+def previous_hour(day, hour):
+    """Gets the previous hour with wrap."""
+    hour -= 1
+    if hour < 0:
+        hour = 23
+        day -= 1
+        if day < 0:
+            day = 6
+    assert 0 <= day <= 6, day
+    assert 0 <= hour <= 23, hour
+    return day, hour
+
+
+# pylint: disable=invalid-name
+def weight(x, ip, fp):
+    """Linear increment between ip and fp function."""
+    return max(0, min(1, (ip - x) / (ip - fp)))

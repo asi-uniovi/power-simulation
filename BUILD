@@ -33,7 +33,7 @@ py_library(
 py_library(
     name = "configuration",
     srcs = ["configuration.py"],
-    srcs_version = "PY2AND3",
+    srcs_version = "PY3",
 )
 
 filegroup(
@@ -73,7 +73,7 @@ py_binary(
     ],
     default_python_version = "PY3",
     deps = [":simulation"],
-    srcs_version = "PY2AND3",
+    srcs_version = "PY3",
 )
 
 py_library(
@@ -131,6 +131,7 @@ py_library(
     name = "stats",
     srcs = ["stats.py"],
     deps = [
+        ":activity_distribution",
         ":base",
         ":histogram",
         ":module",
@@ -146,7 +147,6 @@ py_library(
         ":activity_distribution",
         ":base",
         ":computer",
-        ":module",
         ":stats",
     ],
     srcs_version = "PY3",

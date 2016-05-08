@@ -10,39 +10,15 @@ import injector
 from base import Base
 from distribution import DiscreteUniformDistribution
 from distribution import EmpiricalDistribution
-from static import HOUR, DAY, DAYS, WEEK
+from static import previous_hour
+from static import timestamp_to_day
+from static import DAYS
 
-logger = logging.getLogger(__name__)
-
-
-def timestamp_to_day(timestamp):
-    """Converts from a simulation timestamp to the pair (day, hour)."""
-    day = int((timestamp % WEEK(1)) // DAY(1))
-    hour = int((timestamp % DAY(1)) // HOUR(1))
-    assert 0 <= day <= 6, day
-    assert 0 <= hour <= 23, hour
-    return day, hour
-
-
-def previous_hour(day, hour):
-    """Gets the previous hour with wrap."""
-    hour -= 1
-    if hour < 0:
-        hour = 23
-        day -= 1
-        if day < 0:
-            day = 6
-    assert 0 <= day <= 6, day
-    assert 0 <= hour <= 23, hour
-    return day, hour
-
-
-def weight(x, ip, fp):
-    """Linear increment between ip and fp function."""
-    return max(0, min(1, (ip - x) / (ip - fp)))
+logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
 
 @injector.singleton
+# pylint: disable=no-member,no-self-use,too-many-instance-attributes
 class ActivityDistribution(Base):
     """Stores the hourly activity distribution over a week.
 
@@ -63,6 +39,7 @@ class ActivityDistribution(Base):
         assert 0 < self.__xmin < self.__xmax
         self.__servers = []
         self.__empty_servers = []
+        # pylint: disable=invalid-name
         self.__inactivity_intervals_histograms = {}
         self.__activity_intervals_histograms = {}
         self.__off_intervals_histograms = {}
@@ -71,6 +48,7 @@ class ActivityDistribution(Base):
 
     @property
     def trace_file(self):
+        """Indicates the location of the trace file."""
         return self.get_config('trace_file', section='trace')
 
     @property
@@ -319,7 +297,7 @@ class ActivityDistribution(Base):
         if len(trace.get('data', [])) < 168:
             logger.warning('The trace contains less than 168 objects')
         histogram = {}
-        for d in trace['data']:
+        for d in trace['data']:  # pylint: disable=invalid-name
             day = DAYS[d['Day']]
             hour = int(d['Hour'])
             assert 0 <= day <= 6
