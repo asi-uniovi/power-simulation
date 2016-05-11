@@ -1,0 +1,18 @@
+#!/bin/bash
+#
+# Runs all the simulation traces with all aggregations.
+
+trap "kill 0" SIGINT
+
+readonly LOG='bazel_run_all.log'
+IFS='#' read -a args <<< "$(echo {--per_pc,}\ {--per_hour,}#)"
+
+rm -f "${LOG}"
+for trace in "$(dirname $(dirname $0))"/config/*.ini ; do
+  for arg in "${args[@]}" ; do
+    echo "Running ${trace} with ${arg}"
+    bazel run -c opt :main -- --config="${trace}" "${arg}" \
+      |& tee -a bazel-run-all.log \
+      | grep 'RESULT:'
+  done
+done
