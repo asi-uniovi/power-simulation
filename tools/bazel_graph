@@ -1,0 +1,5 @@
+#!/bin/bash
+#
+# Generate a PNG image of the build dependencies with Bazel.
+
+bazel query 'deps(//:main)' --output graph | dot -Tpng > "${1:-bazel.png}"
