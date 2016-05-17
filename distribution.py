@@ -10,9 +10,8 @@ import statsmodels.api as sm
 class Distribution(object, metaclass=abc.ABCMeta):
     """Base distribution class."""
 
-    def __init__(self, sample_size, data):
+    def __init__(self, data):
         self.__data = data
-        self.__sample_size = sample_size
 
     @property
     def mean(self):
@@ -27,7 +26,7 @@ class Distribution(object, metaclass=abc.ABCMeta):
     @property
     def sample_size(self):
         """How much data we got for this distribution."""
-        return self.__sample_size
+        return len(self.data)
 
     def rvs(self):
         """This samples the distribution for one value."""
@@ -42,9 +41,6 @@ class Distribution(object, metaclass=abc.ABCMeta):
 class DiscreteUniformDistribution(Distribution):
     """Uniform distribution over a set of values."""
 
-    def __init__(self, sample_size, *data):
-        super(DiscreteUniformDistribution, self).__init__(sample_size, data)
-
     def rvs(self):
         """One item from the sample."""
         return random.sample(self.data, 1)[0]
@@ -53,9 +49,9 @@ class DiscreteUniformDistribution(Distribution):
 class EmpiricalDistribution(Distribution):
     """Empirical distribution according to the data provided."""
 
-    def __init__(self, sample_size, *data):
-        super(EmpiricalDistribution, self).__init__(sample_size, data)
-        ecdf = sm.distributions.ECDF(numpy.array(data, copy=True))
+    def __init__(self, data):
+        super(EmpiricalDistribution, self).__init__(data)
+        ecdf = sm.distributions.ECDF(numpy.array(data))
         self.__inverse = sm.distributions.monotone_fn_inverter(ecdf, ecdf.x)
 
     def rvs(self):
@@ -72,7 +68,7 @@ class BinomialDistribution(Distribution):
     """The binomial distribution."""
 
     def __init__(self, N, p):
-        super(BinomialDistribution, self).__init__(0, [])
+        super(BinomialDistribution, self).__init__([])
         self.__N = N  # pylint: disable=invalid-name
         self.__p = p
 
