@@ -43,7 +43,7 @@ class ActivityDistribution(Base):
         self.__inactivity_intervals_histograms = {}
         self.__activity_intervals_histograms = {}
         self.__off_intervals_histograms = {}
-        self.__off_fractions_histograms = {}
+        self.__off_frequencies_histograms = {}
         self.__parse_trace(self.trace_file)
 
     @property
@@ -89,11 +89,11 @@ class ActivityDistribution(Base):
         return self.random_inactivity_for_hour(
             cid, *timestamp_to_day(timestamp))
 
-    def off_fraction_for_hour(self, cid, day, hour):
+    def off_frequency_for_hour(self, cid, day, hour):
         """Determines whether a computer should turndown or not."""
         return self.__draw_from_distribution(
             self.__distribution_for_hour(
-                self.__off_fractions_histograms, cid, day, hour))
+                self.__off_frequencies_histograms, cid, day, hour))
 
     def off_interval_for_hour(self, cid, day, hour):
         """Samples an off interval for the day and hour provided"""
@@ -214,7 +214,7 @@ class ActivityDistribution(Base):
             self.__parse_inactivity_intervals(trace)
             self.__parse_activity_intervals(trace)
             self.__parse_off_intervals(trace)
-            self.__parse_off_fractions(trace)
+            self.__parse_off_frequencies(trace)
             self.__filter_out_empty_servers()
 
     def __parse_servers(self, trace):
@@ -245,10 +245,10 @@ class ActivityDistribution(Base):
         self.__off_intervals_histograms = self.__parse_histograms(
             trace, 'OffIntervals')
 
-    def __parse_off_fractions(self, trace):
+    def __parse_off_frequencies(self, trace):
         """Process the off fractions."""
         logger.info('Parsing off fractions.')
-        self.__off_fractions_histograms = self.__parse_histograms(
+        self.__off_frequencies_histograms = self.__parse_histograms(
             trace, 'OffFrequencies', do_reduce=False)
 
     def __filter_out_empty_servers(self):
@@ -263,7 +263,7 @@ class ActivityDistribution(Base):
                     or self.__is_empty_histogram(
                         self.__off_intervals_histograms, cid)
                     or self.__is_empty_histogram(
-                        self.__off_fractions_histograms, cid)):
+                        self.__off_frequencies_histograms, cid)):
                 empty_servers.add(cid)
         self.__servers = sorted(set(self.__servers) - empty_servers)
         self.__empty_servers = list(empty_servers)

@@ -29,7 +29,7 @@ class User(Base):
     def __init__(self):
         super(User, self).__init__()
         self.__current_hour = None
-        self.__shutdown_fraction = None
+        self.__off_frequency = None
 
     def run(self):
         """Generates requests af the defined frequency."""
@@ -58,12 +58,12 @@ class User(Base):
         hour = timestamp_to_day(self._env.now)
         if self.__current_hour != hour:
             self.__current_hour = hour
-            self.__shutdown_fraction = (
-                self._activity_distribution.off_fraction_for_hour(
+            self.__off_frequency = (
+                self._activity_distribution.off_frequency_for_hour(
                     self._computer.cid, *hour))
-            assert self.__shutdown_fraction >= 0
-        if self.__shutdown_fraction > 0:
-            self.__shutdown_fraction -= 1
+            assert self.__off_frequency >= 0
+        if self.__off_frequency > 0:
+            self.__off_frequency -= 1
             return True
         return False
 
