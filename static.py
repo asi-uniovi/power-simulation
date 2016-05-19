@@ -53,11 +53,13 @@ class profile(object):
                 profiler = cProfile.Profile()
                 profiler.enable()
 
-            func(*args, **kwargs)
+            ret = func(*args, **kwargs)
 
             if self._config.get_arg('trace'):  # pylint: disable=no-member
                 profiler.create_stats()
                 profiler.dump_stats('trace')
+
+            return ret
 
         return wrapper
 
