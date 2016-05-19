@@ -47,8 +47,11 @@ class DiscreteUniformDistribution(Distribution):
 class EmpiricalDistribution(Distribution):
     """Empirical distribution according to the data provided."""
 
+    def __init__(self, data):
+        super(EmpiricalDistribution, self).__init__(data + [max(data)])
+
     def rvs(self):
         """Sample the inverse and try again in nan."""
-        p = (self.sample_size - 1) * numpy.random.random()
+        p = (self.sample_size - 2) * numpy.random.random()
         i = int(numpy.floor(p) + 1)
         return self.data[i] + (p - i + 1) * (self.data[i + 1] - self.data[i])
