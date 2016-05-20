@@ -27,7 +27,8 @@ class Configuration(object):
     def __parse_config(self):
         """Get the config file as a dict of dicts."""
         if not os.path.isfile(self.__args.config_file):
-            raise ValueError('The configuration file does not exist')
+            raise ValueError('The configuration file does not exist: %s'
+                             % self.__args.config_file)
 
         self.__config = configparser.ConfigParser()
         self.__config.read(self.__args.config_file)
