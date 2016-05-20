@@ -53,6 +53,11 @@ class EmpiricalDistribution(Distribution):
     def __init__(self, data):
         super(EmpiricalDistribution, self).__init__(data + [max(data)])
 
+    @property
+    def sample_size(self):
+        """How much data we got for this distribution."""
+        return len(self.data) - 1
+
     def rvs(self):
         """Sample the inverse and try again in nan."""
         p = (self.sample_size - 2) * numpy.random.random()
