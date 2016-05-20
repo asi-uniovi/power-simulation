@@ -1,6 +1,7 @@
 """Some useful statistical distributions."""
 
 import abc
+import functools
 
 import numpy
 
@@ -17,11 +18,13 @@ class Distribution(object, metaclass=abc.ABCMeta):
         return self.__data
 
     @property
+    @functools.lru_cache()
     def mean(self):
         """Expected value of the distribution."""
         return numpy.mean(self.data)
 
     @property
+    @functools.lru_cache()
     def median(self):
         """Median of the distribution."""
         return numpy.median(self.data)  # pylint: disable=no-member
