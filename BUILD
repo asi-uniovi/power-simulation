@@ -72,7 +72,10 @@ py_binary(
         ":data",
     ],
     default_python_version = "PY3",
-    deps = [":simulation"],
+    deps = [
+        ":configuration",
+        ":simulation",
+    ],
     srcs_version = "PY3",
 )
 

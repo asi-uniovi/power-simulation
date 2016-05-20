@@ -6,10 +6,11 @@ import logging
 import sys
 import warnings
 
+from configuration import Configuration
 from simulation import runner
 
 
-def main():
+def main(_):
     """Just starts the simulation."""
     try:
         runner()
@@ -20,4 +21,4 @@ def main():
 
 if __name__ == '__main__':
     warnings.simplefilter('error')
-    sys.exit(main())
+    sys.exit(main(Configuration()))
