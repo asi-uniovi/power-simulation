@@ -111,10 +111,9 @@ class ActivityDistribution(Base):
         hist = self.__get(self.__inactivity_intervals_histograms, cid,
                           *timestamp_to_day(self._env.now))
         if hist is None or all_timespan:
-            hist = self.__flatten_histogram(
-                self.__inactivity_intervals_histograms, cid)
+            hist = self.__flatten_inactivity_histogram(cid)
         else:
-            hist = [i for i in hist.data]
+            hist = hist.data
         if len(hist) == 0:
             logger.warning('Using default timeout for %s (lack of data)', cid)
             return self.__default_timeout
@@ -174,10 +173,13 @@ class ActivityDistribution(Base):
                                 hour, []).append(value.get(day, {}).get(hour))
         return transposed
 
-    def __flatten_histogram(self, histogram, cid):
+    @functools.lru_cache(maxsize=None)
+    def __flatten_inactivity_histogram(self, cid):
         """Makes a histogram completely flat."""
-        return [i for day in histogram[cid].values()
-                for hour in day.values() if hour is not None for i in hour.data]
+        return numpy.concatenate(
+            [hour.data
+             for day in self.__inactivity_intervals_histograms[cid].values()
+             for hour in day.values() if hour is not None])
 
     def __distribution_for_hour(self, histogram, cid, day, hour):
         """Queries the activity distribution to the get average inactivity."""
