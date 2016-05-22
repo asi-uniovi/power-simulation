@@ -13,7 +13,6 @@ class Distribution(object, metaclass=abc.ABCMeta):
         self.__data = sorted(data)
         self.__mean = statistics.mean(self.data)
         self.__median = statistics.median(self.data)
-        self.__sample_size = len(data)
 
     @property
     def data(self):
@@ -33,7 +32,7 @@ class Distribution(object, metaclass=abc.ABCMeta):
     @property
     def sample_size(self):
         """How much data we got for this distribution."""
-        return self.__sample_size
+        return len(self.data)
 
     def rvs(self):
         """This samples the distribution for one value."""
