@@ -1,16 +1,19 @@
 """Some useful statistical distributions."""
 
 import abc
-import functools
-
-import numpy
+import math
+import random
+import statistics
 
 
 class Distribution(object, metaclass=abc.ABCMeta):
     """Base distribution class."""
 
     def __init__(self, data):
-        self.__data = numpy.sort(data)
+        self.__data = sorted(data)
+        self.__mean = statistics.mean(self.data)
+        self.__median = statistics.median(self.data)
+        self.__sample_size = len(data)
 
     @property
     def data(self):
@@ -18,21 +21,19 @@ class Distribution(object, metaclass=abc.ABCMeta):
         return self.__data
 
     @property
-    @functools.lru_cache()
     def mean(self):
         """Expected value of the distribution."""
-        return numpy.mean(self.data)
+        return self.__mean
 
     @property
-    @functools.lru_cache()
     def median(self):
         """Median of the distribution."""
-        return numpy.median(self.data)  # pylint: disable=no-member
+        return self.__median
 
     @property
     def sample_size(self):
         """How much data we got for this distribution."""
-        return len(self.data)
+        return self.__sample_size
 
     def rvs(self):
         """This samples the distribution for one value."""
@@ -44,22 +45,20 @@ class DiscreteUniformDistribution(Distribution):
 
     def rvs(self):
         """One item from the sample."""
-        return numpy.random.choice(self.data)  # pylint: disable=no-member
+        return random.choice(self.data)
 
 
 class EmpiricalDistribution(Distribution):
     """Empirical distribution according to the data provided."""
 
     def __init__(self, data):
-        super(EmpiricalDistribution, self).__init__(data + [max(data)])
-
-    @property
-    def sample_size(self):
-        """How much data we got for this distribution."""
-        return len(self.data) - 1
+        super(EmpiricalDistribution, self).__init__(data)
+        self.__diffs = [data[i + 1] - data[i] for i in range(len(data) - 1)]
+        self.__diffs.append(0)
 
     def rvs(self):
-        """Sample the inverse and try again in nan."""
-        p = (self.sample_size - 2) * numpy.random.random()
-        i = int(numpy.floor(p) + 1)
-        return self.data[i] + (p - i + 1) * (self.data[i + 1] - self.data[i])
+        """Implementation from "Simulation Modeling and Analysis, 5e"."""
+        # pylint: disable=invalid-name
+        p = (self.sample_size - 1) * random.random()
+        i = int(math.floor(p) + 1)
+        return self.data[i] + (p - i + 1) * self.__diffs[i]
