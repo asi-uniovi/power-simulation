@@ -10,7 +10,7 @@ class Distribution(object, metaclass=abc.ABCMeta):
     """Base distribution class."""
 
     def __init__(self, data):
-        self.__data = sorted(data)
+        self.__data = data
         self.__mean = statistics.mean(self.data)
         self.__median = statistics.median(self.data)
 
@@ -51,9 +51,10 @@ class EmpiricalDistribution(Distribution):
     """Empirical distribution according to the data provided."""
 
     def __init__(self, data):
-        super(EmpiricalDistribution, self).__init__(data)
-        self.__diffs = [data[i + 1] - data[i] for i in range(len(data) - 1)]
-        self.__diffs.append(0)
+        super(EmpiricalDistribution, self).__init__(sorted(data))
+        self.__diffs = [self.data[i + 1] - self.data[i]
+                        for i in range(self.sample_size - 1)]
+        self.__diffs.append(0.0)
 
     def rvs(self):
         """Implementation from "Simulation Modeling and Analysis, 5e"."""
