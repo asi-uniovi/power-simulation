@@ -42,7 +42,7 @@ class Simulation(Base):
         logger.info('Simulating %d users (%d s)',
                     self.servers, self.__simulation_time)
         logger.info('Target user satisfaction %d%%', self.__target_satisfaction)
-        logger.info('Average global timeout would be %.2f s',
+        logger.info('RESULT: Average global timeout would be %.2f s',
                     self._training_distribution.global_idle_timeout())
         self._env.process(self.__monitor_time())
         for _ in range(self.servers):
