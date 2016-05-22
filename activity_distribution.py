@@ -173,7 +173,6 @@ class ActivityDistribution(Base):
                                 hour, []).append(value.get(day, {}).get(hour))
         return transposed
 
-    @functools.lru_cache()
     def __flatten_inactivity_histogram(self, cid):
         """Makes a histogram completely flat."""
         return numpy.concatenate(
