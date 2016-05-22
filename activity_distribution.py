@@ -173,7 +173,7 @@ class ActivityDistribution(Base):
                                 hour, []).append(value.get(day, {}).get(hour))
         return transposed
 
-    @functools.lru_cache(maxsize=None)
+    @functools.lru_cache()
     def __flatten_inactivity_histogram(self, cid):
         """Makes a histogram completely flat."""
         return numpy.concatenate(
@@ -251,7 +251,7 @@ class ActivityDistribution(Base):
         """Process the off fractions."""
         logger.info('Parsing off fractions.')
         self.__off_frequencies_histograms = self.__parse_histograms(
-            trace, 'OffFrequencies', do_reduce=False)
+            trace, 'OffFrequencies', do_reduce=False, additive=True)
 
     def __filter_out_empty_servers(self):
         """Removes the servers that have no data in any of the histograms."""
@@ -280,51 +280,16 @@ class ActivityDistribution(Base):
         return True
 
     def __parse_histograms(self, trace, hist_key, do_filter=False,
-                           do_reduce=True):
+                           do_reduce=True, additive=False):
         """Parses the histogram to get a {PC: hist} dict."""
         histograms = {i['PC']: self.__parse_histogram(i)
                       for i in trace if i['Type'] == hist_key}
         if set(histograms.keys()) != set(self.__servers):
             raise ValueError('PCs on Key %s are not consistent' % hist_key)
-        return self.__filter(
-            self.__merge_histograms(histograms), do_filter, do_reduce)
-
-    def __merge_histograms(self, hist):
-        """Merges histograms to be global or per PC/hour."""
-        if not self.get_arg('per_pc'):
-            hist = self.__merge_per_pc(hist)
-        if not self.get_arg('per_hour'):
-            hist = self.__merge_per_hour(hist)
-        return hist
-
-    def __merge_per_pc(self, hist):
-        merged_subhist = {}
-        for _, days in hist.items():
-            for day, hours in days.items():
-                for hour, data in hours.items():
-                    new = merged_subhist.get(day, {}).get(hour)
-                    new = [] if new is None else list(new.data)
-                    new.extend([] if data is None else list(data.data))
-                    merged_subhist.setdefault(day, {})[hour] = (
-                        self.__process(new))
-        for cid in hist:
-            hist[cid] = merged_subhist
-        return hist
-
-    def __merge_per_hour(self, hist):
-        new_hist = {}
-        for cid, days in hist.items():
-            merged_data = []
-            for day, hours in days.items():
-                for hour, data in hours.items():
-                    if data is not None:
-                        merged_data.extend(data.data)
-            merged_data = self.__process(merged_data)
-            for day, hours in days.items():
-                for hour in hours:
-                    new_hist.setdefault(cid, {}).setdefault(day, {}).setdefault(
-                        hour, merged_data)
-        return new_hist
+        histograms = self.__filter(histograms, do_filter, do_reduce)
+        histograms = self.__merge_histograms(histograms, additive)
+        histograms = self.__process(histograms)
+        return histograms
 
     def __parse_histogram(self, trace):
         """Generic parser of a histogram element."""
@@ -338,41 +303,81 @@ class ActivityDistribution(Base):
             hour = int(d['Hour'])
             assert 0 <= day <= 6
             assert 0 <= hour <= 23
-            histogram.setdefault(day, {})[hour] = self.__process(
-                d['Intervals'])
+            histogram.setdefault(day, {})[hour] = d['Intervals']
         return histogram
 
-    def __process(self, data):
-        """Process one data unit."""
-        data = numpy.asarray(data)
-        if len(set(data)) > 1:
-            return EmpiricalDistribution(len(data), *data)
-        elif len(data) == 1:
-            return DiscreteUniformDistribution(len(data), *data)
-        return None
+    def __merge_histograms(self, histogram, additive):
+        """Merges histograms to be global or per PC/hour."""
+        if not self.get_arg('per_pc'):
+            histogram = self.__merge_per_pc(histogram, additive)
+        if not self.get_arg('per_hour'):
+            histogram = self.__merge_per_hour(histogram, additive)
+        return histogram
+
+    def __merge_per_hour(self, histogram, additive):
+        """Merge so that each hour has the same model."""
+        merged = {}
+        for cid, days in histogram.items():
+            for day, hours in days.items():
+                for hour, data in hours.items():
+                    if data is not None:
+                        assert isinstance(data, list)
+                        merged.setdefault(day, {}).setdefault(
+                            hour, []).extend(data)
+        for cid in histogram:
+            histogram[cid] = merged
+        return histogram
+
+    def __merge_per_pc(self, histogram, additive):
+        """Merge so every PC has the same model."""
+        merged = {}
+        for cid, days in histogram.items():
+            for day, hours in days.items():
+                for hour, data in hours.items():
+                    if data is not None:
+                        assert isinstance(data, list)
+                        merged.setdefault(cid, []).extend(data)
+        for cid in histogram:
+            for day, hours in days.items():
+                for hour, data in hours.items():
+                    histogram[cid][day][hour] = merged[cid]
+        return histogram
 
     def __filter(self, histogram, do_filter, do_reduce):
+        """Filter a histogram to improve quality."""
         if not do_filter and not do_reduce:
             return histogram
-        for days in histogram.values():
-            for hours in days.values():
-                for hour in hours:
-                    if hours[hour] is not None:
-                        hours[hour] = self.__filter_histogram(
-                            hours[hour].data, do_filter, do_reduce)
+        for cid, days in histogram.items():
+            for day, hours in days.items():
+                for hour, data in hours.items():
+                    histogram[cid][day][hour] = self.__filter_histogram(
+                        data, do_filter, do_reduce)
         return histogram
 
     def __filter_histogram(self, data, do_filter, do_reduce):
-        sample_size = len(data)
+        """Perform filtering on the raw data to improve quality."""
         if do_filter:
-            data = numpy.asarray([i for i in data
-                                  if self.__xmin <= i <= self.__xmax])
-        elif do_reduce:
-            data = numpy.asarray([i for i in data if i > 0])
-        if sample_size != len(data):
-            logger.debug('filter(): elements filtered out: %d -> %d',
-                         sample_size, len(data))
-        return self.__process(data)
+            data = (i for i in data if self.__xmin <= i <= self.__xmax)
+        if do_reduce:
+            data = (i for i in data if i > 0)
+        return list(data)
+
+    def __process(self, histogram):
+        """Creates the distribution objects from the raw data."""
+        for cid, days in histogram.items():
+            for day, hours in days.items():
+                for hour, data in hours.items():
+                    if isinstance(data, list):
+                        histogram[cid][day][hour] = self.__process_histogram(data)
+        return histogram
+
+    def __process_histogram(self, data):
+        """Process one data unit."""
+        if len(data) > 1:
+            return EmpiricalDistribution(data)
+        elif len(data) > 0:
+            return DiscreteUniformDistribution(data)
+        return None
 
 
 @injector.singleton
