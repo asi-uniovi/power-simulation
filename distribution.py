@@ -1,18 +1,18 @@
 """Some useful statistical distributions."""
 
 import abc
-import math
-import random
-import statistics
+
+import numpy
 
 
 class Distribution(object, metaclass=abc.ABCMeta):
     """Base distribution class."""
 
     def __init__(self, data):
-        self.__data = data
-        self.__mean = statistics.mean(self.data)
-        self.__median = statistics.median(self.data)
+        self.__data = numpy.ascontiguousarray(data)
+        self.__mean = numpy.mean(self.__data)
+        self.__median = numpy.median(self.__data)
+        self.__sample_size = numpy.size(self.__data)
 
     @property
     def data(self):
@@ -32,7 +32,7 @@ class Distribution(object, metaclass=abc.ABCMeta):
     @property
     def sample_size(self):
         """How much data we got for this distribution."""
-        return len(self.data)
+        return self.__sample_size
 
     def rvs(self):
         """This samples the distribution for one value."""
@@ -44,21 +44,21 @@ class DiscreteUniformDistribution(Distribution):
 
     def rvs(self):
         """One item from the sample."""
-        return random.choice(self.data)
+        return numpy.random.choice(self.data)  # pylint: disable=no-member
 
 
 class EmpiricalDistribution(Distribution):
     """Empirical distribution according to the data provided."""
 
     def __init__(self, data):
-        super(EmpiricalDistribution, self).__init__(sorted(data))
-        self.__diffs = [self.data[i + 1] - self.data[i]
-                        for i in range(self.sample_size - 1)]
-        self.__diffs.append(0.0)
+        super(EmpiricalDistribution, self).__init__(numpy.sort(data))
+        self.__diffs = numpy.ascontiguousarray(
+            [self.data[i + 1] - self.data[i]
+             for i in range(self.sample_size - 1)] + [0.0])
 
     def rvs(self):
         """Implementation from "Simulation Modeling and Analysis, 5e"."""
         # pylint: disable=invalid-name
-        p = (self.sample_size - 1) * random.random()
-        i = int(math.floor(p) + 1)
+        p = (self.sample_size - 1) * numpy.random.random()
+        i = int(numpy.floor(p) + 1)
         return self.data[i] + (p - i + 1) * self.__diffs[i]
