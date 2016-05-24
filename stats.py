@@ -76,9 +76,9 @@ class Stats(Base):
         """Gets all the subhistograms per hour."""
         return self.__storage[key].get_all_hourly_histograms()
 
-    def get_all_hourly_summaries(self, key, summaries=('mean', 'median')):
+    def get_all_hourly_summaries(self, key):
         """Gets all the summaries per hour."""
-        return self.__storage[key].get_all_hourly_summaries(summaries)
+        return self.__storage[key].get_all_hourly_summaries()
 
     def get_all_histogram(self, key, cid=None):
         """Gets all of the histogram data."""
