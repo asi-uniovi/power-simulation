@@ -42,7 +42,7 @@ class Histogram(Base):
             self.__write_cache = []
             Histogram.__cache_invalidate()
 
-    @functools.lru_cache()
+    @functools.lru_cache(maxsize=1)
     def get_all_hourly_histograms(self):
         """Gets all the subhistograms per hour."""
         self.flush()
@@ -71,7 +71,8 @@ class Histogram(Base):
                     WHERE histogram = ?
                           AND computer = ?;''',
                 (self.__name, cid))
-        return [i['value'] for i in self.__cursor.fetchall()]
+        return numpy.ascontiguousarray(
+            [i['value'] for i in self.__cursor.fetchall()])
 
     @functools.lru_cache()
     def get_all_hourly_summaries(self, summaries):
