@@ -40,6 +40,8 @@ class Binder(injector.Module, metaclass=Singleton):
         conn.isolation_level = None
         conn.row_factory = sqlite3.Row
         conn.enable_load_extension(True)
+        # TODO(m3drano): Find the library with Bazel paths.
+        conn.load_extension('../libsqlitefunctions')
         conn.execute('PRAGMA journal_mode = OFF;')
         conn.execute('PRAGMA foreign_keys = OFF;')
         conn.execute('PRAGMA cache_size = %d;' % -int(MB(512) / KB(1)))

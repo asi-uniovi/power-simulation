@@ -64,6 +64,12 @@ py_library(
     srcs_version = "PY3",
 )
 
+cc_library(
+    name = "sqlitefunctions",
+    srcs = ["extension-functions.c"],
+    copts = ["-fno-common"],
+)
+
 py_binary(
     name = "main",
     srcs = ["main.py"],
@@ -82,6 +88,7 @@ py_binary(
 py_library(
     name = "module",
     srcs = ["module.py"],
+    data = [":sqlitefunctions"],
     deps = [
         ":configuration",
         ":singleton",
