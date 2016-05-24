@@ -8,7 +8,8 @@ import numpy
 from activity_distribution import ActivityDistribution
 from activity_distribution import timestamp_to_day
 from base import Base
-from computer import Computer, ComputerStatus
+from computer import Computer
+from computer import ComputerStatus
 from stats import Stats
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name

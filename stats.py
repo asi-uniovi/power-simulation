@@ -8,7 +8,8 @@ import numpy
 from activity_distribution import TrainingDistribution
 from base import Base
 from histogram import Histogram
-from module import Binder, CustomInjector
+from module import Binder
+from module import CustomInjector
 from static import weight
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
