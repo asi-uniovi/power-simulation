@@ -52,7 +52,7 @@ class Histogram(Base):
                 WHERE histogram = ?
              ORDER BY hour ASC;''',
             (self.__name,))
-        return self.__fetch_hourly()
+        return self.__fetch_hourly_array()
 
     @functools.lru_cache()
     def get_all_histogram(self, cid=None):
@@ -128,7 +128,7 @@ class Histogram(Base):
             (self.__name, cid))
         return int(self.__cursor.fetchone()['count'])
 
-    def __fetch_hourly(self):
+    def __fetch_hourly_array(self):
         """Groups by hour and fills in the hours with no data."""
         dct = {i: numpy.asarray(list(i[1] for i in g))
                for i, g in itertools.groupby(
