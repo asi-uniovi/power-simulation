@@ -74,7 +74,7 @@ class Histogram(Base):
         return numpy.ascontiguousarray(
             [i['value'] for i in self.__cursor.fetchall()])
 
-    @functools.lru_cache()
+    @functools.lru_cache(maxsize=1)
     def get_all_hourly_summaries(self):
         """Gets all the summaries per hour."""
         self.flush()
