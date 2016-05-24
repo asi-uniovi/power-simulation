@@ -89,4 +89,4 @@ def previous_hour(day, hour):
 # pylint: disable=invalid-name
 def weight(x, ip, fp):
     """Linear increment between ip and fp function."""
-    return max(0, min(1, (ip - x) / (ip - fp)))
+    return max(0.0, min(1.0, (ip - x) / (ip - fp)))

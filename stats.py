@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 def weighted_user_satisfaction(t, timeout, threshold):
     """Calculates the weighted satisfaction with a sigmoid."""
     if t < timeout:
-        return 1
+        return 1.0
     else:
         return weight(t - timeout, 60, threshold)
 
