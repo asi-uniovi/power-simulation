@@ -5,7 +5,7 @@ pipelines:
     - step:
         script:
           - gcc -fPIC -lm -shared extension-functions.c -o libsqlitefunctions.so
-          - pip install -U requirements.txt
+          - pip install -Ur requirements.txt
           - ./main.py --debug --config=config/dev.ini
 #          - ./main.py --config=config/2014.ini
 #          - ./main.py --config=config/2015-1.ini
