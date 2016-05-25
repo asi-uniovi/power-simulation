@@ -90,3 +90,12 @@ def previous_hour(day, hour):
 def weight(x, ip, fp):
     """Linear increment between ip and fp function."""
     return max(0.0, min(1.0, (ip - x) / (ip - fp)))
+
+
+# pylint: disable=invalid-name
+def weighted_user_satisfaction(t, timeout, threshold):
+    """Calculates the weighted satisfaction with a sigmoid."""
+    if t < timeout:
+        return 1.0
+    else:
+        return weight(t - timeout, 60, threshold)

@@ -10,18 +10,9 @@ from base import Base
 from histogram import Histogram
 from module import Binder
 from module import CustomInjector
-from static import weight
+from static import weighted_user_satisfaction
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
-
-
-# pylint: disable=invalid-name
-def weighted_user_satisfaction(t, timeout, threshold):
-    """Calculates the weighted satisfaction with a sigmoid."""
-    if t < timeout:
-        return 1.0
-    else:
-        return weight(t - timeout, 60, threshold)
 
 
 @injector.singleton
