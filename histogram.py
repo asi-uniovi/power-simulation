@@ -80,16 +80,16 @@ class Histogram(Base):
     @functools.lru_cache(maxsize=1)
     def get_all_hourly_summaries(self):
         """Gets all the summaries per hour."""
-        self.flush()
-        self.__cursor.execute(
-            '''SELECT hour, AVG(value) AS mean, MEDIAN(value) AS median
-                 FROM histogram
-                WHERE histogram = ?
-             GROUP BY hour
-             ORDER BY hour ASC;''',
-            (self.__name,))
-        dct = {i['hour']: i for i in self.__cursor.fetchall()}
-        return [dct.get(i, {'mean': 0.0, 'median': 0.0}) for i in range(168)]
+        ret = []
+        for hist in self.get_all_hourly_histograms():
+            dct = {}
+            for summary in ('mean', 'median'):
+                try:
+                    dct[summary] = getattr(numpy, summary)(hist)
+                except (IndexError, RuntimeWarning):
+                    dct[summary] = 0.0
+            ret.append(dct)
+        return ret
 
     @functools.lru_cache()
     def get_all_hourly_count(self):

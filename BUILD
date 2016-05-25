@@ -82,7 +82,6 @@ py_binary(
 py_library(
     name = "module",
     srcs = ["module.py"],
-    data = [":sqlitefunctions"],
     deps = [
         ":configuration",
         ":singleton",
