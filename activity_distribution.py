@@ -126,7 +126,7 @@ class ActivityDistribution(Base):
     def __optimal_timeout(self, hist):
         """Uses the bisection method to find the timeout for the target."""
 
-        def f(x):
+        def f(x):  # pylint: disable=invalid-name
             """Trasposed function to optimize via root finding."""
             return (numpy.mean([
                 weighted_user_satisfaction(
@@ -300,6 +300,7 @@ class ActivityDistribution(Base):
                     return False
         return True
 
+    # pylint: disable=too-many-arguments
     def __parse_histograms(self, trace, hist_key, do_filter=False,
                            do_reduce=True, additive=False):
         """Parses the histogram to get a {PC: hist} dict."""
