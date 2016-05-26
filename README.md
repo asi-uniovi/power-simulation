@@ -1,7 +1,5 @@
 # Power managemnet simulaton for computer fleets
 
-[ ![Codeship Status for uniovi-atc/simulacion](https://codeship.com/projects/28ab70c0-bbc4-0133-ca86-5a73e45d98be/status?branch=master)](https://codeship.com/projects/135998)
-
 ## How to run this
 
 ### Using Python, pip and virtualenv
