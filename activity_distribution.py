@@ -358,7 +358,7 @@ class ActivityDistribution(Base):
                     if data is not None:
                         assert isinstance(data, list)
                         merged.setdefault(cid, []).extend(data)
-        for cid in histogram:
+        for cid, days in histogram.items():
             for day, hours in days.items():
                 for hour, data in hours.items():
                     histogram[cid][day][hour] = merged[cid]
