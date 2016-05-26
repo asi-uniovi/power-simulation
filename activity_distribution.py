@@ -3,16 +3,18 @@
 import functools
 import json
 import logging
-import numpy
 
 import injector
+import numpy
+import scipy.optimize
 
 from base import Base
 from distribution import DiscreteUniformDistribution
 from distribution import EmpiricalDistribution
+from static import DAYS
 from static import previous_hour
 from static import timestamp_to_day
-from static import DAYS
+from static import weighted_user_satisfaction
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
@@ -31,6 +33,8 @@ class ActivityDistribution(Base):
         super(ActivityDistribution, self).__init__()
         self.__default_timeout = self.get_config_int('default_timeout')
         self.__target_satisfaction = self.get_config_int('target_satisfaction')
+        self.__satisfaction_threshold = self.get_config_int(
+            'satisfaction_threshold', section='stats')
         self.__noise_threshold = self.get_config_float(
             'noise_threshold', section='trace')
         self.__xmin = self.get_config_float('xmin', section='trace')
@@ -117,9 +121,27 @@ class ActivityDistribution(Base):
         if len(hist) == 0:
             logger.warning('Using default timeout for %s (lack of data)', cid)
             return self.__default_timeout
-        timeout = numpy.percentile(
-            hist, self.__target_satisfaction, interpolation='lower')
-        return timeout
+        return self.__optimal_timeout(hist)
+
+    def __optimal_timeout(self, hist):
+        """Uses the bisection method to find the timeout for the target."""
+
+        def f(x):
+            """Trasposed function to optimize via root finding."""
+            return (numpy.mean([
+                weighted_user_satisfaction(
+                    t, x, self.__satisfaction_threshold)
+                for t in hist]) * 100 - self.__target_satisfaction)
+
+        try:
+            return scipy.optimize.brentq(f, self.__xmin, self.__xmax, xtol=1)
+        except ValueError:
+            # If the function has no root, means that we cannot achieve the
+            # satisfaction target, therefore, if we provide the max value, we
+            # ensure to, at least, be as close as possible.
+            if f(self.__xmax) > f(self.__xmin):
+                return self.__xmax
+            return self.__xmin
 
     @functools.lru_cache()
     def global_idle_timeout(self):
