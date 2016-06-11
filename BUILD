@@ -123,12 +123,6 @@ py_library(
     srcs_version = "PY3",
 )
 
-cc_library(
-    name = "sqlitefunctions",
-    srcs = ["extension-functions.c"],
-    copts = ["-fno-common"],
-)
-
 py_library(
     name = "static",
     srcs = ["static.py"],
