@@ -123,6 +123,7 @@ class ActivityDistribution(Base):
             return self.__default_timeout
         return self.__optimal_timeout(hist)
 
+    @functools.lru_cache(maxsize=65536)
     def __optimal_timeout(self, hist):
         """Uses the bisection method to find the timeout for the target."""
 
@@ -195,12 +196,14 @@ class ActivityDistribution(Base):
                                 hour, []).append(value.get(day, {}).get(hour))
         return transposed
 
+    @functools.lru_cache(maxsize=256)
     def __flatten_inactivity_histogram(self, cid):
         """Makes a histogram completely flat."""
-        return numpy.concatenate(
-            [hour.data
-             for day in self.__inactivity_intervals_histograms[cid].values()
-             for hour in day.values() if hour is not None])
+        return tuple(
+            i
+            for day in self.__inactivity_intervals_histograms[cid].values()
+            for hour in day.values() if hour is not None
+            for i in hour.data)
 
     def __distribution_for_hour(self, histogram, cid, day, hour):
         """Queries the activity distribution to the get average inactivity."""

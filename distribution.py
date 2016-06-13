@@ -9,10 +9,7 @@ class Distribution(object, metaclass=abc.ABCMeta):
     """Base distribution class."""
 
     def __init__(self, data):
-        self.__data = numpy.ascontiguousarray(data)
-        self.__mean = numpy.mean(self.__data)
-        self.__median = numpy.median(self.__data)
-        self.__sample_size = numpy.size(self.__data)
+        self.__data = tuple(data)
 
     @property
     def data(self):
@@ -22,17 +19,17 @@ class Distribution(object, metaclass=abc.ABCMeta):
     @property
     def mean(self):
         """Expected value of the distribution."""
-        return self.__mean
+        return numpy.mean(self.__data)
 
     @property
     def median(self):
         """Median of the distribution."""
-        return self.__median
+        return numpy.median(self.__data)
 
     @property
     def sample_size(self):
         """How much data we got for this distribution."""
-        return self.__sample_size
+        return len(self.__data)
 
     def rvs(self):
         """This samples the distribution for one value."""
@@ -51,8 +48,8 @@ class EmpiricalDistribution(Distribution):
     """Empirical distribution according to the data provided."""
 
     def __init__(self, data):
-        super(EmpiricalDistribution, self).__init__(numpy.sort(data))
-        self.__diffs = numpy.ascontiguousarray(
+        super(EmpiricalDistribution, self).__init__(sorted(data))
+        self.__diffs = tuple(
             [self.data[i + 1] - self.data[i]
              for i in range(self.sample_size - 1)] + [0.0])
 
