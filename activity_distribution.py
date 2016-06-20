@@ -123,7 +123,7 @@ class ActivityDistribution(Base):
             return self.__default_timeout
         return self.__optimal_timeout(hist)
 
-    @functools.lru_cache(maxsize=65536)
+    @functools.lru_cache(maxsize=512)
     def __optimal_timeout(self, hist):
         """Uses the bisection method to find the timeout for the target."""
 
@@ -144,7 +144,7 @@ class ActivityDistribution(Base):
                 return self.__xmax
             return self.__xmin
 
-    @functools.lru_cache()
+    @functools.lru_cache(maxsize=1)
     def global_idle_timeout(self):
         """Calculates the value of the idle timer for a given satisfaction."""
         return numpy.mean([self.optimal_idle_timeout(cid, all_timespan=True)

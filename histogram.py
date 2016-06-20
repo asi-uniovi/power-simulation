@@ -57,7 +57,7 @@ class Histogram(Base):
                    self.__cursor.fetchall(), operator.itemgetter(0))}
         return [dct.get(i, []) for i in range(168)]
 
-    @functools.lru_cache()
+    @functools.lru_cache(maxsize=256)
     def get_all_histogram(self, cid=None):
         """Gets all the data from the histogram."""
         self.flush()
@@ -91,7 +91,7 @@ class Histogram(Base):
             ret.append(dct)
         return ret
 
-    @functools.lru_cache()
+    @functools.lru_cache(maxsize=1)
     def get_all_hourly_count(self):
         """Gets all the count per hour."""
         self.flush()
