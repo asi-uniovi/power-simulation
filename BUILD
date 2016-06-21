@@ -1,33 +1,33 @@
 py_library(
     name = "activity_distribution",
     srcs = ["activity_distribution.py"],
+    srcs_version = "PY3",
     deps = [
         ":base",
         ":distribution",
         ":static",
     ],
-    srcs_version = "PY3",
 )
 
 py_library(
     name = "base",
     srcs = ["base.py"],
+    srcs_version = "PY3",
     deps = [
         ":configuration",
         ":module",
     ],
-    srcs_version = "PY3",
 )
 
 py_library(
     name = "computer",
     srcs = ["computer.py"],
+    srcs_version = "PY3",
     deps = [
         ":activity_distribution",
         ":base",
         ":stats",
     ],
-    srcs_version = "PY3",
 )
 
 py_library(
@@ -57,11 +57,11 @@ py_library(
 py_library(
     name = "histogram",
     srcs = ["histogram.py"],
+    srcs_version = "PY3",
     deps = [
         ":base",
         ":static",
     ],
-    srcs_version = "PY3",
 )
 
 py_binary(
@@ -72,38 +72,39 @@ py_binary(
         ":data",
     ],
     default_python_version = "PY3",
+    srcs_version = "PY3",
     deps = [
         ":configuration",
         ":simulation",
     ],
-    srcs_version = "PY3",
 )
 
 py_library(
     name = "module",
     srcs = ["module.py"],
+    srcs_version = "PY3",
     deps = [
         ":configuration",
         ":singleton",
         ":static",
     ],
-    srcs_version = "PY3",
 )
 
 py_library(
     name = "plot",
     srcs = ["plot.py"],
+    srcs_version = "PY3",
     deps = [
         ":activity_distribution",
         ":static",
         ":stats",
     ],
-    srcs_version = "PY3",
 )
 
 py_library(
     name = "simulation",
     srcs = ["simulation.py"],
+    srcs_version = "PY3",
     deps = [
         ":activity_distribution",
         ":base",
@@ -114,7 +115,6 @@ py_library(
         ":stats",
         ":user",
     ],
-    srcs_version = "PY3",
 )
 
 py_library(
@@ -126,13 +126,14 @@ py_library(
 py_library(
     name = "static",
     srcs = ["static.py"],
-    deps = [":configuration"],
     srcs_version = "PY3",
+    deps = [":configuration"],
 )
 
 py_library(
     name = "stats",
     srcs = ["stats.py"],
+    srcs_version = "PY3",
     deps = [
         ":activity_distribution",
         ":base",
@@ -140,17 +141,16 @@ py_library(
         ":module",
         ":static",
     ],
-    srcs_version = "PY3",
 )
 
 py_library(
     name = "user",
     srcs = ["user.py"],
+    srcs_version = "PY3",
     deps = [
         ":activity_distribution",
         ":base",
         ":computer",
         ":stats",
     ],
-    srcs_version = "PY3",
 )
