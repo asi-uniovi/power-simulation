@@ -52,7 +52,7 @@ class ActivityDistribution(Base):
 
     @property
     def trace_file(self):
-        """Indicates the location of the trace file."""
+        """Indicates the location of the trace file (to be overriden)."""
         return self.get_config('trace_file', section='trace')
 
     @property
@@ -246,9 +246,10 @@ class ActivityDistribution(Base):
     def __parse_servers(self, trace):
         """Gets and validates the server hostnames from the trace."""
         logger.info('Parsing and validating server hostnames.')
-        # TODO(m3drano): This should check for repeated hostnames too.
-        pcs = [set(i['PC'] for i in trace if i['Type'] == key)
+        pcs = [[i['PC'] for i in trace if i['Type'] == key]
                for key in set(j['Type'] for j in trace)]
+        if any(True for i in pcs if len(i) != len(set(i))):
+            raise ValueError('There are duplicate PCs')
         if len(set(len(i) for i in pcs)) != 1:
             raise ValueError('PC names are not consistent across keys')
         self.__servers = sorted(pcs.pop())
