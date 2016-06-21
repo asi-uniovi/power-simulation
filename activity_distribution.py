@@ -333,14 +333,14 @@ class ActivityDistribution(Base):
 
     def __merge_histograms(self, histogram, additive):
         """Merges histograms to be global or per PC/hour."""
-        if not self.get_arg('per_pc'):
-            histogram = self.__merge_per_pc(histogram, additive)
         if not self.get_arg('per_hour'):
             histogram = self.__merge_per_hour(histogram, additive)
+        if not self.get_arg('per_pc'):
+            histogram = self.__merge_per_pc(histogram, additive)
         return histogram
 
-    def __merge_per_hour(self, histogram, additive):
-        """Merge so that each hour has the same model."""
+    def __merge_per_pc(self, histogram, additive):
+        """Merge so all PCs have the same model."""
         merged = {}
         for cid, days in histogram.items():
             for day, hours in days.items():
@@ -349,24 +349,31 @@ class ActivityDistribution(Base):
                         assert isinstance(data, list)
                         merged.setdefault(day, {}).setdefault(
                             hour, []).extend(data)
+        if additive:
+            for day, hours in merged.items():
+                for hour in hours:
+                    hours[hour] = [numpy.mean(hours[hour])]
         for cid in histogram:
             histogram[cid] = merged
         return histogram
 
-    def __merge_per_pc(self, histogram, additive):
-        """Merge so every PC has the same model."""
+    def __merge_per_hour(self, histogram, additive):
+        """Merge so all hours have the same model."""
         merged = {}
         for cid, days in histogram.items():
+            merged_data = []
             for day, hours in days.items():
                 for hour, data in hours.items():
                     if data is not None:
                         assert isinstance(data, list)
-                        merged.setdefault(cid, []).extend(data)
-        for cid, days in histogram.items():
+                        merged_data.extend(data)
+            if additive:
+                merged_data = [numpy.mean(merged_data)]
             for day, hours in days.items():
-                for hour, data in hours.items():
-                    histogram[cid][day][hour] = merged[cid]
-        return histogram
+                for hour in hours:
+                    merged.setdefault(cid, {}).setdefault(day, {}).setdefault(
+                        hour, merged_data)
+        return merged
 
     def __filter(self, histogram, do_filter, do_reduce):
         """Filter a histogram to improve quality."""
