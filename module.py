@@ -4,26 +4,14 @@ import os
 import sqlite3
 
 import injector
-import simpy
 
 from configuration import Configuration
 from singleton import Singleton
 from static import KB, MB
 
 
-env_key = injector.Key('env')  # pylint: disable=invalid-name
-
-
 class Binder(injector.Module, metaclass=Singleton):
     """This binds all the types needed on the simulation."""
-
-    def __init__(self):
-        super(Binder, self).__init__()
-        self._env = simpy.Environment()
-
-    def configure(self, binder):
-        """Sets the basic configuration and dependency injections."""
-        binder.bind(env_key, to=injector.InstanceProvider(self._env))
 
     @injector.singleton
     @injector.provides(sqlite3.Connection)

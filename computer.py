@@ -39,7 +39,7 @@ class Computer(Base):
             Computer.__new_computer_id()]
         self.__status = ComputerStatus.on
         self.__last_auto_shutdown = None
-        self.__idle_timer = self._env.process(self.__idle_timer_runner())
+        self.__idle_timer = self._config.env.process(self.__idle_timer_runner())
 
     @property
     def status(self):
@@ -59,7 +59,7 @@ class Computer(Base):
         if (status == ComputerStatus.on
                 and self.__last_auto_shutdown is not None):
             self._stats.append('AUTO_SHUTDOWN_TIME',
-                               self._env.now - self.__last_auto_shutdown,
+                               self._config.env.now - self.__last_auto_shutdown,
                                self.__computer_id,
                                timestamp=self.__last_auto_shutdown)
             self.__last_auto_shutdown = None
@@ -73,13 +73,13 @@ class Computer(Base):
             self.__idle_timer.interrupt()
         activity_time = (
             self._activity_distribution.random_activity_for_timestamp(
-                self.__computer_id, self._env.now))
+                self.__computer_id, self._config.env.now))
         assert activity_time > 0, activity_time
-        now = self._env.now
-        yield self._env.timeout(activity_time)
+        now = self._config.env.now
+        yield self._config.env.timeout(activity_time)
         self._stats.append('ACTIVITY_TIME', activity_time, self.__computer_id,
                            timestamp=now)
-        self.__idle_timer = self._env.process(self.__idle_timer_runner())
+        self.__idle_timer = self._config.env.process(self.__idle_timer_runner())
 
     @property
     def __idle_timeout(self):
@@ -92,15 +92,15 @@ class Computer(Base):
     def __idle_timer_runner(self):
         """Process for the idle timer control."""
         try:
-            idle_start = self._env.now
-            yield self._env.timeout(self.__idle_timeout)
+            idle_start = self._config.env.now
+            yield self._config.env.timeout(self.__idle_timeout)
             self.change_status(ComputerStatus.off,
                                interrupt_idle_timer=False)
-            self.__last_auto_shutdown = self._env.now
+            self.__last_auto_shutdown = self._config.env.now
         except simpy.Interrupt:
             pass
         finally:
-            self._stats.append('IDLE_TIME', self._env.now - idle_start,
+            self._stats.append('IDLE_TIME', self._config.env.now - idle_start,
                                self.__computer_id, timestamp=idle_start)
 
     @classmethod

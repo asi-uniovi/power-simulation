@@ -5,6 +5,7 @@ import configparser
 import os
 
 import injector
+import simpy
 
 
 @injector.singleton
@@ -13,8 +14,18 @@ class Configuration(object):
 
     def __init__(self):
         super(Configuration, self).__init__()
+        self.__env = simpy.Environment()
         self.__parse_args()
         self.__parse_config()
+
+    @property
+    def env(self):
+        """Current simulation environment."""
+        return self.__env
+
+    def reset(self):
+        """Resets the configuration to be able to start a new run."""
+        self.__env = simpy.Environment()
 
     def get_arg(self, key):
         """Forwards the get action to the args container."""

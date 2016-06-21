@@ -4,10 +4,9 @@ import abc
 import injector
 
 from configuration import Configuration
-from module import env_key
 
 
-@injector.inject(_config=Configuration, _env=env_key)
+@injector.inject(_config=Configuration)
 class Base(object, metaclass=abc.ABCMeta):
     """An abstract class with all the basic methods we need across."""
 

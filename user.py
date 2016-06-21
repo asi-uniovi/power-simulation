@@ -35,28 +35,28 @@ class User(Base):
     def run(self):
         """Generates requests af the defined frequency."""
         while True:
-            yield self._env.process(self._computer.serve())
+            yield self._config.env.process(self._computer.serve())
             assert self._computer.status == ComputerStatus.on
-            now = self._env.now
+            now = self._config.env.now
             if self.__indicate_shutdown():
                 logger.debug('User is shutting down PC %s', self._computer.cid)
                 shutdown_time = self.__shutdown_interval()
                 self._computer.change_status(ComputerStatus.off)
-                yield self._env.timeout(shutdown_time)
+                yield self._config.env.timeout(shutdown_time)
                 self._stats.append('USER_SHUTDOWN_TIME', shutdown_time,
                                    self._computer.cid, timestamp=now)
             else:
                 inactivity_time = (
                     self._activity_distribution.random_inactivity_for_timestamp(
-                        self._computer.cid, self._env.now))
+                        self._computer.cid, self._config.env.now))
                 assert inactivity_time > 0, inactivity_time
-                yield self._env.timeout(inactivity_time)
+                yield self._config.env.timeout(inactivity_time)
                 self._stats.append('INACTIVITY_TIME', inactivity_time,
                                    self._computer.cid, timestamp=now)
 
     def __indicate_shutdown(self):
         """Indicates whether we need to shutdown or not."""
-        hour = timestamp_to_day(self._env.now)
+        hour = timestamp_to_day(self._config.env.now)
         if self.__current_hour != hour:
             self.__current_hour = hour
             self.__off_frequency = (
@@ -73,7 +73,7 @@ class User(Base):
         try:
             shutdown = numpy.ceil(
                 self._activity_distribution.off_interval_for_timestamp(
-                    self._computer.cid, self._env.now))
+                    self._computer.cid, self._config.env.now))
             assert shutdown > 0, shutdown
             return shutdown
         except TypeError:

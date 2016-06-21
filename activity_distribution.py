@@ -113,7 +113,7 @@ class ActivityDistribution(Base):
     def optimal_idle_timeout(self, cid, all_timespan=False):
         """Calculates the value of the idle timer for a given satisfaction."""
         hist = self.__get(self.__inactivity_intervals_histograms, cid,
-                          *timestamp_to_day(self._env.now))
+                          *timestamp_to_day(self._config.env.now))
         if hist is None or all_timespan:
             hist = self.__flatten_inactivity_histogram(cid)
         else:

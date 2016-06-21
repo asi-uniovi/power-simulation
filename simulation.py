@@ -37,6 +37,7 @@ class Simulation(Base):
 
     def run(self):
         """Sets up and starts a new simulation."""
+        self._config.reset()
         self._activity_distribution.remove_servers(
             self._training_distribution.empty_servers)
         logger.info('Simulating %d users (%d s)',
@@ -44,12 +45,12 @@ class Simulation(Base):
         logger.info('Target user satisfaction %d%%', self.__target_satisfaction)
         logger.info('RESULT: Average global timeout would be %.2f s',
                     self._training_distribution.global_idle_timeout())
-        self._env.process(self.__monitor_time())
+        self._config.env.process(self.__monitor_time())
         for _ in range(self.servers):
-            self._env.process(CustomInjector(Binder()).get(User).run())
+            self._config.env.process(CustomInjector(Binder()).get(User).run())
         logger.info('Simulation starting')
-        self._env.run(until=self.__simulation_time)
-        logger.info('Simulation ended at %d s', self._env.now)
+        self._config.env.run(until=self.__simulation_time)
+        logger.info('Simulation ended at %d s', self._config.env.now)
         self.__validate_results()
         self.__log_results()
         if self.get_arg('plot'):
@@ -98,8 +99,8 @@ class Simulation(Base):
         """Indicates how te simulation is progressing."""
         while True:
             logger.info('%.2f%% completed',
-                        self._env.now / self.__simulation_time * 100.0)
-            yield self._env.timeout(self.__simulation_time / 10.0)
+                        self._config.env.now / self.__simulation_time * 100.0)
+            yield self._config.env.timeout(self.__simulation_time / 10.0)
 
 
 def runner():
