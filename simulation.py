@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
 @injector.inject(_activity_distribution=ActivityDistribution,
                  _training_distribution=TrainingDistribution,
+                 _user_builder=injector.AssistedBuilder(cls=User),
                  _plot=Plot,
                  _stats=Stats)
 # pylint: disable=no-member
@@ -47,8 +48,8 @@ class Simulation(Base):
         logger.info('RESULT: Average global timeout would be %.2f s',
                     self._training_distribution.global_idle_timeout())
         self._config.env.process(self.__monitor_time())
-        for _ in range(self.servers):
-            self._config.env.process(CustomInjector(Binder()).get(User).run())
+        for cid in self._training_distribution.servers:
+            self._config.env.process(self._user_builder.build(cid=cid).run())
         logger.info('Simulation starting')
         self._config.env.run(until=self.__simulation_time)
         logger.info('Simulation ended at %d s', self._config.env.now)

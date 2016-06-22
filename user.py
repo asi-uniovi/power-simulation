@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
 @injector.inject(_activity_distribution=ActivityDistribution,
                  _stats=Stats,
-                 _computer=Computer)
+                 _computer_builder=injector.AssistedBuilder(cls=Computer))
 # pylint: disable=no-member
 class User(Base):
     """A user model.
@@ -27,8 +27,9 @@ class User(Base):
       - The average interarrival time.
     """
 
-    def __init__(self):
+    def __init__(self, cid):
         super(User, self).__init__()
+        self._computer = self._computer_builder.build(cid=cid)
         self.__current_hour = None
         self.__off_frequency = None
 

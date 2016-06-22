@@ -31,12 +31,10 @@ class Computer(Base):
 
     Server with configurable exponential serving rate.
     """
-    __computer_id_count = -1
 
-    def __init__(self):
+    def __init__(self, cid):
         super(Computer, self).__init__()
-        self.__computer_id = self._training_distribution.servers[
-            Computer.__new_computer_id()]
+        self.__computer_id = cid
         self.__status = ComputerStatus.on
         self.__last_auto_shutdown = None
         self.__idle_timer = self._config.env.process(self.__idle_timer_runner())
@@ -102,9 +100,3 @@ class Computer(Base):
         finally:
             self._stats.append('IDLE_TIME', self._config.env.now - idle_start,
                                self.__computer_id, timestamp=idle_start)
-
-    @classmethod
-    def __new_computer_id(cls):
-        """Creates a new computer ID."""
-        cls.__computer_id_count += 1
-        return cls.__computer_id_count
