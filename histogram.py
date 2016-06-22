@@ -42,6 +42,15 @@ class Histogram(Base):
             self.__write_cache = []
             Histogram.__cache_invalidate()
 
+    def truncate(self):
+        """Deletes all the data from the table."""
+        self.__sum = 0
+        self.__count = 0
+        self.__write_cache = []
+        self.__cursor.execute('DELETE FROM histogram WHERE histogram = ?;',
+                              (self.__name,))
+        self.__cursor.execute('VACUUM;')
+
     @functools.lru_cache(maxsize=1)
     def get_all_hourly_histograms(self):
         """Gets all the subhistograms per hour."""

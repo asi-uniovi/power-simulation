@@ -36,6 +36,11 @@ class Stats(Base):
             return self._training_distribution.global_idle_timeout()
         return self._training_distribution.optimal_idle_timeout(cid)
 
+    def reset(self):
+        """Reset all stats."""
+        for i in self.__storage.values():
+            i.truncate()
+
     def user_satisfaction(self):
         """Calculates de user satisfaction."""
         lst = []

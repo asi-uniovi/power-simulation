@@ -40,6 +40,7 @@ class Simulation(Base):
         self._config.reset()
         self._activity_distribution.remove_servers(
             self._training_distribution.empty_servers)
+        self._stats.reset()
         logger.info('Simulating %d users (%d s)',
                     self.servers, self.__simulation_time)
         logger.info('Target user satisfaction %d%%', self.__target_satisfaction)
