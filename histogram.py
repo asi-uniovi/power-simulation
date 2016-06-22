@@ -1,6 +1,5 @@
 """Database backed histogram."""
 
-import functools
 import itertools
 import operator
 import sqlite3
@@ -40,7 +39,6 @@ class Histogram(Base):
                 ('INSERT INTO histogram(histogram, timestamp, computer, value) '
                  "VALUES('%s', ?, ?, ?);") % self.__name, self.__write_cache)
             self.__write_cache = []
-            Histogram.__cache_invalidate()
 
     def truncate(self):
         """Deletes all the data from the table."""
@@ -51,7 +49,6 @@ class Histogram(Base):
                               (self.__name,))
         self.__cursor.execute('VACUUM;')
 
-    @functools.lru_cache(maxsize=1)
     def get_all_hourly_histograms(self):
         """Gets all the subhistograms per hour."""
         self.flush()
@@ -66,7 +63,6 @@ class Histogram(Base):
                    self.__cursor.fetchall(), operator.itemgetter(0))}
         return [dct.get(i, []) for i in range(168)]
 
-    @functools.lru_cache(maxsize=256)
     def get_all_histogram(self, cid=None):
         """Gets all the data from the histogram."""
         self.flush()
@@ -86,7 +82,6 @@ class Histogram(Base):
         return numpy.ascontiguousarray(
             [i['value'] for i in self.__cursor.fetchall()])
 
-    @functools.lru_cache(maxsize=1)
     def get_all_hourly_summaries(self):
         """Gets all the summaries per hour."""
         ret = []
@@ -100,7 +95,6 @@ class Histogram(Base):
             ret.append(dct)
         return ret
 
-    @functools.lru_cache(maxsize=1)
     def get_all_hourly_count(self):
         """Gets all the count per hour."""
         self.flush()
@@ -139,14 +133,6 @@ class Histogram(Base):
                       AND computer = ?;''',
             (self.__name, cid))
         return int(self.__cursor.fetchone()['count'])
-
-    @classmethod
-    def __cache_invalidate(cls):
-        """Invalidates all the memoizing caches."""
-        # pylint: disable=no-member
-        cls.get_all_hourly_histograms.cache_clear()
-        cls.get_all_hourly_summaries.cache_clear()
-        cls.get_all_hourly_count.cache_clear()
 
 
 @injector.inject(conn=sqlite3.Connection)
