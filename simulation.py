@@ -1,8 +1,10 @@
 """A very simple simuation of several 1/M/c queuing systems."""
 
 import logging
+import math
 
 import injector
+import scipy.stats
 
 from activity_distribution import ActivityDistribution
 from activity_distribution import TrainingDistribution
@@ -30,6 +32,10 @@ class Simulation(Base):
         super(Simulation, self).__init__()
         self.__simulation_time = self.get_config_int('simulation_time')
         self.__target_satisfaction = self.get_config_int('target_satisfaction')
+        self._activity_distribution.remove_servers(
+            self._training_distribution.empty_servers)
+        self._training_distribution.remove_servers(
+            self._activity_distribution.empty_servers)
 
     @property
     def servers(self):
@@ -39,8 +45,6 @@ class Simulation(Base):
     def run(self):
         """Sets up and starts a new simulation."""
         self._config.reset()
-        self._activity_distribution.remove_servers(
-            self._training_distribution.empty_servers)
         self._stats.reset()
         logger.info('Simulating %d users (%d s)',
                     self.servers, self.__simulation_time)
@@ -54,17 +58,14 @@ class Simulation(Base):
         self._config.env.run(until=self.__simulation_time)
         logger.info('Simulation ended at %d s', self._config.env.now)
         self.__validate_results()
-        self.__log_results()
+        results = (self._stats.user_satisfaction(),
+                   self._stats.removed_inactivity())
+        logger.info('RESULT: User Satisfaction (US) = %.2f%%', results[0])
+        logger.info('RESULT: Removed Inactivity (RI) = %.2f%%', results[1])
         if self.get_arg('plot'):
             self.__plot_results()
         logger.info('Run complete.')
-
-    def __log_results(self):
-        """Prints the final results of the simulation run."""
-        logger.info('RESULT: User Satisfaction (US) = %.2f%%',
-                    self._stats.user_satisfaction())
-        logger.info('RESULT: Removed Inactivity (RI) = %.2f%%',
-                    self._stats.removed_inactivity())
+        return results
 
     def __plot_results(self):
         """Plots the results."""
@@ -110,4 +111,17 @@ def runner():
     custom_injector = CustomInjector(Binder())
     custom_injector.get(config_logging)()
     custom_injector.get(create_histogram_tables)()
-    custom_injector.get(profile)(custom_injector.get(Simulation).run)()
+    run = custom_injector.get(profile)(custom_injector.get(Simulation).run)
+
+    # pylint: disable=invalid-name
+    runs = 30
+    alpha = 0.05
+    m, _ = run()
+    x, s = m, 0
+    for i in range(2, runs + 1):
+        m, _ = run()
+        s = ((i - 2) / (i - 1) * s + 1 / i * (m - x) ** 2)
+        x = (1 - 1 / i) * x + 1 / i * m
+        d = scipy.stats.t.interval(1 - alpha, i - 1)[1] * math.sqrt(s / i)
+        logger.info('RUN %d: satisfaction within [%.2f%%, %.2f%%] (d = %.4f)',
+                    i, x - d, x + d, d)
