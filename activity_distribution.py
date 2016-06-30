@@ -244,7 +244,7 @@ class ActivityDistribution(Base):
 
     def __parse_servers(self, trace):
         """Gets and validates the server hostnames from the trace."""
-        logger.info('Parsing and validating server hostnames.')
+        logger.debug('Parsing and validating server hostnames.')
         pcs = [[i['PC'] for i in trace if i['Type'] == key]
                for key in set(j['Type'] for j in trace)]
         if any(True for i in pcs if len(i) != len(set(i))):
@@ -255,31 +255,31 @@ class ActivityDistribution(Base):
 
     def __parse_inactivity_intervals(self, trace):
         """Loads the inactivity intervals from the trace."""
-        logger.info('Parsing inactivity intervals.')
+        logger.debug('Parsing inactivity intervals.')
         self.__inactivity_intervals_histograms = self.__parse_histograms(
             trace, 'InactivityIntervals', do_filter=True)
 
     def __parse_activity_intervals(self, trace):
         """Process the activity intervals."""
-        logger.info('Parsing activity intervals.')
+        logger.debug('Parsing activity intervals.')
         self.__activity_intervals_histograms = self.__parse_histograms(
             trace, 'ActivityIntervals')
 
     def __parse_off_intervals(self, trace):
         """Process the off intervals."""
-        logger.info('Parsing off intervals.')
+        logger.debug('Parsing off intervals.')
         self.__off_intervals_histograms = self.__parse_histograms(
             trace, 'OffIntervals')
 
     def __parse_off_frequencies(self, trace):
         """Process the off fractions."""
-        logger.info('Parsing off fractions.')
+        logger.debug('Parsing off fractions.')
         self.__off_frequencies_histograms = self.__parse_histograms(
             trace, 'OffFrequencies', do_reduce=False, additive=True)
 
     def __filter_out_empty_servers(self):
         """Removes the servers that have no data in any of the histograms."""
-        logger.info('Filtering servers with no data.')
+        logger.debug('Filtering servers with no data.')
         empty_servers = set()
         for cid in self.__servers:
             if (self.__is_empty_histogram(
@@ -293,7 +293,7 @@ class ActivityDistribution(Base):
                 empty_servers.add(cid)
         self.__servers = sorted(set(self.__servers) - empty_servers)
         self.__empty_servers = list(empty_servers)
-        logger.info('%d servers have been filtered out.', len(empty_servers))
+        logger.debug('%d servers have been filtered out.', len(empty_servers))
 
     def __is_empty_histogram(self, histogram, cid):
         """Indicates if a histogram is empty."""
@@ -321,7 +321,7 @@ class ActivityDistribution(Base):
         if len(trace.get('data', [])) > 168:
             raise ValueError('The trace contains more than 168 objects')
         if len(trace.get('data', [])) < 168:
-            logger.warning('The trace contains less than 168 objects')
+            logger.error('The trace contains less than 168 objects')
         histogram = {}
         for d in trace['data']:  # pylint: disable=invalid-name
             day = DAYS[d['Day']]

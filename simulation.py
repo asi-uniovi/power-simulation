@@ -42,34 +42,39 @@ class Simulation(Base):
         """Number of servers being simulated."""
         return len(self._training_distribution.servers)
 
+    @property
+    def timeout(self):
+        """Average global timeout."""
+        return self._training_distribution.global_idle_timeout()
+
     def run(self):
         """Sets up and starts a new simulation."""
         self._config.reset()
         self._stats.reset()
-        logger.info('Simulating %d users (%d s)',
+        logger.debug('Simulating %d users (%d s)',
                     self.servers, self.__simulation_time)
-        logger.info('Target user satisfaction %d%%', self.__target_satisfaction)
-        logger.info('RESULT: Average global timeout would be %.2f s',
-                    self._training_distribution.global_idle_timeout())
-        self._config.env.process(self.__monitor_time())
+        logger.debug('Target user satisfaction %d%%', self.__target_satisfaction)
+        if self._config.get_arg('debug'):
+            self._config.env.process(self.__monitor_time())
         for cid in self._training_distribution.servers:
             self._config.env.process(self._user_builder.build(cid=cid).run())
-        logger.info('Simulation starting')
+        logger.debug('Simulation starting')
         self._config.env.run(until=self.__simulation_time)
-        logger.info('Simulation ended at %d s', self._config.env.now)
-        self.__validate_results()
+        logger.debug('Simulation ended at %d s', self._config.env.now)
+        if self._config.get_arg('debug'):
+            self.__validate_results()
         results = (self._stats.user_satisfaction(),
                    self._stats.removed_inactivity())
-        logger.info('RESULT: User Satisfaction (US) = %.2f%%', results[0])
-        logger.info('RESULT: Removed Inactivity (RI) = %.2f%%', results[1])
+        logger.debug('RESULT: User Satisfaction (US) = %.2f%%', results[0])
+        logger.debug('RESULT: Removed Inactivity (RI) = %.2f%%', results[1])
         if self.get_arg('plot'):
             self.__plot_results()
-        logger.info('Run complete.')
+        logger.debug('Run complete.')
         return results
 
     def __plot_results(self):
         """Plots the results."""
-        logger.info('Storing plots.')
+        logger.debug('Storing plots.')
         self._plot.plot_all('USER_SHUTDOWN_TIME')
         self._plot.plot_all('AUTO_SHUTDOWN_TIME')
         self._plot.plot_all('ACTIVITY_TIME')
@@ -101,7 +106,7 @@ class Simulation(Base):
     def __monitor_time(self):
         """Indicates how te simulation is progressing."""
         while True:
-            logger.info('%.2f%% completed',
+            logger.debug('%.2f%% completed',
                         self._config.env.now / self.__simulation_time * 100.0)
             yield self._config.env.timeout(self.__simulation_time / 10.0)
 
@@ -111,9 +116,11 @@ def runner():
     custom_injector = CustomInjector(Binder())
     custom_injector.get(config_logging)()
     custom_injector.get(create_histogram_tables)()
-    run = custom_injector.get(profile)(custom_injector.get(Simulation).run)
+    simulator = custom_injector.get(Simulation)
+    run = custom_injector.get(profile)(simulator.run)
 
     # pylint: disable=invalid-name
+    logger.info('Average global timeout would be %.2f s', simulator.timeout)
     runs = 30
     alpha = 0.05
     m, _ = run()
@@ -123,5 +130,5 @@ def runner():
         s = ((i - 2) / (i - 1) * s + 1 / i * (m - x) ** 2)
         x = (1 - 1 / i) * x + 1 / i * m
         d = scipy.stats.t.interval(1 - alpha, i - 1)[1] * math.sqrt(s / i)
-        logger.info('RUN %d: satisfaction within [%.2f%%, %.2f%%] (d = %.4f)',
+        logger.info('Run %d: satisfaction within [%.2f%%, %.2f%%] (d = %.4f)',
                     i, x - d, x + d, d)

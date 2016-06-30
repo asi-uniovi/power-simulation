@@ -12,7 +12,7 @@ for trace in "$(dirname $(dirname $0))"/config/*.ini ; do
   for arg in "${args[@]}" ; do
     echo "Running ${trace} with ${arg}"
     bazel run -c opt :main -- --noplot --config="${trace}" ${arg} "$@" 2>&1 \
-      | tee -a bazel-run-all.log \
-      | grep 'RESULT:'
+      | tee -a bazel-run-all.log
+    echo ''
   done
 done
