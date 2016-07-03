@@ -52,7 +52,7 @@ class Simulation(Base):
         self._config.reset()
         self._stats.reset()
         logger.debug('Simulating %d users (%d s)',
-                    self.servers, self.__simulation_time)
+                     self.servers, self.__simulation_time)
         logger.debug('Target user satisfaction %d%%', self.__target_satisfaction)
         if self._config.get_arg('debug'):
             self._config.env.process(self.__monitor_time())
@@ -107,7 +107,7 @@ class Simulation(Base):
         """Indicates how te simulation is progressing."""
         while True:
             logger.debug('%.2f%% completed',
-                        self._config.env.now / self.__simulation_time * 100.0)
+                         self._config.env.now / self.__simulation_time * 100.0)
             yield self._config.env.timeout(self.__simulation_time / 10.0)
 
 
