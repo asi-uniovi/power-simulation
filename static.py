@@ -8,6 +8,8 @@ import injector
 
 from configuration import Configuration
 
+MAX_RUNS = 100
+MAX_CONFIDENCE_WIDTH = 0.5
 
 DAYS = {
     'Sunday': 0,

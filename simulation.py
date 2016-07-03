@@ -12,7 +12,7 @@ from base import Base
 from histogram import create_histogram_tables
 from module import Binder, CustomInjector
 from plot import Plot
-from static import config_logging, profile
+from static import config_logging, profile, MAX_CONFIDENCE_WIDTH, MAX_RUNS
 from stats import Stats
 from user import User
 
@@ -136,11 +136,11 @@ def runner():
     (s, i), c = run(), 1
     satisfaction, inactivity = confidence_interval(s), confidence_interval(i)
     (xs, ds), (xi, di) = satisfaction.send(None), inactivity.send(None)
-    while di > 0.5 or ds > 0.5 or c < 2:
+    while di > MAX_CONFIDENCE_WIDTH or ds > MAX_CONFIDENCE_WIDTH or c < 2:
         (s, i), c = run(), c + 1
         (xs, ds), (xi, di) = satisfaction.send(s), inactivity.send(i)
         logger.info('Run %d: US = %.2f%% (d = %.4f), RI = %.2f%% (d = %.4f)',
                     c, xs, ds, xi, di)
-        if c > 100:
+        if c > MAX_RUNS:
             logger.warning('Finishing simulation runs due to inconvergence.')
             break
