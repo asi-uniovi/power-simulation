@@ -144,3 +144,4 @@ def runner():
         if c > MAX_RUNS:
             logger.warning('Finishing simulation runs due to inconvergence.')
             break
+    logger.info('All runs done (%d).', c)
