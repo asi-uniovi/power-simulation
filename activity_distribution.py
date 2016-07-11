@@ -51,6 +51,10 @@ class ActivityDistribution(Base):
         self.__parse_trace(self.trace_file)
 
     @property
+    def do_merge(self):
+        return False
+
+    @property
     def trace_file(self):
         """Indicates the location of the trace file (to be overriden)."""
         return self.get_config('trace_file', section='trace')
@@ -333,14 +337,16 @@ class ActivityDistribution(Base):
 
     def __merge_histograms(self, histogram, additive):
         """Merges histograms to be global or per PC/hour."""
-        if not self.get_arg('per_hour'):
-            histogram = self.__merge_per_hour(histogram, additive)
-        if not self.get_arg('per_pc'):
-            histogram = self.__merge_per_pc(histogram, additive)
+        if self.do_merge:
+            if not self.get_arg('per_hour'):
+                histogram = self.__merge_per_hour(histogram, additive)
+            if not self.get_arg('per_pc'):
+                histogram = self.__merge_per_pc(histogram, additive)
         return histogram
 
     def __merge_per_pc(self, histogram, additive):
         """Merge so all PCs have the same model."""
+        logger.debug('Merging histogram per PC.')
         merged = {}
         for cid, days in histogram.items():
             for day, hours in days.items():
@@ -359,6 +365,7 @@ class ActivityDistribution(Base):
 
     def __merge_per_hour(self, histogram, additive):
         """Merge so all hours have the same model."""
+        logger.debug('Merging histogram per hour.')
         merged = {}
         for cid, days in histogram.items():
             merged_data = []
@@ -415,6 +422,10 @@ class ActivityDistribution(Base):
 @injector.singleton
 class TrainingDistribution(ActivityDistribution):
     """Activity distribution for training purposes."""
+
+    @property
+    def do_merge(self):
+        return True
 
     @property
     def trace_file(self):
