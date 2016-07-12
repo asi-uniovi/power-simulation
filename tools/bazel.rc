@@ -1,1 +1,2 @@
+startup --output_base=scratch
 build --force_python=py3
