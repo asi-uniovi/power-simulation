@@ -51,7 +51,8 @@ class EmpiricalDistribution(Distribution):
 
     def __init__(self, data):
         super(EmpiricalDistribution, self).__init__(sorted(data))
-        self.__diffs = HashableArray([self.data[i + 1] - self.data[i]
+        self.__diffs = HashableArray([
+            self.data[i + 1] - self.data[i]
             for i in range(self.sample_size - 1)] + [0.0])
 
     def rvs(self):

@@ -32,6 +32,7 @@ KB = lambda x: x << 10
 MB = lambda x: x << 20
 
 
+# pylint: disable=too-few-public-methods
 class HashableArray(object):
     """This is just contains the NumPy array and the hash."""
 

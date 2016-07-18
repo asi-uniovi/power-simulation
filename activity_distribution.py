@@ -53,6 +53,7 @@ class ActivityDistribution(Base):
 
     @property
     def do_merge(self):
+        """Do merge the dataset or not."""
         return False
 
     @property
