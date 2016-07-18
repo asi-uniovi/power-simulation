@@ -12,6 +12,7 @@ from base import Base
 from distribution import DiscreteUniformDistribution
 from distribution import EmpiricalDistribution
 from static import DAYS
+from static import HashableArray
 from static import previous_hour
 from static import timestamp_to_day
 from static import weighted_user_satisfaction
@@ -202,11 +203,11 @@ class ActivityDistribution(Base):
 
     def __flatten_inactivity_histogram(self, cid):
         """Makes a histogram completely flat."""
-        return tuple(
+        return HashableArray([
             i
             for day in self.__inactivity_intervals_histograms[cid].values()
             for hour in day.values() if hour is not None
-            for i in hour.data)
+            for i in hour.data])
 
     def __distribution_for_hour(self, histogram, cid, day, hour):
         """Queries the activity distribution to the get average inactivity."""

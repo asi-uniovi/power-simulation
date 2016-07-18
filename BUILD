@@ -52,6 +52,7 @@ py_library(
     name = "distribution",
     srcs = ["distribution.py"],
     srcs_version = "PY3",
+    deps = [":static"],
 )
 
 py_library(

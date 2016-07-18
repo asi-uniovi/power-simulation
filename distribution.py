@@ -4,13 +4,14 @@ import abc
 
 import numpy
 
+from static import HashableArray
+
 
 class Distribution(object, metaclass=abc.ABCMeta):
     """Base distribution class."""
 
     def __init__(self, data):
-        self.__data = numpy.sort(data)
-        self.__data.setflags(write=False)
+        self.__data = HashableArray(data, sort=True)
 
     @property
     def data(self):
@@ -50,9 +51,8 @@ class EmpiricalDistribution(Distribution):
 
     def __init__(self, data):
         super(EmpiricalDistribution, self).__init__(sorted(data))
-        self.__diffs = numpy.asarray([self.data[i + 1] - self.data[i]
+        self.__diffs = HashableArray([self.data[i + 1] - self.data[i]
             for i in range(self.sample_size - 1)] + [0.0])
-        self.__diffs.setflags(write=False)
 
     def rvs(self):
         """Implementation from "Simulation Modeling and Analysis, 5e"."""
