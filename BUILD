@@ -109,6 +109,7 @@ py_library(
     deps = [
         ":activity_distribution",
         ":base",
+        ":configuration",
         ":histogram",
         ":module",
         ":plot",

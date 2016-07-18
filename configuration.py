@@ -65,4 +65,11 @@ class Configuration(object):
         parser.add_argument('--per_hour',
                             action='store_true',
                             help='generate distributions grouped by hour')
+        parser.add_argument('--max_runs',
+                            type=int, default=100,
+                            help='do not run the simulation more than this')
+        parser.add_argument('--max_confidence_interval_width',
+                            type=float, default=1.0,
+                            help=('run simulations until the confidence '
+                                  'intervals are narrower than this'))
         self.__args = parser.parse_args()

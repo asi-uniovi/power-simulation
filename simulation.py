@@ -9,10 +9,11 @@ import scipy.stats
 from activity_distribution import ActivityDistribution
 from activity_distribution import TrainingDistribution
 from base import Base
+from configuration import Configuration
 from histogram import create_histogram_tables
 from module import Binder, CustomInjector
 from plot import Plot
-from static import config_logging, profile, MAX_CONFIDENCE_WIDTH, MAX_RUNS
+from static import config_logging, profile
 from stats import Stats
 from user import User
 
@@ -130,18 +131,27 @@ def runner():
     custom_injector.get(config_logging)()
     custom_injector.get(create_histogram_tables)()
     simulator = custom_injector.get(Simulation)
+    configuration = custom_injector.get(Configuration)
+    max_runs = configuration.get_arg('max_runs')
+    confidence_width = configuration.get_arg('max_confidence_interval_width')
     run = custom_injector.get(profile)(simulator.run)
 
     logger.info('Average global timeout would be %.2f s', simulator.timeout)
     (s, i), c = run(), 1
+
+    if max_runs == 1:
+        logger.warning('Only one run, cannot calculate confidence intervals.')
+        logger.info('Run 1: US = %.2f%% (d = Inf), RI = %.2f%% (d = Inf)', s, i)
+        return
+
     satisfaction, inactivity = confidence_interval(s), confidence_interval(i)
     (xs, ds), (xi, di) = satisfaction.send(None), inactivity.send(None)
-    while di > MAX_CONFIDENCE_WIDTH or ds > MAX_CONFIDENCE_WIDTH or c < 2:
+    while di > confidence_width or ds > confidence_width or c < 2:
         (s, i), c = run(), c + 1
         (xs, ds), (xi, di) = satisfaction.send(s), inactivity.send(i)
         logger.info('Run %d: US = %.2f%% (d = %.4f), RI = %.2f%% (d = %.4f)',
                     c, xs, ds, xi, di)
-        if c > MAX_RUNS:
+        if c > max_runs:
             logger.warning('Finishing simulation runs due to inconvergence.')
             break
     logger.info('All runs done (%d).', c)
