@@ -50,8 +50,8 @@ class Configuration(object):
         parser.add_argument('-d', '--debug',
                             action='store_true',
                             help='show detailed debug information')
-        parser.add_argument('--config', dest='config_file',
-                            default='config.ini',
+        parser.add_argument('--config',
+                            dest='config_file', default='config.ini',
                             help='path to the config file of the simulation')
         parser.add_argument('--noplot',
                             dest='plot', action='store_false',
