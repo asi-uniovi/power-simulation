@@ -5,6 +5,7 @@ py_library(
     deps = [
         ":base",
         ":distribution",
+        ":hashable_array",
         ":static",
     ],
 )
@@ -52,7 +53,13 @@ py_library(
     name = "distribution",
     srcs = ["distribution.py"],
     srcs_version = "PY3",
-    deps = [":static"],
+    deps = [":hashable_array"],
+)
+
+py_library(
+    name = "hashable_array",
+    srcs = ["hashable_array.py"],
+    srcs_version = "PY2AND3",
 )
 
 py_library(

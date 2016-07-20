@@ -4,7 +4,7 @@ import abc
 
 import numpy
 
-from static import HashableArray
+from hashable_array import HashableArray
 
 
 class Distribution(object, metaclass=abc.ABCMeta):
