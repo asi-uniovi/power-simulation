@@ -1,6 +1,6 @@
 git-pylint-commit-hook
 injector
-matplotlib
+matplotlib<1.5
 numpy
 pandas
 pylint
