@@ -1,4 +1,4 @@
-image: python:3.5.1
+image: python:3.5.2
 
 pipelines:
   default:
@@ -6,4 +6,4 @@ pipelines:
         script:
           - pip install -Ur requirements.txt
           # TODO(m3drano): This should be run with Bazel.
-          - ./main.py --debug --config=config/dev.ini
+          - ./main.py --debug --trace --max_runs=1 --config=config/dev.ini
