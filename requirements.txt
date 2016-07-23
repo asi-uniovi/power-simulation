@@ -1,6 +1,7 @@
 git-pylint-commit-hook
 injector
 matplotlib<1.5
+memory_profiler
 numpy
 pandas
 pylint
