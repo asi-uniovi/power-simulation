@@ -13,11 +13,23 @@ from distribution import DiscreteUniformDistribution
 from distribution import EmpiricalDistribution
 from hashable_array import HashableArray
 from static import DAYS
-from static import previous_hour
 from static import timestamp_to_day
 from static import weighted_user_satisfaction
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
+
+
+def previous_hour(day, hour):
+    """Gets the previous hour with wrap."""
+    hour -= 1
+    if hour < 0:
+        hour = 23
+        day -= 1
+        if day < 0:
+            day = 6
+    assert 0 <= day <= 6, day
+    assert 0 <= hour <= 23, hour
+    return day, hour
 
 
 @injector.singleton

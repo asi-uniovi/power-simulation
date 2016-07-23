@@ -73,19 +73,6 @@ def timestamp_to_day(timestamp):
     return day, hour
 
 
-def previous_hour(day, hour):
-    """Gets the previous hour with wrap."""
-    hour -= 1
-    if hour < 0:
-        hour = 23
-        day -= 1
-        if day < 0:
-            day = 6
-    assert 0 <= day <= 6, day
-    assert 0 <= hour <= 23, hour
-    return day, hour
-
-
 # pylint: disable=invalid-name
 def weight(x, ip, fp):
     """Linear increment between ip and fp function."""
