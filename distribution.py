@@ -4,7 +4,7 @@ import abc
 
 import numpy
 
-from hashable_array import HashableArray
+from hashable import HashableArray
 
 
 class Distribution(object, metaclass=abc.ABCMeta):
@@ -12,6 +12,7 @@ class Distribution(object, metaclass=abc.ABCMeta):
 
     def __init__(self, data, sort=False):
         self.__data = HashableArray(data, sort)
+        self.__data.seal()
 
     @property
     def data(self):

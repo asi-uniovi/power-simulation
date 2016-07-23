@@ -11,7 +11,7 @@ import scipy.optimize
 from base import Base
 from distribution import DiscreteUniformDistribution
 from distribution import EmpiricalDistribution
-from hashable_array import HashableArray
+from hashable import HashableArray
 from static import DAYS
 from static import timestamp_to_day
 from static import weighted_user_satisfaction
