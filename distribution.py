@@ -10,8 +10,8 @@ from hashable_array import HashableArray
 class Distribution(object, metaclass=abc.ABCMeta):
     """Base distribution class."""
 
-    def __init__(self, data):
-        self.__data = HashableArray(data, sort=True)
+    def __init__(self, data, sort=False):
+        self.__data = HashableArray(data, sort)
 
     @property
     def data(self):
@@ -50,14 +50,11 @@ class EmpiricalDistribution(Distribution):
     """Empirical distribution according to the data provided."""
 
     def __init__(self, data):
-        super(EmpiricalDistribution, self).__init__(sorted(data))
-        self.__diffs = HashableArray([
-            self.data[i + 1] - self.data[i]
-            for i in range(self.sample_size - 1)] + [0.0])
+        super(EmpiricalDistribution, self).__init__(data + [max(data)], True)
 
     def rvs(self):
         """Implementation from "Simulation Modeling and Analysis, 5e"."""
         # pylint: disable=invalid-name
-        p = (self.sample_size - 1) * numpy.random.random()
+        p = (self.sample_size - 2) * numpy.random.random()
         i = int(numpy.floor(p) + 1)
-        return self.data[i] + (p - i + 1) * self.__diffs[i]
+        return self.data[i] + (p - i + 1) * (self.data[i + 1] - self.data[i])
