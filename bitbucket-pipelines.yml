@@ -1,11 +1,11 @@
-image: python:3.5
+image: python:3.5-slim
 
 pipelines:
   default:
     - step:
         script:
           - apt-get update
-          - apt-get build-dep -y --no-install-recommends python3-matplotlib python3-numpy python3-scipy
+          - apt-get build-dep -y python3-matplotlib python3-numpy python3-scipy
           - pip3 install -Ur requirements.txt
           # TODO(m3drano): This should be run with Bazel.
           - python3 main.py --debug --trace --max_runs=1 --config=config/dev.ini --per_pc --per_hour
