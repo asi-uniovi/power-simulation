@@ -1,8 +1,9 @@
-image: python:3.5-onbuild
+image: python:3.5
 
 pipelines:
   default:
     - step:
         script:
+          - pip install -Ur requirements.txt
           # TODO(m3drano): This should be run with Bazel.
           - ./main.py --debug --trace --max_runs=1 --config=config/dev.ini --per_pc --per_hour
