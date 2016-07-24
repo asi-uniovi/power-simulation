@@ -5,7 +5,7 @@ pipelines:
     - step:
         script:
           - apt-get update
-          - apt-get -y build-dep python3-matplotlib python3-numpy python3-scipy
+          - apt-get -y install pkg-config python3-dev libfreetype6-dev
           - pip3 install -Ur requirements.txt
           # TODO(m3drano): This should be run with Bazel.
           - python3 main.py --debug --trace --max_runs=1 --config=config/dev.ini --per_pc --per_hour
