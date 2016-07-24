@@ -131,19 +131,25 @@ class ActivityDistribution(Base):
 
     def optimal_idle_timeout(self, cid, all_timespan=False):
         """Calculates the value of the idle timer for a given satisfaction."""
-        hist = self.__get(self.__inactivity_intervals_histograms, cid,
-                          *timestamp_to_day(self._config.env.now))
-        if hist is None or all_timespan:
-            hist = self.__flatten_inactivity_histogram(cid)
+        if all_timespan:
+            return self.__optimal_timeout_all(cid)
         else:
-            hist = hist.data
-        if len(hist) == 0:
-            logger.warning('Using default timeout for %s (lack of data)', cid)
-            return self.__default_timeout
-        return self.__optimal_timeout(hist)
+            return self.__optimal_timeout_timestamp(
+                cid, *timestamp_to_day(self._config.env.now))
+
+    @functools.lru_cache(maxsize=131072)
+    def __optimal_timeout_timestamp(self, cid, day, hour):
+        hist = self.__get(self.__inactivity_intervals_histograms, cid, day, hour)
+        if hist is None or len(hist.data) == 0:
+            return self.__optimal_timeout_all(cid)
+        return self.__optimal_timeout_search(hist.data)
 
     @functools.lru_cache(maxsize=512)
-    def __optimal_timeout(self, hist):
+    def __optimal_timeout_all(self, cid):
+        return self.__optimal_timeout_search(
+            self.__flatten_inactivity_histogram(cid))
+
+    def __optimal_timeout_search(self, hist):
         """Uses the bisection method to find the timeout for the target."""
 
         def f(x):  # pylint: disable=invalid-name
