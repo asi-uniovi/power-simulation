@@ -12,6 +12,7 @@ from base import Base
 from distribution import DiscreteUniformDistribution
 from distribution import EmpiricalDistribution
 from hashable import HashableArray
+from hashable import HashableDict
 from static import DAYS
 from static import timestamp_to_day
 from static import weighted_user_satisfaction
@@ -57,10 +58,10 @@ class ActivityDistribution(Base):
         self.__servers = []
         self.__empty_servers = []
         # pylint: disable=invalid-name
-        self.__inactivity_intervals_histograms = {}
-        self.__activity_intervals_histograms = {}
-        self.__off_intervals_histograms = {}
-        self.__off_frequencies_histograms = {}
+        self.__inactivity_intervals_histograms = HashableDict()
+        self.__activity_intervals_histograms = HashableDict()
+        self.__off_intervals_histograms = HashableDict()
+        self.__off_frequencies_histograms = HashableDict()
         self.__parse_trace(self.trace_file)
 
     @property
@@ -204,14 +205,14 @@ class ActivityDistribution(Base):
 
     def __transpose_histogram(self, histogram):
         """Converts the {PC: {Day: {Hour: x}}} hist to {Day: {Hour: [x*]}}."""
-        transposed = {}
+        transposed = HashableDict()
         if histogram is not None:
             for day in range(7):
                 for hour in range(24):
                     for value in histogram.values():
-                        if value.get(day, {}).get(hour) is not None:
-                            transposed.setdefault(day, {}).setdefault(
-                                hour, []).append(value.get(day, {}).get(hour))
+                        if value.get(day, HashableDict()).get(hour) is not None:
+                            transposed.setdefault(day, HashableDict()).setdefault(
+                                hour, []).append(value.get(day, HashableDict()).get(hour))
         return transposed
 
     def __flatten_inactivity_histogram(self, cid):
@@ -236,7 +237,7 @@ class ActivityDistribution(Base):
 
     def __get(self, histogram, cid, day, hour):
         """Generic getter for a histogram."""
-        return histogram.get(cid, {}).get(day, {}).get(hour)
+        return histogram.get(cid, HashableDict()).get(day, HashableDict()).get(hour)
 
     def __draw_from_distribution(self, distribution, min_value=0,
                                  max_value=float('inf')):
@@ -325,8 +326,8 @@ class ActivityDistribution(Base):
     def __parse_histograms(self, trace, hist_key, do_filter=False,
                            do_reduce=True, additive=False):
         """Parses the histogram to get a {PC: hist} dict."""
-        histograms = {i['PC']: self.__parse_histogram(i)
-                      for i in trace if i['Type'] == hist_key}
+        histograms = HashableDict({i['PC']: self.__parse_histogram(i)
+                                   for i in trace if i['Type'] == hist_key})
         if set(histograms.keys()) != set(self.__servers):
             raise ValueError('PCs on Key %s are not consistent' % hist_key)
         histograms = self.__filter(histograms, do_filter, do_reduce)
@@ -340,13 +341,13 @@ class ActivityDistribution(Base):
             raise ValueError('The trace contains more than 168 objects')
         if len(trace.get('data', [])) < 168:
             logger.error('The trace contains less than 168 objects')
-        histogram = {}
+        histogram = HashableDict()
         for d in trace['data']:  # pylint: disable=invalid-name
             day = DAYS[d['Day']]
             hour = int(d['Hour'])
             assert 0 <= day <= 6
             assert 0 <= hour <= 23
-            histogram.setdefault(day, {})[hour] = d['Intervals']
+            histogram.setdefault(day, HashableDict())[hour] = d['Intervals']
         return histogram
 
     def __merge_histograms(self, histogram, additive):
@@ -361,13 +362,13 @@ class ActivityDistribution(Base):
     def __merge_per_pc(self, histogram, additive):
         """Merge so all PCs have the same model."""
         logger.debug('Merging histogram per PC.')
-        merged = {}
+        merged = HashableDict()
         for cid, days in histogram.items():
             for day, hours in days.items():
                 for hour, data in hours.items():
                     if data is not None:
                         assert isinstance(data, list)
-                        merged.setdefault(day, {}).setdefault(
+                        merged.setdefault(day, HashableDict()).setdefault(
                             hour, []).extend(data)
         if additive:
             for day, hours in merged.items():
@@ -380,7 +381,7 @@ class ActivityDistribution(Base):
     def __merge_per_hour(self, histogram, additive):
         """Merge so all hours have the same model."""
         logger.debug('Merging histogram per hour.')
-        merged = {}
+        merged = HashableDict()
         for cid, days in histogram.items():
             merged_data = []
             for day, hours in days.items():
@@ -392,7 +393,7 @@ class ActivityDistribution(Base):
                 merged_data = [numpy.mean(merged_data)]
             for day, hours in days.items():
                 for hour in hours:
-                    merged.setdefault(cid, {}).setdefault(day, {}).setdefault(
+                    merged.setdefault(cid, HashableDict()).setdefault(day, HashableDict()).setdefault(
                         hour, merged_data)
         return merged
 

@@ -3,6 +3,13 @@
 import numpy
 
 
+class HashableDict(dict):
+    """This is just a dict that can be hashed."""
+
+    def __hash__(self):
+        return hash(frozenset(self.items()))
+
+
 # pylint: disable=too-few-public-methods
 class HashableArray(object):
     """This just contains the NumPy array and the hash."""
