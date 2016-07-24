@@ -3,8 +3,6 @@ injector
 matplotlib
 memory_profiler
 numpy
-pandas
 pylint
 scipy
 simpy
-statsmodels
