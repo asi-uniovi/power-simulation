@@ -4,7 +4,7 @@ pipelines:
   default:
     - step:
         script:
-          - apt-get install libfreetype6-dev
+          - sudo apt-get install libfreetype6-dev
           - pip install -Ur requirements.txt
           # TODO(m3drano): This should be run with Bazel.
           - ./main.py --debug --trace --max_runs=1 --config=config/dev.ini --per_pc --per_hour
