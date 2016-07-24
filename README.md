@@ -4,33 +4,29 @@
 
 ### Using Python, pip and virtualenv
 
-(optional) Create a Python virtualenv by using virtualenv activate it:
+Create a Python virtualenv by using virtualenv activate it:
 
-`$ virtualenv ~/.virtualenvs/simulacion`
+`$ virtualenv ~/.virtualenvs/simulacion --python="$(which python3)"`
 
 `$ source ~/.virtualenvs/simulacion/bin/activate`
-
-After cloning the repository, install the packages needed with pip:
-
-`$ pip install -Ur requirements.txt`
 
 You might need to install dependencies, in order to build from source the
 packages, for instance, in the case of Debian/Ubuntu:
 
 `$ sudo apt-get install python-dev libatlas-base-dev gfortran libsqlite3-dev`
 
-Run the simulation with a config file:
+After cloning the repository, install the packages needed with pip:
 
-`$ python main.py --config config/dev.ini`
+`$ pip install -Ur requirements.txt`
 
-### (Experimental) Using Bazel
+### Using Bazel
 
 You can as well use [Bazel](http://bazel.io) for reproducible builds and faster
 clean ups. After [installing it](), run with:
 
 `$ bazel run -c opt :main -- --config=config/dev.ini`
 
-Results will be found on the `bazel-bin/main.runfiles` directory.
+Results will be found on the `bazel-bin/main.runfiles/__main__/` directory.
 
 ## References
 
