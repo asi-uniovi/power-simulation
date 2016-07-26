@@ -237,7 +237,8 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
 
     def __get(self, histogram, cid, day, hour):
         """Generic getter for a histogram."""
-        return histogram.get(cid, HashableDict()).get(day, HashableDict()).get(hour)
+        return histogram.get(cid, HashableDict()).get(
+            day, HashableDict()).get(hour)
 
     def __draw_from_distribution(self, distribution, min_value=0,
                                  max_value=float('inf')):
