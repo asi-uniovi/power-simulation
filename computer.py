@@ -79,7 +79,6 @@ class Computer(Base):
                            timestamp=now)
         self.__idle_timer = self._config.env.process(self.__idle_timer_runner())
 
-    @property
     def __idle_timeout(self):
         """Indicates this computer idle time."""
         idle = self._training_distribution.optimal_idle_timeout(
@@ -91,7 +90,7 @@ class Computer(Base):
         """Process for the idle timer control."""
         try:
             idle_start = self._config.env.now
-            yield self._config.env.timeout(self.__idle_timeout)
+            yield self._config.env.timeout(self.__idle_timeout())
             self.change_status(ComputerStatus.off,
                                interrupt_idle_timer=False)
             self.__last_auto_shutdown = self._config.env.now
