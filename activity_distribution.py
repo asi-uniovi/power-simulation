@@ -240,6 +240,7 @@ class ActivityDistribution(Base):
             previous_count += 1
             day, hour = previous_hour(day, hour)
             distribution = self.__get(histogram, cid, day, hour)
+        histogram[cid].setdefault(day, {}).setdefault(hour, distribution)
         return distribution
 
     def __get(self, histogram, cid, day, hour):
