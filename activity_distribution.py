@@ -393,8 +393,8 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
                 merged_data = [numpy.mean(merged_data)]
             for day, hours in days.items():
                 for hour in hours:
-                    merged.setdefault(cid, HashableDict()).setdefault(day, HashableDict()).setdefault(
-                        hour, merged_data)
+                    merged.setdefault(cid, HashableDict()).setdefault(
+                        day, HashableDict()).setdefault(hour, merged_data)
         return merged
 
     def __filter(self, histogram, do_filter, do_reduce):
