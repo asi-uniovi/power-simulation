@@ -137,7 +137,7 @@ class ActivityDistribution(Base):
             return self.__optimal_timeout_timestamp(
                 cid, *timestamp_to_day(self._config.env.now))
 
-    @functools.lru_cache(maxsize=131072)
+    @functools.lru_cache(maxsize=65536)
     def __optimal_timeout_timestamp(self, cid, day, hour):
         hist = self.__get(self.__inactivity_intervals_histograms, cid, day, hour)
         if hist is None or len(hist.data) == 0:
