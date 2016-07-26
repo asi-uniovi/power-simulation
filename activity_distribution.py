@@ -1,5 +1,6 @@
 """User (in)activity distribution parsing, fitting and generation."""
 
+import abc
 import functools
 import json
 import logging
@@ -33,18 +34,19 @@ def previous_hour(day, hour):
     return day, hour
 
 
-@injector.singleton
 # pylint: disable=no-member,no-self-use,too-many-instance-attributes
-class ActivityDistribution(Base):
+class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
     """Stores the hourly activity distribution over a week.
 
     Each bucket of the histogram contains the distribution of the log file
     processed. Each bucket represents one hour of the week.
     """
 
-    def __init__(self):
+    def __init__(self, do_merge, trace_file):
         """All the data of this object is loaded from the config object."""
-        super(ActivityDistribution, self).__init__()
+        super(ActivityDistributionBase, self).__init__()
+        self.__do_merge = do_merge
+        self.__trace_file = self.get_config(trace_file, section='trace')
         self.__default_timeout = self.get_config_int('default_timeout')
         self.__target_satisfaction = self.get_config_int('target_satisfaction')
         self.__satisfaction_threshold = self.get_config_int(
@@ -62,17 +64,7 @@ class ActivityDistribution(Base):
         self.__activity_intervals_histograms = HashableDict()
         self.__off_intervals_histograms = HashableDict()
         self.__off_frequencies_histograms = HashableDict()
-        self.__parse_trace(self.trace_file)
-
-    @property
-    def do_merge(self):
-        """Do merge the dataset or not."""
-        return False
-
-    @property
-    def trace_file(self):
-        """Indicates the location of the trace file (to be overriden)."""
-        return self.get_config('trace_file', section='trace')
+        self.__parse_trace(self.__trace_file)
 
     @property
     def servers(self):
@@ -360,7 +352,7 @@ class ActivityDistribution(Base):
 
     def __merge_histograms(self, histogram, additive):
         """Merges histograms to be global or per PC/hour."""
-        if self.do_merge:
+        if self.__do_merge:
             if not self.get_arg('per_hour'):
                 histogram = self.__merge_per_hour(histogram, additive)
             if not self.get_arg('per_pc'):
@@ -443,13 +435,20 @@ class ActivityDistribution(Base):
 
 
 @injector.singleton
-class TrainingDistribution(ActivityDistribution):
+class ActivityDistribution(ActivityDistributionBase):
+    """Activity distribution for tracing purposes."""
+
+    def __init__(self):
+        """All the data of this object is loaded from the config object."""
+        super(ActivityDistribution, self).__init__(
+            do_merge=False, trace_file='trace_file')
+
+
+@injector.singleton
+class TrainingDistribution(ActivityDistributionBase):
     """Activity distribution for training purposes."""
 
-    @property
-    def do_merge(self):
-        return True
-
-    @property
-    def trace_file(self):
-        return self.get_config('training_file', section='trace')
+    def __init__(self):
+        """All the data of this object is loaded from the config object."""
+        super(TrainingDistribution, self).__init__(
+            do_merge=True, trace_file='training_file')
