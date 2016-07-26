@@ -33,7 +33,7 @@ class HashableArray(object):
                 self.__array = numpy.sort(self.__array)
             else:
                 self.__array = numpy.asarray(self.__array)
-            self.__array.setflags(write=False)
+            self.__array.setflags(write=False)  # pylint: disable=no-member
             self.__sealed = True
 
     def extend(self, other):
