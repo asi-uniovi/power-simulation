@@ -6,41 +6,35 @@ import numpy
 class HashableDict(dict):
     """This is just a dict that can be hashed."""
 
+    def __init__(self, *args, **kwargs):
+        super(HashableDict, self).__init__(*args, **kwargs)
+        self.__hash = None
+
+    def __setitem__(self, key, value):
+        """The map shouldn't be mutated after is is hashed."""
+        if self.__hash is not None:
+            raise RuntimeError('This dict is not mutable any more.')
+        super(HashableDict, self).__setitem__(key, value)
+
     def __hash__(self):
-        return hash(frozenset(self.items()))
+        """Generates and returns the hash of the dict."""
+        if self.__hash is None:
+            self.__hash = hash(frozenset(self.items()))
+        return self.__hash
 
 
+# TODO(m3drano): this could be implemented with inheritance, as above.
 # pylint: disable=too-few-public-methods
 class HashableArray(object):
     """This just contains the NumPy array and the hash."""
 
     def __init__(self, data, sort=False):
         super(HashableArray, self).__init__()
-        self.__sealed = False
-        try:
-            self.__hash = hash(data)
-        except TypeError:
-            self.__hash = hash(tuple(data))
+        self.__array = numpy.asarray(data)
         if sort:
-            self.__array = sorted(data)
-        else:
-            self.__array = list(data)
-
-    def seal(self, sort=False):
-        """Makes the array a numpy array and makes it immutable."""
-        if not self.__sealed:
-            if sort:
-                self.__array = numpy.sort(self.__array)
-            else:
-                self.__array = numpy.asarray(self.__array)
-            self.__array.setflags(write=False)  # pylint: disable=no-member
-            self.__sealed = True
-
-    def extend(self, other):
-        """Extends the array contents with new array."""
-        if self.__sealed:
-            raise RuntimeError('Array is sealed, cannot extend.')
-        self.__array.extend(other)
+            self.__array.sort()
+        self.__array.flags.writeable = False
+        self.__hash = hash(self.__array.data.tobytes())
 
     @property
     def array(self):

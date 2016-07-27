@@ -12,7 +12,6 @@ class Distribution(object, metaclass=abc.ABCMeta):
 
     def __init__(self, data, sort=False):
         self.__data = HashableArray(data, sort)
-        self.__data.seal()
         self.__mean = numpy.mean(self.__data)
         self.__median = numpy.median(self.__data)
 
