@@ -147,10 +147,9 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
 
         def f(x):  # pylint: disable=invalid-name
             """Trasposed function to optimize via root finding."""
-            return (numpy.mean([
-                weighted_user_satisfaction(
-                    t, x, self.__satisfaction_threshold)
-                for t in hist]) * 100 - self.__target_satisfaction)
+            return (numpy.mean(weighted_user_satisfaction(
+                hist.array, x, self.__satisfaction_threshold))
+                    * 100 - self.__target_satisfaction)
 
         try:
             return scipy.optimize.brentq(f, self.__xmin, self.__xmax, xtol=1)

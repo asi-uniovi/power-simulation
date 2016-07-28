@@ -5,6 +5,7 @@ import functools
 import logging
 
 import injector
+import numpy
 
 from configuration import Configuration
 
@@ -76,13 +77,10 @@ def timestamp_to_day(timestamp):
 # pylint: disable=invalid-name
 def weight(x, ip, fp):
     """Linear increment between ip and fp function."""
-    return max(0.0, min(1.0, (ip - x) / (ip - fp)))
+    return numpy.maximum(0.0, numpy.minimum(1.0, (ip - x) / (ip - fp)))
 
 
 # pylint: disable=invalid-name
 def weighted_user_satisfaction(t, timeout, threshold):
     """Calculates the weighted satisfaction with a sigmoid."""
-    if t < timeout:
-        return 1.0
-    else:
-        return weight(t - timeout, 60, threshold)
+    return numpy.where(t < timeout, 1.0, weight(t - timeout, 60, threshold))
