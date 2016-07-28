@@ -15,6 +15,7 @@ from distribution import EmpiricalDistribution
 from hashable import HashableArray
 from hashable import HashableDict
 from static import DAYS
+from static import PCS_HOURS_SIZE
 from static import timestamp_to_day
 from static import weighted_user_satisfaction
 
@@ -129,7 +130,7 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
             return self.__optimal_timeout_timestamp(
                 cid, *timestamp_to_day(self._config.env.now))
 
-    @functools.lru_cache(maxsize=65536)
+    @functools.lru_cache(maxsize=PCS_HOURS_SIZE)
     def __optimal_timeout_timestamp(self, cid, day, hour):
         hist = self.__distribution_for_hour(
             self.__inactivity_intervals_histograms, cid, day, hour)
@@ -137,7 +138,6 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
             return self.__optimal_timeout_all(cid)
         return self.__optimal_timeout_search(hist.data)
 
-    @functools.lru_cache(maxsize=512)
     def __optimal_timeout_all(self, cid):
         return self.__optimal_timeout_search(
             self.__flatten_inactivity_histogram(cid))

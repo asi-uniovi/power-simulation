@@ -29,6 +29,11 @@ WEEK = lambda x: x * DAY(7)
 KB = lambda x: x << 10
 MB = lambda x: x << 20
 
+# These are orientative sizes rounded to the nearest power of 2.
+# pylint: disable=no-member
+POWER = lambda n: int(numpy.power(2, numpy.ceil(numpy.log2(n))))
+PCS_HOURS_SIZE = POWER(265 * 168)
+
 
 @injector.inject(config=Configuration)
 def config_logging(config):
