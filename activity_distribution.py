@@ -23,6 +23,7 @@ from static import weighted_user_satisfaction
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
 
+@functools.lru_cache(maxsize=256)
 def previous_hour(day, hour):
     """Gets the previous hour with wrap."""
     hour -= 1
@@ -225,14 +226,16 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
     def __distribution_for_hour(self, histogram, cid, day, hour):
         """Queries the activity distribution to the get average inactivity."""
         previous_count = 0
-        distribution = self.__get(histogram, cid, day, hour)
+        d, h = day, hour
+        distribution = self.__get(histogram, cid, d, h)
         while distribution is None:
             if previous_count > 168:
                 return None
             previous_count += 1
-            day, hour = previous_hour(day, hour)
-            distribution = self.__get(histogram, cid, day, hour)
-        histogram[cid].setdefault(day, {}).setdefault(hour, distribution)
+            d, h = previous_hour(d, h)
+            distribution = self.__get(histogram, cid, d, h)
+        histogram[cid].setdefault(day, HashableDict()).setdefault(
+            hour, distribution)
         return distribution
 
     def __get(self, histogram, cid, day, hour):
