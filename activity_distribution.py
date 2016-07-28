@@ -10,6 +10,7 @@ import numpy
 import scipy.optimize
 
 from base import Base
+from distribution import Distribution
 from distribution import DiscreteUniformDistribution
 from distribution import EmpiricalDistribution
 from hashable import HashableArray
@@ -420,9 +421,9 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
         """Creates the distribution objects from the raw data."""
         for cid, days in histogram.items():
             for day, hours in days.items():
-                for hour, data in hours.items():
-                    if isinstance(data, list):
-                        histogram[cid][day][hour] = self.__process_histogram(data)
+                for hour, d in hours.items():
+                    if not isinstance(d, Distribution):
+                        histogram[cid][day][hour] = self.__process_histogram(d)
         return histogram
 
     def __process_histogram(self, data):
