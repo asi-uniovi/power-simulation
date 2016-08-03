@@ -163,9 +163,12 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
                 return self.__xmax
             return self.__xmin
 
-    @functools.lru_cache(maxsize=1)
+    @functools.lru_cache(maxsize=2)
     def global_idle_timeout(self):
         """Calculates the value of the idle timer for a given satisfaction."""
+        if not self.get_arg('per_pc'):
+            return self.optimal_idle_timeout(
+                self.__servers[0], all_timespan=True)
         return numpy.mean([self.optimal_idle_timeout(cid, all_timespan=True)
                            for cid in self.__servers])
 
