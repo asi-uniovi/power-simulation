@@ -71,7 +71,7 @@ py_library(
 py_library(
     name = "hashable",
     srcs = ["hashable.py"],
-    srcs_version = "PY2AND3",
+    srcs_version = "PY3",
 )
 
 py_library(
