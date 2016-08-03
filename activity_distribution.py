@@ -72,12 +72,12 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
     @property
     def servers(self):
         """Read only servers list."""
-        return sorted(self.__servers)
+        return self.__servers
 
     @property
     def empty_servers(self):
         """Read only empty servers list."""
-        return sorted(self.__empty_servers)
+        return self.__empty_servers
 
     def random_activity_for_hour(self, cid, day, hour):
         """Queries the activity distribution and generates a random sample."""
@@ -187,7 +187,7 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
     def remove_servers(self, empty_servers):
         """Blacklist some of the servers."""
         self.__servers = sorted(set(self.__servers) - set(empty_servers))
-        self.__empty_servers = empty_servers
+        self.__empty_servers = sorted(empty_servers)
 
     def __resolve_histogram(self, key):
         """Matches histograms and keys."""
@@ -317,7 +317,7 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
                         self.__off_frequencies_histograms, cid)):
                 empty_servers.add(cid)
         self.__servers = sorted(set(self.__servers) - empty_servers)
-        self.__empty_servers = list(empty_servers)
+        self.__empty_servers = sorted(empty_servers)
         logger.debug('%d servers have been filtered out.', len(empty_servers))
 
     def __is_empty_histogram(self, histogram, cid):
