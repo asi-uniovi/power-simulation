@@ -169,6 +169,9 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
         if not self.get_arg('per_pc'):
             return self.optimal_idle_timeout(
                 self.__servers[0], all_timespan=True)
+        if not self.get_arg('per_hour'):
+            return numpy.mean([self.__optimal_timeout_timestamp(cid, 0, 0)
+                               for cid in self.__servers])
         return numpy.mean([self.optimal_idle_timeout(cid, all_timespan=True)
                            for cid in self.__servers])
 
