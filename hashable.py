@@ -23,7 +23,6 @@ class HashableDict(dict):
         return self.__hash
 
 
-# TODO(m3drano): this could be implemented with inheritance, as above.
 # pylint: disable=too-few-public-methods
 class HashableArray(object):
     """This just contains the NumPy array and the hash."""

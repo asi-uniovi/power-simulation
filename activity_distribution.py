@@ -1,29 +1,23 @@
 """User (in)activity distribution parsing, fitting and generation."""
 
 import abc
-import functools
+import itertools
 import json
 import logging
+import operator
 
 import injector
 import numpy
-import scipy.optimize
 
 from base import Base
-from distribution import Distribution
-from distribution import DiscreteUniformDistribution
-from distribution import EmpiricalDistribution
-from hashable import HashableArray
 from hashable import HashableDict
+from model import Model
 from static import DAYS
-from static import PCS_HOURS_SIZE
 from static import timestamp_to_day
-from static import weighted_user_satisfaction
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
 
-@functools.lru_cache(maxsize=256)
 def previous_hour(day, hour):
     """Gets the previous hour with wrap."""
     hour -= 1
@@ -38,6 +32,7 @@ def previous_hour(day, hour):
 
 
 # pylint: disable=no-member,no-self-use,too-many-instance-attributes
+@injector.inject(_model_builder=injector.AssistedBuilder(cls=Model))
 class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
     """Stores the hourly activity distribution over a week.
 
@@ -63,66 +58,33 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
         self.__servers = []
         self.__empty_servers = []
         # pylint: disable=invalid-name
-        self.__inactivity_intervals_histograms = HashableDict()
-        self.__activity_intervals_histograms = HashableDict()
-        self.__off_intervals_histograms = HashableDict()
-        self.__off_frequencies_histograms = HashableDict()
-        self.__parse_trace(self.__trace_file)
+        self.__models = HashableDict()
+        self.__optimal_timeout = None
+        self.__parse_trace()
 
     @property
     def servers(self):
         """Read only servers list."""
         return self.__servers
 
-    @property
     def empty_servers(self):
         """Read only empty servers list."""
         return self.__empty_servers
 
-    def random_activity_for_hour(self, cid, day, hour):
-        """Queries the activity distribution and generates a random sample."""
-        return self.__draw_from_distribution(
-            self.__distribution_for_hour(
-                self.__activity_intervals_histograms, cid, day, hour),
-            min_value=0.1, max_value=self.__xmax)
+    def remove_servers(self, empty_servers):
+        """Blacklist some of the servers."""
+        self.__empty_servers = sorted(self.__empty_servers + empty_servers)
+        for cid in empty_servers:
+            if cid in self.__models:
+                del self.__models[cid]
+        self.__servers = sorted(set(self.__servers) - set(self.__empty_servers))
 
-    def random_activity_for_timestamp(self, cid, timestamp):
-        """Queries the activity distribution and generates a random sample."""
-        return self.random_activity_for_hour(cid, *timestamp_to_day(timestamp))
-
-    def random_inactivity_for_hour(self, cid, day, hour):
-        """Queries the activity distribution and generates a random sample."""
-        distribution = self.__distribution_for_hour(
-            self.__inactivity_intervals_histograms, cid, day, hour)
-        rnd_inactivity = self.__draw_from_distribution(
-            distribution, min_value=self.__xmin, max_value=self.__xmax)
-        if self.__noise_threshold is not None:
-            while rnd_inactivity > self.__noise_threshold:
-                rnd_inactivity = self.__draw_from_distribution(
-                    distribution, min_value=self.__xmin, max_value=self.__xmax)
-        return rnd_inactivity
-
-    def random_inactivity_for_timestamp(self, cid, timestamp):
-        """Queries the activity distribution and generates a random sample."""
-        return self.random_inactivity_for_hour(
-            cid, *timestamp_to_day(timestamp))
-
-    def off_frequency_for_hour(self, cid, day, hour):
-        """Determines whether a computer should turndown or not."""
-        return self.__draw_from_distribution(
-            self.__distribution_for_hour(
-                self.__off_frequencies_histograms, cid, day, hour))
-
-    def off_interval_for_hour(self, cid, day, hour):
-        """Samples an off interval for the day and hour provided"""
-        return self.__draw_from_distribution(
-            self.__distribution_for_hour(
-                self.__off_intervals_histograms, cid, day, hour),
-            min_value=self.__xmin, max_value=self.__xmax)
-
-    def off_interval_for_timestamp(self, cid, timestamp):
-        """Samples an off interval for the day and hour provided"""
-        return self.off_interval_for_hour(cid, *timestamp_to_day(timestamp))
+    def global_idle_timeout(self):
+        """Calculates the value of the idle timer for a given satisfaction."""
+        if self.__optimal_timeout is None:
+            self.__optimal_timeout = numpy.mean([self.optimal_idle_timeout(
+                cid, all_timespan=True) for cid in self.__servers])
+        return self.__optimal_timeout
 
     def optimal_idle_timeout(self, cid, all_timespan=False):
         """Calculates the value of the idle timer for a given satisfaction."""
@@ -132,124 +94,81 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
             return self.__optimal_timeout_timestamp(
                 cid, *timestamp_to_day(self._config.env.now))
 
-    @functools.lru_cache(maxsize=PCS_HOURS_SIZE)
-    def __optimal_timeout_timestamp(self, cid, day, hour):
-        hist = self.__distribution_for_hour(
-            self.__inactivity_intervals_histograms, cid, day, hour)
-        if hist is None or len(hist.data) == 0:
-            return self.__optimal_timeout_all(cid)
-        return self.__optimal_timeout_search(hist.data)
+    def random_activity_for_timestamp(self, cid, timestamp):
+        """Queries the activity distribution and generates a random sample."""
+        return self.__draw_from_distribution(
+            self.__distribution_for_hour(
+                cid, *timestamp_to_day(timestamp)).activity,
+            min_value=0.1, max_value=self.__xmax)
 
-    def __optimal_timeout_all(self, cid):
-        return self.__optimal_timeout_search(
-            self.__flatten_inactivity_histogram(cid))
+    def random_inactivity_for_timestamp(self, cid, timestamp):
+        """Queries the activity distribution and generates a random sample."""
+        distribution = self.__distribution_for_hour(
+            cid, *timestamp_to_day(timestamp)).inactivity
+        rnd_inactivity = self.__draw_from_distribution(
+            distribution, min_value=self.__xmin, max_value=self.__xmax)
+        if self.__noise_threshold is not None:
+            while rnd_inactivity > self.__noise_threshold:
+                rnd_inactivity = self.__draw_from_distribution(
+                    distribution, min_value=self.__xmin, max_value=self.__xmax)
+        return rnd_inactivity
 
-    def __optimal_timeout_search(self, hist):
-        """Uses the bisection method to find the timeout for the target."""
+    def off_interval_for_timestamp(self, cid, timestamp):
+        """Samples an off interval for the day and hour provided"""
+        return self.__draw_from_distribution(
+            self.__distribution_for_hour(
+                cid, *timestamp_to_day(timestamp)).off_duration,
+            min_value=self.__xmin, max_value=self.__xmax)
 
-        def f(x):  # pylint: disable=invalid-name
-            """Trasposed function to optimize via root finding."""
-            return (numpy.mean(weighted_user_satisfaction(
-                hist.array, x, self.__satisfaction_threshold))
-                    * 100 - self.__target_satisfaction)
-
-        try:
-            return scipy.optimize.brentq(f, self.__xmin, self.__xmax, xtol=1)
-        except ValueError:
-            # If the function has no root, means that we cannot achieve the
-            # satisfaction target, therefore, if we provide the max value, we
-            # ensure to, at least, be as close as possible.
-            if f(self.__xmax) > f(self.__xmin):
-                return self.__xmax
-            return self.__xmin
-
-    @functools.lru_cache(maxsize=2)
-    def global_idle_timeout(self):
-        """Calculates the value of the idle timer for a given satisfaction."""
-        if not self.get_arg('per_pc'):
-            return self.optimal_idle_timeout(
-                self.__servers[0], all_timespan=True)
-        if not self.get_arg('per_hour'):
-            return numpy.mean([self.__optimal_timeout_timestamp(cid, 0, 0)
-                               for cid in self.__servers])
-        return numpy.mean([self.optimal_idle_timeout(cid, all_timespan=True)
-                           for cid in self.__servers])
+    def off_frequency_for_hour(self, cid, day, hour):
+        """Determines whether a computer should turndown or not."""
+        return numpy.mean(
+            self.__distribution_for_hour(cid, day, hour).off_fraction)
 
     def get_all_hourly_summaries(self, key, summaries=('mean', 'median')):
         """Returns the summaries per hour."""
-        return [{s: getattr(numpy, s)([getattr(i, s) for i in values])
+        return [{s: getattr(numpy, s)([i for i in values.resolve_key(key)])
                  for s in summaries}
-                for day in self.__transpose_histogram(
-                    self.__resolve_histogram(key)).values()
+                for day in self.__transpose_histogram().values()
                 for values in day.values()]
 
     def get_all_hourly_count(self, key):
         """Returns the counts per hour."""
-        return [sum(i.sample_size for i in values)
-                for day in self.__transpose_histogram(
-                    self.__resolve_histogram(key)).values()
+        return [sum(i.sample_size for i in values.resolve_key(key))
+                for day in self.__transpose_histogram().values()
                 for values in day.values()]
 
-    def remove_servers(self, empty_servers):
-        """Blacklist some of the servers."""
-        self.__servers = sorted(set(self.__servers) - set(empty_servers))
-        self.__empty_servers = sorted(empty_servers)
+    def __optimal_timeout_all(self, cid):
+        flat_model = self._model_builder.build()
+        for day in self.__models[cid].values():
+            for model in day.values():
+                flat_model.extend(model)
+        return flat_model.optimal_idle_timeout()
 
-    def __resolve_histogram(self, key):
-        """Matches histograms and keys."""
-        if key == 'ACTIVITY_TIME':
-            return self.__activity_intervals_histograms
-        elif key == 'INACTIVITY_TIME':
-            return self.__inactivity_intervals_histograms
-        elif key == 'USER_SHUTDOWN_TIME':
-            return self.__off_intervals_histograms
-        elif key == 'AUTO_SHUTDOWN_TIME':
-            return None
-        elif key == 'IDLE_TIME':
-            return None
-        raise KeyError('Invalid key for histogram.')
+    def __optimal_timeout_timestamp(self, cid, day, hour):
+        hist = self.__distribution_for_hour(cid, day, hour)
+        if hist is None:
+            return self.__optimal_timeout_all(cid)
+        return hist.optimal_idle_timeout()
 
-    def __transpose_histogram(self, histogram):
-        """Converts the {PC: {Day: {Hour: x}}} hist to {Day: {Hour: [x*]}}."""
-        transposed = HashableDict()
-        if histogram is not None:
-            for day in range(7):
-                for hour in range(24):
-                    for value in histogram.values():
-                        if value.get(day, HashableDict()).get(hour) is not None:
-                            transposed.setdefault(day, HashableDict()).setdefault(
-                                hour, []).append(value.get(day, HashableDict()).get(hour))
-        return transposed
-
-    def __flatten_inactivity_histogram(self, cid):
-        """Makes a histogram completely flat."""
-        return HashableArray([
-            i
-            for day in self.__inactivity_intervals_histograms[cid].values()
-            for hour in day.values() if hour is not None
-            for i in hour.data])
-
-    def __distribution_for_hour(self, histogram, cid, day, hour):
+    # pylint: disable=invalid-name
+    def __distribution_for_hour(self, cid, day, hour):
         """Queries the activity distribution to the get average inactivity."""
         previous_count = 0
         d, h = day, hour
-        distribution = self.__get(histogram, cid, d, h)
-        while distribution is None:
-            if previous_count > 168:
-                return None
-            previous_count += 1
-            d, h = previous_hour(d, h)
-            distribution = self.__get(histogram, cid, d, h)
-        histogram[cid].setdefault(day, HashableDict()).setdefault(
-            hour, distribution)
+        distribution = self.__get(cid, d, h)
+        if distribution is None:
+            while distribution is None:
+                if previous_count > 168:
+                    logger.warning('There is no model for %s (%d,%d)',
+                                   cid, day, hour)
+                    return None
+                previous_count += 1
+                d, h = previous_hour(d, h)
+                distribution = self.__get(cid, d, h)
+            self.__models[cid].setdefault(day, HashableDict()).setdefault(
+                hour, distribution)
         return distribution
-
-    def __get(self, histogram, cid, day, hour):
-        """Generic getter for a histogram."""
-        try:
-            return histogram[cid][day][hour]
-        except KeyError:
-            return None
 
     def __draw_from_distribution(self, distribution, min_value=0,
                                  max_value=float('inf')):
@@ -261,189 +180,129 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
             rnd = distribution.rvs()
         return rnd
 
-    def __parse_trace(self, trace_path):
+    def __transpose_histogram(self):
+        """Converts the {PC: {Day: {Hour: x}}} hist to {Day: {Hour: [x*]}}."""
+        transposed = HashableDict()
+        for day in range(7):
+            for hour in range(24):
+                for value in self.__models.values():
+                    if value.get(day, HashableDict()).get(hour) is not None:
+                        transposed.setdefault(day, HashableDict()).setdefault(
+                            hour, []).append(value.get(day, {}).get(hour))
+        return transposed
+
+    def __parse_trace(self):
         """Parses the json trace to generate all the histograms."""
-        with open(trace_path) as trace:
+        logger.debug('Parsing models.')
+        with open(self.__trace_file) as trace:
             trace = json.load(trace)
             trace = [i for i in trace if i['PC'] != '_Total']
-            self.__parse_servers(trace)
-            self.__parse_inactivity_intervals(trace)
-            self.__parse_activity_intervals(trace)
-            self.__parse_off_intervals(trace)
-            self.__parse_off_frequencies(trace)
-            self.__filter_out_empty_servers()
+            key = operator.itemgetter('PC')
+            self.__models = HashableDict()
+            for pc, trace in itertools.groupby(sorted(trace, key=key), key=key):
+                self.__servers.append(pc)
+                self.__models[pc] = self.__parse_model(
+                    {t['Type']: t['data'] for t in trace})
+            if len(self.__servers) != len(set(self.__servers)):
+                raise ValueError('There are duplicate PCs')
+        self.__merge_histograms()
+        self.__filter_out_empty_servers()
 
-    def __parse_servers(self, trace):
-        """Gets and validates the server hostnames from the trace."""
-        logger.debug('Parsing and validating server hostnames.')
-        pcs = [[i['PC'] for i in trace if i['Type'] == key]
-               for key in set(j['Type'] for j in trace)]
-        if any(True for i in pcs if len(i) != len(set(i))):
-            raise ValueError('There are duplicate PCs')
-        if len(set(len(i) for i in pcs)) != 1:
-            raise ValueError('PC names are not consistent across keys')
-        self.__servers = sorted(pcs.pop())
+    def __parse_model(self, traces):
+        """Generic parser of a server model."""
+        histogram = HashableDict()
+        for t, data in traces.items():
+            for d in data:
+                day = DAYS[d['Day']]
+                hour = int(d['Hour'])
+                assert 0 <= day <= 6
+                assert 0 <= hour <= 23
+                histogram.setdefault(day, HashableDict()).setdefault(
+                    hour, HashableDict())[t] = self.__filter(t, d['Intervals'])
+        models = HashableDict()
+        for day, hours in histogram.items():
+            for hour, dct in hours.items():
+                model = self._model_builder.build(
+                    inactivity=dct['InactivityIntervals'],
+                    activity=dct['ActivityIntervals'],
+                    off_duration=dct['OffIntervals'],
+                    off_fraction=dct['OffFrequencies'])
+                if model.is_complete:
+                    models.setdefault(day, HashableDict()).setdefault(
+                        hour, model)
+        return models
 
-    def __parse_inactivity_intervals(self, trace):
-        """Loads the inactivity intervals from the trace."""
-        logger.debug('Parsing inactivity intervals.')
-        self.__inactivity_intervals_histograms = self.__parse_histograms(
-            trace, 'InactivityIntervals', do_filter=True)
+    def __filter(self, t, data):
+        """Perform filtering on the raw data to improve quality."""
+        if t == 'InactivityIntervals':
+            data = (i for i in data if self.__xmin <= i <= self.__xmax)
+        if t != 'OffFrequencies':
+            data = (i for i in data if i > 0)
+        return list(data)
 
-    def __parse_activity_intervals(self, trace):
-        """Process the activity intervals."""
-        logger.debug('Parsing activity intervals.')
-        self.__activity_intervals_histograms = self.__parse_histograms(
-            trace, 'ActivityIntervals')
+    def __merge_histograms(self):
+        """Merges histograms to be global or per PC/hour."""
+        if self.__do_merge:
+            if not self.get_arg('per_hour'):
+                self.__merge_per_hour()
+            if not self.get_arg('per_pc'):
+                self.__merge_per_pc()
 
-    def __parse_off_intervals(self, trace):
-        """Process the off intervals."""
-        logger.debug('Parsing off intervals.')
-        self.__off_intervals_histograms = self.__parse_histograms(
-            trace, 'OffIntervals')
+    def __merge_per_hour(self):
+        """Merge so all hours have the same model."""
+        logger.debug('Merging histogram per hour.')
+        merged = HashableDict()
+        for cid, days in self.__models.items():
+            merged_model = self._model_builder.build()
+            for day, hours in days.items():
+                for hour, model in hours.items():
+                    merged_model.extend(model)
+            for day, hours in days.items():
+                for hour in hours:
+                    merged.setdefault(cid, HashableDict()).setdefault(
+                        day, HashableDict()).setdefault(hour, merged_model)
+        self.__models = merged
 
-    def __parse_off_frequencies(self, trace):
-        """Process the off fractions."""
-        logger.debug('Parsing off fractions.')
-        self.__off_frequencies_histograms = self.__parse_histograms(
-            trace, 'OffFrequencies', do_reduce=False, additive=True)
+    def __merge_per_pc(self):
+        """Merge so all PCs have the same model."""
+        logger.debug('Merging histogram per PC.')
+        merged = HashableDict()
+        for cid, days in self.__models.items():
+            for day, hours in days.items():
+                for hour, model in hours.items():
+                    merged.setdefault(day, HashableDict()).setdefault(
+                        hour, self._model_builder.build()).extend(model)
+        for cid in self.__models:
+            self.__models[cid] = merged
 
     def __filter_out_empty_servers(self):
         """Removes the servers that have no data in any of the histograms."""
         logger.debug('Filtering servers with no data.')
         empty_servers = set()
         for cid in self.__servers:
-            if (self.__is_empty_histogram(
-                    self.__inactivity_intervals_histograms, cid)
-                    or self.__is_empty_histogram(
-                        self.__activity_intervals_histograms, cid)
-                    or self.__is_empty_histogram(
-                        self.__off_intervals_histograms, cid)
-                    or self.__is_empty_histogram(
-                        self.__off_frequencies_histograms, cid)):
+            if self.__is_empty_histogram(cid):
                 empty_servers.add(cid)
+                if cid in self.__models:
+                    del self.__models[cid]
         self.__servers = sorted(set(self.__servers) - empty_servers)
         self.__empty_servers = sorted(empty_servers)
         logger.debug('%d servers have been filtered out.', len(empty_servers))
 
-    def __is_empty_histogram(self, histogram, cid):
+    def __is_empty_histogram(self, cid):
         """Indicates if a histogram is empty."""
         for day in range(7):
             for hour in range(24):
-                if self.__get(histogram, cid, day, hour) is not None:
+                model = self.__get(cid, day, hour)
+                if model is not None and model.is_complete:
                     return False
         return True
 
-    # pylint: disable=too-many-arguments
-    def __parse_histograms(self, trace, hist_key, do_filter=False,
-                           do_reduce=True, additive=False):
-        """Parses the histogram to get a {PC: hist} dict."""
-        histograms = HashableDict({i['PC']: self.__parse_histogram(i)
-                                   for i in trace if i['Type'] == hist_key})
-        if set(histograms.keys()) != set(self.__servers):
-            raise ValueError('PCs on Key %s are not consistent' % hist_key)
-        histograms = self.__filter(histograms, do_filter, do_reduce)
-        histograms = self.__merge_histograms(histograms, additive)
-        histograms = self.__process(histograms)
-        return histograms
-
-    def __parse_histogram(self, trace):
-        """Generic parser of a histogram element."""
-        if len(trace.get('data', [])) > 168:
-            raise ValueError('The trace contains more than 168 objects')
-        if len(trace.get('data', [])) < 168:
-            logger.error('The trace contains less than 168 objects')
-        histogram = HashableDict()
-        for d in trace['data']:  # pylint: disable=invalid-name
-            day = DAYS[d['Day']]
-            hour = int(d['Hour'])
-            assert 0 <= day <= 6
-            assert 0 <= hour <= 23
-            histogram.setdefault(day, HashableDict())[hour] = d['Intervals']
-        return histogram
-
-    def __merge_histograms(self, histogram, additive):
-        """Merges histograms to be global or per PC/hour."""
-        if self.__do_merge:
-            if not self.get_arg('per_hour'):
-                histogram = self.__merge_per_hour(histogram, additive)
-            if not self.get_arg('per_pc'):
-                histogram = self.__merge_per_pc(histogram, additive)
-        return histogram
-
-    def __merge_per_pc(self, histogram, additive):
-        """Merge so all PCs have the same model."""
-        logger.debug('Merging histogram per PC.')
-        merged = HashableDict()
-        for cid, days in histogram.items():
-            for day, hours in days.items():
-                for hour, data in hours.items():
-                    if data is not None:
-                        assert isinstance(data, list)
-                        merged.setdefault(day, HashableDict()).setdefault(
-                            hour, []).extend(data)
-        if additive:
-            for day, hours in merged.items():
-                for hour in hours:
-                    hours[hour] = [numpy.mean(hours[hour])]
-        for cid in histogram:
-            histogram[cid] = merged
-        return histogram
-
-    def __merge_per_hour(self, histogram, additive):
-        """Merge so all hours have the same model."""
-        logger.debug('Merging histogram per hour.')
-        merged = HashableDict()
-        for cid, days in histogram.items():
-            merged_data = []
-            for day, hours in days.items():
-                for hour, data in hours.items():
-                    if data is not None:
-                        assert isinstance(data, list)
-                        merged_data.extend(data)
-            if additive:
-                merged_data = [numpy.mean(merged_data)]
-            for day, hours in days.items():
-                for hour in hours:
-                    merged.setdefault(cid, HashableDict()).setdefault(
-                        day, HashableDict()).setdefault(hour, merged_data)
-        return merged
-
-    def __filter(self, histogram, do_filter, do_reduce):
-        """Filter a histogram to improve quality."""
-        if not do_filter and not do_reduce:
-            return histogram
-        for cid, days in histogram.items():
-            for day, hours in days.items():
-                for hour, data in hours.items():
-                    histogram[cid][day][hour] = self.__filter_histogram(
-                        data, do_filter, do_reduce)
-        return histogram
-
-    def __filter_histogram(self, data, do_filter, do_reduce):
-        """Perform filtering on the raw data to improve quality."""
-        if do_filter:
-            data = (i for i in data if self.__xmin <= i <= self.__xmax)
-        if do_reduce:
-            data = (i for i in data if i > 0)
-        return list(data)
-
-    def __process(self, histogram):
-        """Creates the distribution objects from the raw data."""
-        for cid, days in histogram.items():
-            for day, hours in days.items():
-                for hour, d in hours.items():
-                    if not isinstance(d, Distribution):
-                        histogram[cid][day][hour] = self.__process_histogram(d)
-        return histogram
-
-    def __process_histogram(self, data):
-        """Process one data unit."""
-        if len(data) > 1:
-            return EmpiricalDistribution(data)
-        elif len(data) > 0:
-            return DiscreteUniformDistribution(data)
-        return None
+    def __get(self, cid, day, hour):
+        """Generic getter for a model."""
+        try:
+            return self.__models[cid][day][hour]
+        except KeyError:
+            return None
 
 
 @injector.singleton

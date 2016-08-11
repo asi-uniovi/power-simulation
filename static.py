@@ -29,11 +29,6 @@ WEEK = lambda x: x * DAY(7)
 KB = lambda x: x << 10
 MB = lambda x: x << 20
 
-# These are orientative sizes rounded to the nearest power of 2.
-# pylint: disable=no-member
-POWER = lambda n: int(numpy.power(2, numpy.ceil(numpy.log2(n))))
-PCS_HOURS_SIZE = POWER(265 * 168)
-
 
 @injector.inject(config=Configuration)
 def config_logging(config):
@@ -79,7 +74,7 @@ def timestamp_to_day(timestamp):
     return day, hour
 
 
-# pylint: disable=invalid-name
+# pylint: disable=invalid-name,no-member
 def weight(x, ip, fp):
     """Linear increment between ip and fp function."""
     return numpy.maximum(0.0, numpy.minimum(1.0, (ip - x) / (ip - fp)))

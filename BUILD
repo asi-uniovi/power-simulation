@@ -6,8 +6,8 @@ py_library(
     srcs_version = "PY3",
     deps = [
         ":base",
-        ":distribution",
         ":hashable",
+        ":model",
         ":static",
     ],
 )
@@ -65,7 +65,6 @@ py_library(
     name = "distribution",
     srcs = ["distribution.py"],
     srcs_version = "PY3",
-    deps = [":hashable"],
 )
 
 py_library(
@@ -96,6 +95,17 @@ py_binary(
     deps = [
         ":configuration",
         ":simulation",
+    ],
+)
+
+py_library(
+    name = "model",
+    srcs = ["model.py"],
+    srcs_version = "PY3",
+    deps = [
+        ":base",
+        ":distribution",
+        ":static",
     ],
 )
 

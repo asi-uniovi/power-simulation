@@ -1,19 +1,15 @@
 """Some useful statistical distributions."""
 
-import abc
-
 import numpy
+import scipy.interpolate
 
-from hashable import HashableArray
 
+class EmpiricalDistribution(object):
+    """Empirical distribution according to the data provided."""
 
-class Distribution(object, metaclass=abc.ABCMeta):
-    """Base distribution class."""
-
-    def __init__(self, data, sort=False):
-        self.__data = HashableArray(data, sort)
-        self.__mean = numpy.mean(self.__data)
-        self.__median = numpy.median(self.__data)
+    def __init__(self, data):
+        self.__data = numpy.asarray(data)
+        self.__tck = None
 
     @property
     def data(self):
@@ -23,40 +19,32 @@ class Distribution(object, metaclass=abc.ABCMeta):
     @property
     def mean(self):
         """Expected value of the distribution."""
-        return self.__mean
+        return numpy.mean(self.__data)
 
     @property
     def median(self):
         """Median of the distribution."""
-        return self.__median
+        return numpy.median(self.__data)
 
-    @property
-    def sample_size(self):
-        """How much data we got for this distribution."""
-        return len(self.__data)
+    def rvs(self, size=None):
+        """Sample the spline that has the inverse CDF."""
+        if self.__data.size < 2:
+            return numpy.random.choice(self.__data)  # pylint: disable=no-member
+        if self.__tck is None:
+            self.__fit()
+        return scipy.interpolate.splev(
+            numpy.random.random(size=size), self.__tck)
 
-    def rvs(self):
-        """This samples the distribution for one value."""
-        raise NotImplementedError
+    def extend(self, other):
+        """This extends this distribution with data from another."""
+        self.__data = numpy.append(self.__data, other.data)
+        self.__tck = None
 
+    def __fit(self):
+        """Fits the distribution for generating random values."""
+        self.__data.sort()
+        self.__tck = scipy.interpolate.splrep(
+            numpy.linspace(0, 1, self.__data.size), self.__data, k=1)
 
-class DiscreteUniformDistribution(Distribution):
-    """Uniform distribution over a set of values."""
-
-    def rvs(self):
-        """One item from the sample."""
-        return numpy.random.choice(self.data)  # pylint: disable=no-member
-
-
-class EmpiricalDistribution(Distribution):
-    """Empirical distribution according to the data provided."""
-
-    def __init__(self, data):
-        super(EmpiricalDistribution, self).__init__(data + [max(data)], True)
-
-    def rvs(self):
-        """Implementation from "Simulation Modeling and Analysis, 5e"."""
-        # pylint: disable=invalid-name
-        p = (self.sample_size - 2) * numpy.random.random()
-        i = int(numpy.floor(p) + 1)
-        return self.data[i] + (p - i + 1) * (self.data[i + 1] - self.data[i])
+    def __len__(self):
+        return self.__data.size

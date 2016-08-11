@@ -34,9 +34,9 @@ class Simulation(Base):
         self.__simulation_time = self.get_config_int('simulation_time')
         self.__target_satisfaction = self.get_config_int('target_satisfaction')
         self._activity_distribution.remove_servers(
-            self._training_distribution.empty_servers)
+            self._training_distribution.empty_servers())
         self._training_distribution.remove_servers(
-            self._activity_distribution.empty_servers)
+            self._activity_distribution.empty_servers())
 
     @property
     def servers(self):
