@@ -6,7 +6,6 @@ py_library(
     srcs_version = "PY3",
     deps = [
         ":base",
-        ":hashable",
         ":model",
         ":static",
     ],
@@ -64,12 +63,6 @@ filegroup(
 py_library(
     name = "distribution",
     srcs = ["distribution.py"],
-    srcs_version = "PY3",
-)
-
-py_library(
-    name = "hashable",
-    srcs = ["hashable.py"],
     srcs_version = "PY3",
 )
 

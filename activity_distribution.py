@@ -10,7 +10,6 @@ import injector
 import numpy
 
 from base import Base
-from hashable import HashableDict
 from model import Model
 from static import DAYS
 from static import timestamp_to_day
@@ -54,7 +53,7 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
         self.__servers = []
         self.__empty_servers = []
         # pylint: disable=invalid-name
-        self.__models = HashableDict()
+        self.__models = {}
         self.__optimal_timeout = None
         self.__parse_trace()
 
@@ -171,7 +170,7 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
                 previous_count += 1
                 d, h = previous_hour(d, h)
                 distribution = self.__get(cid, d, h)
-            self.__models[cid].setdefault(day, HashableDict()).setdefault(
+            self.__models[cid].setdefault(day, {}).setdefault(
                 hour, distribution)
         return distribution
 
@@ -187,12 +186,12 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
 
     def __transpose_histogram(self):
         """Converts the {PC: {Day: {Hour: x}}} hist to {Day: {Hour: [x*]}}."""
-        transposed = HashableDict()
+        transposed = {}
         for day in range(7):
             for hour in range(24):
                 for value in self.__models.values():
-                    if value.get(day, HashableDict()).get(hour) is not None:
-                        transposed.setdefault(day, HashableDict()).setdefault(
+                    if value.get(day, {}).get(hour) is not None:
+                        transposed.setdefault(day, {}).setdefault(
                             hour, []).append(value.get(day, {}).get(hour))
         return transposed
 
@@ -203,7 +202,7 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
             trace = json.load(trace)
             trace = [i for i in trace if i['PC'] != '_Total']
             key = operator.itemgetter('PC')
-            self.__models = HashableDict()
+            self.__models = {}
             for pc, trace in itertools.groupby(sorted(trace, key=key), key=key):
                 self.__servers.append(pc)
                 self.__models[pc] = self.__parse_model(
@@ -215,14 +214,14 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
 
     def __parse_model(self, traces):
         """Generic parser of a server model."""
-        histogram = HashableDict()
+        histogram = {}
         for t, data in traces.items():
             for d in data:
                 day = DAYS[d['Day']]
                 hour = int(d['Hour'])
-                histogram.setdefault(day, HashableDict()).setdefault(
-                    hour, HashableDict())[t] = self.__filter(t, d['Intervals'])
-        models = HashableDict()
+                histogram.setdefault(day, {}).setdefault(
+                    hour, {})[t] = self.__filter(t, d['Intervals'])
+        models = {}
         for day, hours in histogram.items():
             for hour, dct in hours.items():
                 model = self._model_builder.build(
@@ -231,7 +230,7 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
                     off_duration=dct['OffIntervals'],
                     off_fraction=dct['OffFrequencies'])
                 if model.is_complete:
-                    models.setdefault(day, HashableDict()).setdefault(
+                    models.setdefault(day, {}).setdefault(
                         hour, model)
         return models
 
@@ -254,7 +253,7 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
     def __merge_per_hour(self):
         """Merge so all hours have the same model."""
         logger.debug('Merging histogram per hour.')
-        merged = HashableDict()
+        merged = {}
         for cid, days in self.__models.items():
             merged_model = self._model_builder.build()
             for day, hours in days.items():
@@ -262,18 +261,18 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
                     merged_model.extend(model)
             for day, hours in days.items():
                 for hour in hours:
-                    merged.setdefault(cid, HashableDict()).setdefault(
-                        day, HashableDict()).setdefault(hour, merged_model)
+                    merged.setdefault(cid, {}).setdefault(
+                        day, {}).setdefault(hour, merged_model)
         self.__models = merged
 
     def __merge_per_pc(self):
         """Merge so all PCs have the same model."""
         logger.debug('Merging histogram per PC.')
-        merged = HashableDict()
+        merged = {}
         for cid, days in self.__models.items():
             for day, hours in days.items():
                 for hour, model in hours.items():
-                    merged.setdefault(day, HashableDict()).setdefault(
+                    merged.setdefault(day, {}).setdefault(
                         hour, self._model_builder.build()).extend(model)
         for cid in self.__models:
             self.__models[cid] = merged
