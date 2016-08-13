@@ -34,7 +34,7 @@ class EmpiricalDistribution(object):
         if self.__tck is None:
             self.__fit()
         return scipy.interpolate.splev(
-            numpy.random.random(size=size), self.__tck)
+            numpy.random.random(size=size), self.__tck, der=0)
 
     def extend(self, other):
         """This extends this distribution with data from another."""
