@@ -49,3 +49,7 @@ class EmpiricalDistribution(object):
 
     def __len__(self):
         return self.__data.size
+
+    def __iter__(self):
+        for i in self.__data:
+            yield i

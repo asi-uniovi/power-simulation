@@ -130,16 +130,30 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
 
     def get_all_hourly_summaries(self, key, summaries=('mean', 'median')):
         """Returns the summaries per hour."""
-        return [{s: getattr(numpy, s)([i for i in values.resolve_key(key)])
-                 for s in summaries}
-                for day in self.__transpose_histogram().values()
-                for values in day.values()]
+        hours = []
+        transposed = self.__transpose_histogram()
+        for day in range(7):
+            for hour in range(24):
+                data = numpy.array(
+                    [d for i in transposed.get(day, {}).get(hour, [])
+                     for d in i.resolve_key(key)])
+                if len(data) > 0:
+                    hours.append(
+                        {s: getattr(numpy, s)(data) for s in summaries})
+                else:
+                    hours.append({s: 0.0 for s in summaries})
+        return hours
 
     def get_all_hourly_count(self, key):
         """Returns the counts per hour."""
-        return [sum(i.sample_size for i in values.resolve_key(key))
-                for day in self.__transpose_histogram().values()
-                for values in day.values()]
+        hours = []
+        transposed = self.__transpose_histogram()
+        for day in range(7):
+            for hour in range(24):
+                hours.append(
+                    sum(len(i.resolve_key(key))
+                        for i in transposed.get(day, {}).get(hour, [])))
+        return hours
 
     def __optimal_timeout_all(self, cid):
         flat_model = self._model_builder.build()
