@@ -33,10 +33,7 @@ class Simulation(Base):
         super(Simulation, self).__init__()
         self.__simulation_time = self.get_config_int('simulation_time')
         self.__target_satisfaction = self.get_config_int('target_satisfaction')
-        self._activity_distribution.remove_servers(
-            self._training_distribution.empty_servers())
-        self._training_distribution.remove_servers(
-            self._activity_distribution.empty_servers())
+        self._activity_distribution.intersect(self._training_distribution)
 
     @property
     def servers(self):
@@ -58,7 +55,8 @@ class Simulation(Base):
         if self._config.get_arg('debug'):
             self._config.env.process(self.__monitor_time())
         for cid in self._training_distribution.servers:
-            self._config.env.process(self._user_builder.build(cid=cid).run())
+            if cid in self._activity_distribution.servers:
+                self._config.env.process(self._user_builder.build(cid=cid).run())
         logger.debug('Simulation starting')
         self._config.env.run(until=self.__simulation_time)
         logger.debug('Simulation ended at %d s', self._config.env.now)
@@ -136,6 +134,7 @@ def runner():
     confidence_width = configuration.get_arg('max_confidence_interval_width')
     run = custom_injector.get(profile)(simulator.run)
 
+    logger.info('Going to simulate %d users', simulator.servers)
     logger.info('Average global timeout would be %.2f s', simulator.timeout)
     (s, i), c = run(), 1
 

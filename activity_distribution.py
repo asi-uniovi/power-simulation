@@ -67,17 +67,26 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
         """Read only servers list."""
         return self.__servers
 
+    @property
     def empty_servers(self):
         """Read only empty servers list."""
         return self.__empty_servers
 
+    def intersect(self, other):
+        """Make this activity distribution intersect with other."""
+        to_remove = set(self.empty_servers) | set(other.empty_servers)
+        to_remove |= set(self.servers) ^ set(other.servers)
+        self.remove_servers(to_remove)
+        other.remove_servers(to_remove)
+
     def remove_servers(self, empty_servers):
         """Blacklist some of the servers."""
-        self.__empty_servers = sorted(self.__empty_servers + empty_servers)
-        for cid in empty_servers:
+        self.__empty_servers = set(self.__empty_servers) | set(empty_servers)
+        for cid in self.__empty_servers:
             if cid in self.__models:
                 del self.__models[cid]
-        self.__servers = sorted(set(self.__servers) - set(self.__empty_servers))
+        self.__servers = sorted(set(self.__servers) - self.__empty_servers)
+        self.__empty_servers = sorted(self.__empty_servers)
 
     def global_idle_timeout(self):
         """Calculates the value of the idle timer for a given satisfaction."""
