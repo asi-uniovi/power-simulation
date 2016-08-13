@@ -42,7 +42,6 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
         super(ActivityDistributionBase, self).__init__()
         self.__do_merge = do_merge
         self.__trace_file = self.get_config(trace_file, section='trace')
-        self.__default_timeout = self.get_config_int('default_timeout')
         self.__target_satisfaction = self.get_config_int('target_satisfaction')
         self.__satisfaction_threshold = self.get_config_int(
             'satisfaction_threshold', section='stats')

@@ -40,11 +40,6 @@ class Computer(Base):
         self.__idle_timer = self._config.env.process(self.__idle_timer_runner())
 
     @property
-    def status(self):
-        """Indicates the computer status."""
-        return self.__status
-
-    @property
     def cid(self):
         """Read only computer ID."""
         return self.__computer_id
