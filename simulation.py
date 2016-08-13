@@ -4,6 +4,7 @@ import logging
 import math
 
 import injector
+import memory_profiler
 import scipy.stats
 
 from activity_distribution import ActivityDistribution
@@ -141,16 +142,18 @@ def runner():
     if max_runs == 1:
         logger.warning('Only one run, cannot calculate confidence intervals.')
         logger.info('Run 1: US = %.2f%% (d = Inf), RI = %.2f%% (d = Inf)', s, i)
-        return
+    else:
+        satisfaction, inactivity = confidence_interval(s), confidence_interval(i)
+        (xs, ds), (xi, di) = satisfaction.send(None), inactivity.send(None)
+        while di > confidence_width or ds > confidence_width or c < 2:
+            (s, i), c = run(), c + 1
+            (xs, ds), (xi, di) = satisfaction.send(s), inactivity.send(i)
+            logger.info('Run %d: US = %.2f%% (d = %.4f), RI = %.2f%% (d = %.4f)',
+                        c, xs, ds, xi, di)
+            if c > max_runs:
+                logger.warning('Finishing simulation runs due to inconvergence.')
+                break
+        logger.info('All runs done (%d).', c)
 
-    satisfaction, inactivity = confidence_interval(s), confidence_interval(i)
-    (xs, ds), (xi, di) = satisfaction.send(None), inactivity.send(None)
-    while di > confidence_width or ds > confidence_width or c < 2:
-        (s, i), c = run(), c + 1
-        (xs, ds), (xi, di) = satisfaction.send(s), inactivity.send(i)
-        logger.info('Run %d: US = %.2f%% (d = %.4f), RI = %.2f%% (d = %.4f)',
-                    c, xs, ds, xi, di)
-        if c > max_runs:
-            logger.warning('Finishing simulation runs due to inconvergence.')
-            break
-    logger.info('All runs done (%d).', c)
+    logger.info(
+        'Process memory footprint: %.2f MiB', memory_profiler.memory_usage()[0])
