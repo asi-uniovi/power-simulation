@@ -26,8 +26,6 @@ def previous_hour(day, hour):
         day -= 1
         if day < 0:
             day = 6
-    assert 0 <= day <= 6, day
-    assert 0 <= hour <= 23, hour
     return day, hour
 
 
@@ -53,8 +51,6 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
             'noise_threshold', section='trace')
         self.__xmin = self.get_config_float('xmin', section='trace')
         self.__xmax = self.get_config_float('xmax', section='trace')
-        assert 0 < self.__noise_threshold > self.__xmin
-        assert 0 < self.__xmin < self.__xmax
         self.__servers = []
         self.__empty_servers = []
         # pylint: disable=invalid-name
@@ -224,8 +220,6 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
             for d in data:
                 day = DAYS[d['Day']]
                 hour = int(d['Hour'])
-                assert 0 <= day <= 6
-                assert 0 <= hour <= 23
                 histogram.setdefault(day, HashableDict()).setdefault(
                     hour, HashableDict())[t] = self.__filter(t, d['Intervals'])
         models = HashableDict()

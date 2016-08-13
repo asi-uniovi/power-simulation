@@ -37,7 +37,6 @@ class User(Base):
         """Generates requests af the defined frequency."""
         while True:
             yield self._config.env.process(self._computer.serve())
-            assert self._computer.status == ComputerStatus.on
             now = self._config.env.now
             if self.__indicate_shutdown():
                 logger.debug('User is shutting down PC %s', self._computer.cid)
@@ -50,7 +49,6 @@ class User(Base):
                 inactivity_time = (
                     self._activity_distribution.random_inactivity_for_timestamp(
                         self._computer.cid, self._config.env.now))
-                assert inactivity_time > 0, inactivity_time
                 yield self._config.env.timeout(inactivity_time)
                 self._stats.append('INACTIVITY_TIME', inactivity_time,
                                    self._computer.cid, timestamp=now)
@@ -63,7 +61,6 @@ class User(Base):
             self.__off_frequency = (
                 self._activity_distribution.off_frequency_for_hour(
                     self._computer.cid, *hour))
-            assert self.__off_frequency >= 0
         if self.__off_frequency > 0:
             self.__off_frequency -= 1
             return True
@@ -75,7 +72,6 @@ class User(Base):
             shutdown = numpy.ceil(
                 self._activity_distribution.off_interval_for_timestamp(
                     self._computer.cid, self._config.env.now))
-            assert shutdown > 0, shutdown
             return shutdown
         except TypeError:
             return 0

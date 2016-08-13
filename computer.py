@@ -51,7 +51,6 @@ class Computer(Base):
 
     def change_status(self, status, interrupt_idle_timer=True):
         """Changes the state of the computer, and takes any side action."""
-        assert status != self.__status
         if interrupt_idle_timer and self.__idle_timer.is_alive:
             self.__idle_timer.interrupt()
         if (status == ComputerStatus.on
@@ -72,7 +71,6 @@ class Computer(Base):
         activity_time = (
             self._activity_distribution.random_activity_for_timestamp(
                 self.__computer_id, self._config.env.now))
-        assert activity_time > 0, activity_time
         now = self._config.env.now
         yield self._config.env.timeout(activity_time)
         self._stats.append('ACTIVITY_TIME', activity_time, self.__computer_id,
@@ -83,7 +81,6 @@ class Computer(Base):
         """Indicates this computer idle time."""
         idle = self._training_distribution.optimal_idle_timeout(
             self.__computer_id)
-        assert idle > 0, idle
         return idle
 
     def __idle_timer_runner(self):
