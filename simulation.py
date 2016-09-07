@@ -5,6 +5,7 @@ import math
 
 import injector
 import memory_profiler
+import numpy
 import scipy.stats
 
 from activity_distribution import ActivityDistribution
@@ -129,8 +130,10 @@ def runner():
     custom_injector = CustomInjector(Binder())
     custom_injector.get(config_logging)()
     custom_injector.get(create_histogram_tables)()
-    simulator = custom_injector.get(Simulation)
     configuration = custom_injector.get(Configuration)
+    if configuration.get_arg('debug'):
+      numpy.random.seed(0)
+    simulator = custom_injector.get(Simulation)
     max_runs = configuration.get_arg('max_runs')
     confidence_width = configuration.get_arg('max_confidence_interval_width')
     run = custom_injector.get(profile)(simulator.run)
