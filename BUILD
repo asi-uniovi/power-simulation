@@ -58,6 +58,7 @@ filegroup(
     srcs = glob([
         "data/*.json",
     ]),
+    visibility = ["//tools:__pkg__"],
 )
 
 py_library(
@@ -151,6 +152,7 @@ py_library(
     name = "static",
     srcs = ["static.py"],
     srcs_version = "PY3",
+    visibility = ["//tools:__pkg__"],
     deps = [":configuration"],
 )
 

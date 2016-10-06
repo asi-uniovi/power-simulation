@@ -82,3 +82,8 @@ def weight(x, ip, fp):
 def weighted_user_satisfaction(t, timeout, threshold):
     """Calculates the weighted satisfaction with a sigmoid."""
     return numpy.where(t < timeout, 1.0, weight(t - timeout, 60, threshold))
+
+
+def user_satisfaction(t, timeout):
+    """Calculates plain old user satisfaction."""
+    return numpy.where(t < timeout, 1.0, 0.0)
