@@ -5,7 +5,8 @@ pipelines:
     - step:
         script:
           - apt-get update
-          - apt-get -y install pkg-config libfreetype6-dev
+          - apt-get -y install git-lfs pkg-config libfreetype6-dev
+          - git lfs install
           - pip3 install -Ur requirements.txt
           # TODO(m3drano): This should be run with Bazel.
           - python3 main.py --debug --trace --max_runs=1 --config=config/dev.ini --per_pc --per_hour
