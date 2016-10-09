@@ -21,16 +21,6 @@ py_library(
     ],
 )
 
-py_binary(
-    name = "benchmark",
-    srcs = ["tests/benchmark.py"],
-    default_python_version = "PY3",
-    srcs_version = "PY3",
-    deps = [
-        ":distribution",
-    ],
-)
-
 py_library(
     name = "computer",
     srcs = ["computer.py"],
@@ -65,6 +55,7 @@ py_library(
     name = "distribution",
     srcs = ["distribution.py"],
     srcs_version = "PY3",
+    visibility = ["//tests:__pkg__"],
 )
 
 py_library(
