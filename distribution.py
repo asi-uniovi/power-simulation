@@ -5,7 +5,12 @@ import scipy.interpolate
 
 
 class EmpiricalDistribution(object):
-    """Empirical distribution according to the data provided."""
+    """Empirical distribution according to the data provided.
+
+    This is implemented with a cubic spline, which is faster than Law's ranking
+    based method. More info:
+    http://www.astroml.org/book_figures/chapter3/fig_clone_distribution.html
+    """
 
     def __init__(self, data):
         self.__data = numpy.asarray(data)
