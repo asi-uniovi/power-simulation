@@ -4,12 +4,8 @@ pipelines:
   default:
     - step:
         script:
-          - curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash
           - apt-get update
-          - apt-get -y install git-lfs pkg-config libfreetype6-dev
-          - git lfs install
-          - echo $(env)
-          - GIT_TRACE=1 git lfs pull
+          - apt-get -y install pkg-config libfreetype6-dev
           - pip3 install -Ur requirements.txt
           # TODO(m3drano): This should be run with Bazel.
           - python3 main.py --debug --trace --max_runs=1 --config=config/dev.ini --per_pc --per_hour
