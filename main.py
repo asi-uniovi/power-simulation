@@ -5,7 +5,6 @@
 import logging
 import sys
 import warnings
-
 from configuration import Configuration
 from simulation import runner
 

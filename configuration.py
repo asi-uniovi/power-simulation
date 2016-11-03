@@ -3,13 +3,12 @@
 import argparse
 import configparser
 import os
-
 import injector
 import simpy
 
 
 # pylint: disable=invalid-name
-def positive_int(x):
+def positive_int(x: str) -> int:
     """Parse ints that are positive numbers."""
     x = int(x)
     if x < 0:
@@ -18,7 +17,7 @@ def positive_int(x):
 
 
 # pylint: disable=invalid-name
-def positive_float(x):
+def positive_float(x: str) -> float:
     """Parse floats that are positive numbers."""
     x = float(x)
     if x < 0.0:
@@ -27,7 +26,7 @@ def positive_float(x):
 
 
 @injector.singleton
-class Configuration(object):
+class Configuration:
     """Wrapper for the command line arguments and other global configs."""
 
     def __init__(self):
@@ -37,32 +36,31 @@ class Configuration(object):
         self.__parse_config()
 
     @property
-    def env(self):
+    def env(self) -> simpy.Environment:
         """Current simulation environment."""
         return self.__env
 
-    def reset(self):
+    def reset(self) -> None:
         """Resets the configuration to be able to start a new run."""
         self.__env = simpy.Environment()
 
-    def get_arg(self, key):
+    def get_arg(self, key: str) -> str:
         """Forwards the get action to the args container."""
         return getattr(self.__args, key)
 
-    def get_config(self, key, section='simulation'):
+    def get_config(self, key: str, section: str='simulation') -> str:
         """Forwards the get action to the config container."""
         return self.__config.get(section, key)
 
-    def __parse_config(self):
+    def __parse_config(self) -> None:
         """Get the config file as a dict of dicts."""
         if not os.path.isfile(self.__args.config_file):
             raise ValueError('The configuration file does not exist: %s'
                              % self.__args.config_file)
-
         self.__config = configparser.ConfigParser()
         self.__config.read(self.__args.config_file)
 
-    def __parse_args(self):
+    def __parse_args(self) -> None:
         """Parses the configuration from the command line args."""
         parser = argparse.ArgumentParser()
         parser.add_argument('-d', '--debug',

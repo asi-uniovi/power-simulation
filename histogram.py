@@ -2,11 +2,10 @@
 
 import itertools
 import operator
+import typing
 import sqlite3
-
 import injector
 import numpy
-
 from base import Base
 from static import WEEK
 
@@ -14,8 +13,8 @@ from static import WEEK
 class Histogram(Base):
     """Histogram stored in a DB."""
 
-    @injector.inject(conn=sqlite3.Connection)
-    def __init__(self, conn, name):
+    @injector.inject
+    def __init__(self, conn: sqlite3.Connection, name: str):
         super(Histogram, self).__init__()
         self.__cache_size = self.get_config_int('cache_size', section='stats')
         self.__cursor = conn.cursor()
@@ -24,7 +23,7 @@ class Histogram(Base):
         self.__count = 0
         self.__write_cache = []
 
-    def append(self, timestamp, cid, value):
+    def append(self, timestamp: int, cid: str, value: float) -> None:
         """Inserts into the histogram, just in cache for now."""
         self.__sum += value
         self.__count += 1
@@ -32,7 +31,7 @@ class Histogram(Base):
         if len(self.__write_cache) >= self.__cache_size:
             self.flush()
 
-    def flush(self):
+    def flush(self) -> None:
         """Dump the cache to the database."""
         if len(self.__write_cache) > 0:
             self.__cursor.executemany(
@@ -40,7 +39,7 @@ class Histogram(Base):
                  "VALUES('%s', ?, ?, ?);") % self.__name, self.__write_cache)
             self.__write_cache = []
 
-    def truncate(self):
+    def truncate(self) -> None:
         """Deletes all the data from the table."""
         self.__sum = 0
         self.__count = 0
@@ -49,7 +48,7 @@ class Histogram(Base):
                               (self.__name,))
         self.__cursor.execute('VACUUM;')
 
-    def get_all_hourly_histograms(self):
+    def get_all_hourly_histograms(self) -> typing.List[numpy.ndarray]:
         """Gets all the subhistograms per hour."""
         self.flush()
         self.__cursor.execute(
@@ -63,7 +62,7 @@ class Histogram(Base):
                    self.__cursor.fetchall(), operator.itemgetter(0))}
         return [dct.get(i, []) for i in range(168)]
 
-    def get_all_histogram(self, cid=None):
+    def get_all_histogram(self, cid: str=None) -> numpy.ndarray:
         """Gets all the data from the histogram."""
         self.flush()
         if cid is None:
@@ -82,7 +81,7 @@ class Histogram(Base):
         return numpy.ascontiguousarray(
             [i['value'] for i in self.__cursor.fetchall()])
 
-    def get_all_hourly_summaries(self):
+    def get_all_hourly_summaries(self) -> typing.List[typing.Dict[str, float]]:
         """Gets all the summaries per hour."""
         ret = []
         for hist in self.get_all_hourly_histograms():
@@ -95,7 +94,7 @@ class Histogram(Base):
             ret.append(dct)
         return ret
 
-    def get_all_hourly_count(self):
+    def get_all_hourly_count(self) -> typing.List[int]:
         """Gets all the count per hour."""
         self.flush()
         self.__cursor.execute(
@@ -108,7 +107,7 @@ class Histogram(Base):
         dct = dict(self.__cursor.fetchall())
         return [dct.get(i, 0) for i in range(168)]
 
-    def sum_histogram(self, cid=None):
+    def sum_histogram(self, cid: str=None) -> int:
         """Sums up all the elements of this histogram."""
         if cid is None:
             return self.__sum
@@ -121,7 +120,7 @@ class Histogram(Base):
             (self.__name, cid))
         return int(self.__cursor.fetchone()['sum'])
 
-    def count_histogram(self, cid=None):
+    def count_histogram(self, cid: str=None) -> int:
         """Counts the number of elements in this histogram."""
         if cid is None:
             return self.__count
@@ -135,8 +134,7 @@ class Histogram(Base):
         return int(self.__cursor.fetchone()['count'])
 
 
-@injector.inject(conn=sqlite3.Connection)
-def create_histogram_tables(conn):
+def create_histogram_tables(conn: sqlite3.Connection):
     """Creates the tables on the database."""
     cursor = conn.cursor()
     cursor.execute('DROP TRIGGER IF EXISTS t_hour;')

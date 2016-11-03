@@ -5,11 +5,11 @@ import itertools
 import json
 import logging
 import operator
-
+import typing
 import injector
 import numpy
-
 from base import Base
+from distribution import EmpiricalDistribution
 from model import Model
 from static import DAYS
 from static import timestamp_to_day
@@ -17,7 +17,7 @@ from static import timestamp_to_day
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
 
-def previous_hour(day, hour):
+def previous_hour(day: int, hour: int) -> int:
     """Gets the previous hour with wrap."""
     hour -= 1
     if hour < 0:
@@ -28,8 +28,19 @@ def previous_hour(day, hour):
     return day, hour
 
 
-# pylint: disable=no-member,no-self-use,too-many-instance-attributes
-@injector.inject(_model_builder=injector.AssistedBuilder(cls=Model))
+def draw_from_distribution(distribution: EmpiricalDistribution,
+                           min_value: float=0,
+                           max_value: float=float('inf')) -> float:
+    """Gets a value from a distribution bounding the limit."""
+    if distribution is None:
+        return min_value
+    rnd = distribution.rvs()
+    while min_value >= rnd >= max_value:
+        rnd = distribution.rvs()
+    return rnd
+
+
+# pylint: disable=too-many-instance-attributes
 class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
     """Stores the hourly activity distribution over a week.
 
@@ -37,9 +48,12 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
     processed. Each bucket represents one hour of the week.
     """
 
-    def __init__(self, do_merge, trace_file):
+    @injector.inject
+    def __init__(self, model_builder: injector.AssistedBuilder[Model],
+                 do_merge: bool, trace_file: str):
         """All the data of this object is loaded from the config object."""
         super(ActivityDistributionBase, self).__init__()
+        self.__model_builder = model_builder
         self.__do_merge = do_merge
         self.__trace_file = self.get_config(trace_file, section='trace')
         self.__target_satisfaction = self.get_config_int('target_satisfaction')
@@ -57,23 +71,23 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
         self.__parse_trace()
 
     @property
-    def servers(self):
+    def servers(self) -> typing.List[str]:
         """Read only servers list."""
         return self.__servers
 
     @property
-    def empty_servers(self):
+    def empty_servers(self) -> typing.List[str]:
         """Read only empty servers list."""
         return self.__empty_servers
 
-    def intersect(self, other):
+    def intersect(self, other: 'ActivityDistributionBase') -> None:
         """Make this activity distribution intersect with other."""
         to_remove = set(self.empty_servers) | set(other.empty_servers)
         to_remove |= set(self.servers) ^ set(other.servers)
         self.remove_servers(to_remove)
         other.remove_servers(to_remove)
 
-    def remove_servers(self, empty_servers):
+    def remove_servers(self, empty_servers: typing.List[str]) -> None:
         """Blacklist some of the servers."""
         self.__empty_servers = set(self.__empty_servers) | set(empty_servers)
         for cid in self.__empty_servers:
@@ -82,14 +96,14 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
         self.__servers = sorted(set(self.__servers) - self.__empty_servers)
         self.__empty_servers = sorted(self.__empty_servers)
 
-    def global_idle_timeout(self):
+    def global_idle_timeout(self) -> float:
         """Calculates the value of the idle timer for a given satisfaction."""
         if self.__optimal_timeout is None:
             self.__optimal_timeout = numpy.mean([self.optimal_idle_timeout(
                 cid, all_timespan=True) for cid in self.__servers])
         return self.__optimal_timeout
 
-    def optimal_idle_timeout(self, cid, all_timespan=False):
+    def optimal_idle_timeout(self, cid: str, all_timespan: bool=False) -> float:
         """Calculates the value of the idle timer for a given satisfaction."""
         if all_timespan:
             return self.__optimal_timeout_all(cid)
@@ -97,38 +111,41 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
             return self.__optimal_timeout_timestamp(
                 cid, *timestamp_to_day(self._config.env.now))
 
-    def random_activity_for_timestamp(self, cid, timestamp):
+    def random_activity_for_timestamp(self, cid: str, timestamp: int) -> float:
         """Queries the activity distribution and generates a random sample."""
-        return self.__draw_from_distribution(
+        return draw_from_distribution(
             self.__distribution_for_hour(
                 cid, *timestamp_to_day(timestamp)).activity,
             min_value=0.1, max_value=self.__xmax)
 
-    def random_inactivity_for_timestamp(self, cid, timestamp):
+    def random_inactivity_for_timestamp(
+            self, cid: str, timestamp: int) -> float:
         """Queries the activity distribution and generates a random sample."""
         distribution = self.__distribution_for_hour(
             cid, *timestamp_to_day(timestamp)).inactivity
-        rnd_inactivity = self.__draw_from_distribution(
+        rnd_inactivity = draw_from_distribution(
             distribution, min_value=self.__xmin, max_value=self.__xmax)
         if self.__noise_threshold is not None:
             while rnd_inactivity > self.__noise_threshold:
-                rnd_inactivity = self.__draw_from_distribution(
+                rnd_inactivity = draw_from_distribution(
                     distribution, min_value=self.__xmin, max_value=self.__xmax)
         return rnd_inactivity
 
-    def off_interval_for_timestamp(self, cid, timestamp):
+    def off_interval_for_timestamp(self, cid: str, timestamp: int) -> float:
         """Samples an off interval for the day and hour provided"""
-        return self.__draw_from_distribution(
+        return draw_from_distribution(
             self.__distribution_for_hour(
                 cid, *timestamp_to_day(timestamp)).off_duration,
             min_value=self.__xmin, max_value=self.__xmax)
 
-    def off_frequency_for_hour(self, cid, day, hour):
+    def off_frequency_for_hour(self, cid: str, day: int, hour: int) -> float:
         """Determines whether a computer should turndown or not."""
         return numpy.mean(
             self.__distribution_for_hour(cid, day, hour).off_fraction)
 
-    def get_all_hourly_summaries(self, key, summaries=('mean', 'median')):
+    def get_all_hourly_summaries(
+            self, key: str, summaries: dict=('mean', 'median')
+    ) -> typing.List[typing.Dict[str, float]]:
         """Returns the summaries per hour."""
         hours = []
         transposed = self.__transpose_histogram()
@@ -144,7 +161,7 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
                     hours.append({s: 0.0 for s in summaries})
         return hours
 
-    def get_all_hourly_count(self, key):
+    def get_all_hourly_count(self, key: str) -> typing.List[int]:
         """Returns the counts per hour."""
         hours = []
         transposed = self.__transpose_histogram()
@@ -155,21 +172,22 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
                         for i in transposed.get(day, {}).get(hour, [])))
         return hours
 
-    def __optimal_timeout_all(self, cid):
-        flat_model = self._model_builder.build()
+    def __optimal_timeout_all(self, cid: str) -> float:
+        flat_model = self.__model_builder.build()
         for day in self.__models[cid].values():
             for model in day.values():
                 flat_model.extend(model)
         return flat_model.optimal_idle_timeout()
 
-    def __optimal_timeout_timestamp(self, cid, day, hour):
+    def __optimal_timeout_timestamp(
+            self, cid: str, day: int, hour: int) -> float:
         hist = self.__distribution_for_hour(cid, day, hour)
         if hist is None:
             return self.__optimal_timeout_all(cid)
         return hist.optimal_idle_timeout()
 
     # pylint: disable=invalid-name
-    def __distribution_for_hour(self, cid, day, hour):
+    def __distribution_for_hour(self, cid: str, day: int, hour: int) -> Model:
         """Queries the activity distribution to the get average inactivity."""
         previous_count = 0
         d, h = day, hour
@@ -187,17 +205,8 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
                 hour, distribution)
         return distribution
 
-    def __draw_from_distribution(self, distribution, min_value=0,
-                                 max_value=float('inf')):
-        """Gets a value from a distribution bounding the limit."""
-        if distribution is None:
-            return min_value
-        rnd = distribution.rvs()
-        while min_value >= rnd >= max_value:
-            rnd = distribution.rvs()
-        return rnd
-
-    def __transpose_histogram(self):
+    def __transpose_histogram(
+            self) -> typing.Dict[int, typing.Dict[int, typing.List[float]]]:
         """Converts the {PC: {Day: {Hour: x}}} hist to {Day: {Hour: [x*]}}."""
         transposed = {}
         for day in range(7):
@@ -208,7 +217,7 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
                             hour, []).append(value.get(day, {}).get(hour))
         return transposed
 
-    def __parse_trace(self):
+    def __parse_trace(self) -> None:
         """Parses the json trace to generate all the histograms."""
         logger.debug('Parsing models.')
         with open(self.__trace_file) as trace:
@@ -225,7 +234,10 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
         self.__merge_histograms()
         self.__filter_out_empty_servers()
 
-    def __parse_model(self, traces):
+    def __parse_model(
+            self,
+            traces: typing.Dict[str, typing.List[typing.Dict[str, typing.Any]]]
+    ) -> typing.Dict[int, typing.Dict[int, Model]]:
         """Generic parser of a server model."""
         histogram = {}
         for t, data in traces.items():
@@ -237,7 +249,7 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
         models = {}
         for day, hours in histogram.items():
             for hour, dct in hours.items():
-                model = self._model_builder.build(
+                model = self.__model_builder.build(
                     inactivity=dct['InactivityIntervals'],
                     activity=dct['ActivityIntervals'],
                     off_duration=dct['OffIntervals'],
@@ -247,7 +259,7 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
                         hour, model)
         return models
 
-    def __filter(self, t, data):
+    def __filter(self, t: str, data: typing.List[float]) -> typing.List[float]:
         """Perform filtering on the raw data to improve quality."""
         if t == 'InactivityIntervals':
             data = (i for i in data if self.__xmin <= i <= self.__xmax)
@@ -255,7 +267,7 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
             data = (i for i in data if i > 0)
         return list(data)
 
-    def __merge_histograms(self):
+    def __merge_histograms(self) -> None:
         """Merges histograms to be global or per PC/hour."""
         if self.__do_merge:
             if not self.get_arg('per_hour'):
@@ -263,12 +275,12 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
             if not self.get_arg('per_pc'):
                 self.__merge_per_pc()
 
-    def __merge_per_hour(self):
+    def __merge_per_hour(self) -> None:
         """Merge so all hours have the same model."""
         logger.debug('Merging histogram per hour.')
         merged = {}
         for cid, days in self.__models.items():
-            merged_model = self._model_builder.build()
+            merged_model = self.__model_builder.build()
             for day, hours in days.items():
                 for hour, model in hours.items():
                     merged_model.extend(model)
@@ -278,7 +290,7 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
                         day, {}).setdefault(hour, merged_model)
         self.__models = merged
 
-    def __merge_per_pc(self):
+    def __merge_per_pc(self) -> None:
         """Merge so all PCs have the same model."""
         logger.debug('Merging histogram per PC.')
         merged = {}
@@ -286,11 +298,11 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
             for day, hours in days.items():
                 for hour, model in hours.items():
                     merged.setdefault(day, {}).setdefault(
-                        hour, self._model_builder.build()).extend(model)
+                        hour, self.__model_builder.build()).extend(model)
         for cid in self.__models:
             self.__models[cid] = merged
 
-    def __filter_out_empty_servers(self):
+    def __filter_out_empty_servers(self) -> None:
         """Removes the servers that have no data in any of the histograms."""
         logger.debug('Filtering servers with no data.')
         empty_servers = set()
@@ -303,7 +315,7 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
         self.__empty_servers = sorted(empty_servers)
         logger.debug('%d servers have been filtered out.', len(empty_servers))
 
-    def __is_empty_histogram(self, cid):
+    def __is_empty_histogram(self, cid: str) -> bool:
         """Indicates if a histogram is empty."""
         for day in range(7):
             for hour in range(24):
@@ -312,7 +324,7 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
                     return False
         return True
 
-    def __get(self, cid, day, hour):
+    def __get(self, cid: int, day: int, hour: int) -> Model:
         """Generic getter for a model."""
         try:
             return self.__models[cid][day][hour]

@@ -2,12 +2,11 @@
 
 import logging
 import operator
-
+import typing
 import injector
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 import numpy
-
 from activity_distribution import TrainingDistribution
 from static import DAYS
 from stats import Stats
@@ -15,12 +14,17 @@ from stats import Stats
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
 
-@injector.inject(_training_distribution=TrainingDistribution, _stats=Stats)
-# pylint: disable=invalid-name,no-member
-class Plot(object):
+# pylint: disable=no-member,invalid-name
+class Plot:
     """Generates plots from the Stats modules."""
 
-    def plot_all(self, histogram):
+    @injector.inject
+    def __init__(self, training_distribution: TrainingDistribution,
+                 stats: Stats):
+        self.__training_distribution = training_distribution
+        self.__stats = stats
+
+    def plot_all(self, histogram: str) -> None:
         """Plots all the available plots."""
         try:
             self.plot_hourly_histogram_count(histogram)
@@ -30,13 +34,14 @@ class Plot(object):
             logger.warning('Histogram %s produced no plot.', histogram)
 
     def plot_hourly_histogram_quantiles(
-            self, histogram, quantiles=(50, 75, 80, 90, 95, 99)):
+            self, histogram: str,
+            quantiles: typing.Tuple[int]=(50, 75, 80, 90, 95, 99)) -> None:
         """Generates a plot to see the hourly quantiles."""
         fig, ax = plt.subplots()
         ax.set_title(histogram + ' (percentiles)')
         ax.set_xlim(0, 7 * 24 - 1)
 
-        hists = self._stats.get_all_hourly_histograms(histogram)
+        hists = self.__stats.get_all_hourly_histograms(histogram)
         for p in quantiles:
             data = []
             for h in hists:
@@ -54,10 +59,10 @@ class Plot(object):
         fig.savefig('%s_percentiles.png' % histogram.lower())
         plt.close(fig)
 
-    def plot_mean_medians_comparison(self, histogram):
+    def plot_mean_medians_comparison(self, histogram: str) -> None:
         """Generates a plot to compare means and medians."""
-        hist = self._stats.get_all_hourly_summaries(histogram)
-        data = self._training_distribution.get_all_hourly_summaries(histogram)
+        hist = self.__stats.get_all_hourly_summaries(histogram)
+        data = self.__training_distribution.get_all_hourly_summaries(histogram)
 
         for s in ('mean', 'median'):
             fig, ax = plt.subplots()
@@ -74,10 +79,10 @@ class Plot(object):
             fig.savefig('%s_%s.png' % (histogram.lower(), s))
             plt.close(fig)
 
-    def plot_hourly_histogram_count(self, histogram):
+    def plot_hourly_histogram_count(self, histogram: str) -> None:
         """Generates a plot to show the hourly counts."""
-        hist = self._stats.get_all_hourly_count(histogram)
-        data = self._training_distribution.get_all_hourly_count(histogram)
+        hist = self.__stats.get_all_hourly_count(histogram)
+        data = self.__training_distribution.get_all_hourly_count(histogram)
 
         fig, ax = plt.subplots()
         ax.set_title('%s (count)' % histogram)
@@ -94,7 +99,7 @@ class Plot(object):
         plt.close(fig)
 
 # pylint: disable=invalid-name
-def _format_ax_line(ax):
+def _format_ax_line(ax) -> None:
     """Common format for each of the axes."""
     ax.legend(loc='upper center', fontsize=8)
     ax.grid(True)

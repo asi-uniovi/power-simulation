@@ -2,9 +2,7 @@
 
 import os
 import sqlite3
-
 import injector
-
 from configuration import Configuration
 from singleton import Singleton
 from static import KB, MB
@@ -14,10 +12,10 @@ class Binder(injector.Module, metaclass=Singleton):
     """This binds all the types needed on the simulation."""
 
     @injector.singleton
-    @injector.provides(sqlite3.Connection)
-    @injector.inject(config=Configuration)
+    @injector.provider
+    @injector.inject
     # pylint: disable=no-self-use
-    def provide_db_connection(self, config):
+    def provide_connection(self, config: Configuration) -> sqlite3.Connection:
         """Sets the database up for the module to work."""
         db_name = config.get_config('database_name', 'stats')
         try:

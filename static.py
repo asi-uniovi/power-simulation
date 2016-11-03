@@ -3,12 +3,12 @@
 import cProfile
 import functools
 import logging
-
+import typing
 import injector
 import numpy
-
 from configuration import Configuration
 
+T = typing.TypeVar('T')
 
 DAYS = {
     'Sunday': 0,
@@ -30,8 +30,7 @@ KB = lambda x: x << 10
 MB = lambda x: x << 20
 
 
-@injector.inject(config=Configuration)
-def config_logging(config):
+def config_logging(config: Configuration) -> None:
     """Sets logging basic config"""
     logging.basicConfig(
         format='%(asctime)s %(levelname)s(%(name)s): %(message)s',
@@ -40,23 +39,27 @@ def config_logging(config):
     logging.captureWarnings(True)
 
 
-@injector.inject(_config=Configuration)
 # pylint: disable=invalid-name,too-few-public-methods
-class profile(object):
+class profile:
     """Decorator to run a function and generate a trace."""
 
-    def __call__(self, func):
+    @injector.inject
+    def __init__(self, config: Configuration):
+        super(profile, self).__init__()
+        self.__config = config
+
+    def __call__(self, func: typing.Callable[..., T]) -> T:
 
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             """Wraps the function generating a trace."""
-            if self._config.get_arg('trace'):  # pylint: disable=no-member
+            if self.__config.get_arg('trace'):
                 profiler = cProfile.Profile()
                 profiler.enable()
 
             ret = func(*args, **kwargs)
 
-            if self._config.get_arg('trace'):  # pylint: disable=no-member
+            if self.__config.get_arg('trace'):
                 profiler.create_stats()
                 profiler.dump_stats('trace')
 
@@ -65,7 +68,7 @@ class profile(object):
         return wrapper
 
 
-def timestamp_to_day(timestamp):
+def timestamp_to_day(timestamp: int) -> typing.Tuple[int, int]:
     """Converts from a simulation timestamp to the pair (day, hour)."""
     day = int((timestamp % WEEK(1)) // DAY(1))
     hour = int((timestamp % DAY(1)) // HOUR(1))
@@ -73,17 +76,18 @@ def timestamp_to_day(timestamp):
 
 
 # pylint: disable=invalid-name,no-member
-def weight(x, ip, fp):
+def weight(x: float, ip: float, fp: float) -> float:
     """Linear increment between ip and fp function."""
     return numpy.maximum(0.0, numpy.minimum(1.0, (ip - x) / (ip - fp)))
 
 
 # pylint: disable=invalid-name
-def weighted_user_satisfaction(t, timeout, threshold):
+def weighted_user_satisfaction(
+        t: float, timeout: float, threshold: float) -> float:
     """Calculates the weighted satisfaction with a sigmoid."""
     return numpy.where(t < timeout, 1.0, weight(t - timeout, 60, threshold))
 
 
-def user_satisfaction(t, timeout):
+def user_satisfaction(t: float, timeout: float) -> float:
     """Calculates plain old user satisfaction."""
     return numpy.where(t < timeout, 1.0, 0.0)

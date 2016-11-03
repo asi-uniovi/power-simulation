@@ -2,12 +2,12 @@
 
 import logging
 import math
-
+import sqlite3
+import typing
 import injector
 import memory_profiler
 import numpy
 import scipy.stats
-
 from activity_distribution import ActivityDistribution
 from activity_distribution import TrainingDistribution
 from base import Base
@@ -22,50 +22,56 @@ from user import User
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
 
-@injector.inject(_activity_distribution=ActivityDistribution,
-                 _training_distribution=TrainingDistribution,
-                 _user_builder=injector.AssistedBuilder(cls=User),
-                 _plot=Plot,
-                 _stats=Stats)
-# pylint: disable=no-member
 class Simulation(Base):
     """Constructs the system and runs the simulation."""
 
-    def __init__(self):
+    @injector.inject
+    # pylint: disable=too-many-arguments
+    def __init__(self, activity_distribution: ActivityDistribution,
+                 training_distribution: TrainingDistribution,
+                 user_builder: injector.AssistedBuilder[User],
+                 plot: Plot, stats: Stats):
         super(Simulation, self).__init__()
+        self.__activity_distribution = activity_distribution
+        self.__training_distribution = training_distribution
+        self.__user_builder = user_builder
+        self.__plot = plot
+        self.__stats = stats
         self.__simulation_time = self.get_config_int('simulation_time')
         self.__target_satisfaction = self.get_config_int('target_satisfaction')
-        self._activity_distribution.intersect(self._training_distribution)
+        self.__activity_distribution.intersect(self.__training_distribution)
 
     @property
-    def servers(self):
+    def servers(self) -> int:
         """Number of servers being simulated."""
-        return len(self._training_distribution.servers)
+        return len(self.__training_distribution.servers)
 
     @property
-    def timeout(self):
+    def timeout(self) -> float:
         """Average global timeout."""
-        return self._training_distribution.global_idle_timeout()
+        return self.__training_distribution.global_idle_timeout()
 
-    def run(self):
+    def run(self) -> typing.Tuple[float, float]:
         """Sets up and starts a new simulation."""
         self._config.reset()
-        self._stats.reset()
+        self.__stats.reset()
         logger.debug('Simulating %d users (%d s)',
                      self.servers, self.__simulation_time)
-        logger.debug('Target user satisfaction %d%%', self.__target_satisfaction)
+        logger.debug(
+            'Target user satisfaction %d%%', self.__target_satisfaction)
         if self._config.get_arg('debug'):
             self._config.env.process(self.__monitor_time())
-        for cid in self._training_distribution.servers:
-            if cid in self._activity_distribution.servers:
-                self._config.env.process(self._user_builder.build(cid=cid).run())
+        for cid in self.__training_distribution.servers:
+            if cid in self.__activity_distribution.servers:
+                self._config.env.process(
+                    self.__user_builder.build(cid=cid).run())
         logger.debug('Simulation starting')
         self._config.env.run(until=self.__simulation_time)
         logger.debug('Simulation ended at %d s', self._config.env.now)
         if self._config.get_arg('debug'):
             self.__validate_results()
-        results = (self._stats.user_satisfaction(),
-                   self._stats.removed_inactivity())
+        results = (self.__stats.user_satisfaction(),
+                   self.__stats.removed_inactivity())
         logger.debug('RESULT: User Satisfaction (US) = %.2f%%', results[0])
         logger.debug('RESULT: Removed Inactivity (RI) = %.2f%%', results[1])
         if self.get_arg('plot'):
@@ -73,23 +79,23 @@ class Simulation(Base):
         logger.debug('Run complete.')
         return results
 
-    def __plot_results(self):
+    def __plot_results(self) -> None:
         """Plots the results."""
         logger.debug('Storing plots.')
-        self._plot.plot_all('USER_SHUTDOWN_TIME')
-        self._plot.plot_all('AUTO_SHUTDOWN_TIME')
-        self._plot.plot_all('ACTIVITY_TIME')
-        self._plot.plot_all('INACTIVITY_TIME')
-        self._plot.plot_all('IDLE_TIME')
+        self.__plot.plot_all('USER_SHUTDOWN_TIME')
+        self.__plot.plot_all('AUTO_SHUTDOWN_TIME')
+        self.__plot.plot_all('ACTIVITY_TIME')
+        self.__plot.plot_all('INACTIVITY_TIME')
+        self.__plot.plot_all('IDLE_TIME')
 
-    def __validate_results(self):
+    def __validate_results(self) -> None:
         """Performs vaidations on the simulation results and warns on errors."""
         # pylint: disable=invalid-name,no-member
-        at = self._stats.sum_histogram('ACTIVITY_TIME') / self.servers
-        ust = self._stats.sum_histogram('USER_SHUTDOWN_TIME') / self.servers
-        it = self._stats.sum_histogram('INACTIVITY_TIME') / self.servers
-        ast = self._stats.sum_histogram('AUTO_SHUTDOWN_TIME') / self.servers
-        idt = self._stats.sum_histogram('IDLE_TIME') / self.servers
+        at = self.__stats.sum_histogram('ACTIVITY_TIME') / self.servers
+        ust = self.__stats.sum_histogram('USER_SHUTDOWN_TIME') / self.servers
+        it = self.__stats.sum_histogram('INACTIVITY_TIME') / self.servers
+        ast = self.__stats.sum_histogram('AUTO_SHUTDOWN_TIME') / self.servers
+        idt = self.__stats.sum_histogram('IDLE_TIME') / self.servers
         val1 = abs((ust + at + it) / self.__simulation_time - 1)
         val2 = abs((ust + at + idt + ast) / self.__simulation_time - 1)
         val3 = abs((ast + idt) / it - 1)
@@ -104,7 +110,7 @@ class Simulation(Base):
             logger.warning(
                 'Validation of total inactivity failed: val2 = %.2f', val3)
 
-    def __monitor_time(self):
+    def __monitor_time(self) -> float:
         """Indicates how te simulation is progressing."""
         while True:
             logger.debug('%.2f%% completed',
@@ -113,7 +119,7 @@ class Simulation(Base):
 
 
 # pylint: disable=invalid-name
-def confidence_interval(m, alpha=0.05):
+def confidence_interval(m: float, alpha: float=0.05):
     """Generator to calculate confidence intervals in a more nicely fashion."""
     x, s, d, i = m, 0, 0, 1
     while True:
@@ -125,14 +131,14 @@ def confidence_interval(m, alpha=0.05):
 
 
 # pylint: disable=invalid-name
-def runner():
+def runner() -> None:
     """Bind all and launch the simulation!"""
     custom_injector = CustomInjector(Binder())
-    custom_injector.get(config_logging)()
-    custom_injector.get(create_histogram_tables)()
     configuration = custom_injector.get(Configuration)
+    config_logging(configuration)
+    create_histogram_tables(custom_injector.get(sqlite3.Connection))
     if configuration.get_arg('debug'):
-      numpy.random.seed(0)
+        numpy.random.seed(0)  # pylint: disable=no-member
     simulator = custom_injector.get(Simulation)
     max_runs = configuration.get_arg('max_runs')
     confidence_width = configuration.get_arg('max_confidence_interval_width')

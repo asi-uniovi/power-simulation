@@ -6,6 +6,7 @@ py_library(
     srcs_version = "PY3",
     deps = [
         ":base",
+        ":distribution",
         ":model",
         ":static",
     ],
@@ -155,7 +156,6 @@ py_library(
         ":activity_distribution",
         ":base",
         ":histogram",
-        ":module",
         ":static",
     ],
 )
