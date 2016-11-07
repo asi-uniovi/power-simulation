@@ -1,16 +1,15 @@
 """Small Kolmogorov-Smirnov test for fitting validity."""
 
 import sys
-
 import scipy.stats
-
 # pylint: disable=import-error
-from distribution import EmpiricalDistribution
+from simulation.distribution import EmpiricalDistribution
 
 ALPHA = 0.05
 SIZE = 10000
 
 
+# pylint: disable=invalid-name
 def main():
     """Repeat some fitting and print timings."""
     dataset = EmpiricalDistribution(scipy.stats.norm.rvs(size=SIZE))

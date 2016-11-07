@@ -5,8 +5,8 @@
 import logging
 import sys
 import warnings
-from configuration import Configuration
-from simulation import runner
+from simulation.configuration import Configuration
+from simulation.simulation import runner
 
 
 def main(_):

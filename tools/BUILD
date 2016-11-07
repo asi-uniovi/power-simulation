@@ -3,5 +3,5 @@ py_binary(
     srcs = ["plot_satisfaction.py"],
     data = ["//:data"],
     srcs_version = "PY3",
-    deps = ["//:static"],
+    deps = ["//simulation:static"],
 )

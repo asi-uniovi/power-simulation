@@ -3,12 +3,10 @@
 import gc
 import sys
 import timeit
-
 import memory_profiler
 import scipy.stats
-
-# pylint: disable=unused-import
-from distribution import EmpiricalDistribution
+# pylint: disable=import-error,unused-import
+from simulation.distribution import EmpiricalDistribution
 
 
 def setup(size):

@@ -3,7 +3,7 @@ py_binary(
     srcs = ["benchmark.py"],
     default_python_version = "PY3",
     srcs_version = "PY3",
-    deps = ["//:distribution"],
+    deps = ["//simulation:distribution"],
 )
 
 py_binary(
@@ -11,5 +11,5 @@ py_binary(
     srcs = ["ks.py"],
     default_python_version = "PY3",
     srcs_version = "PY3",
-    deps = ["//:distribution"],
+    deps = ["//simulation:distribution"],
 )

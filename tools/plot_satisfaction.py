@@ -7,14 +7,12 @@ import itertools
 import json
 import operator
 import sys
-
 import matplotlib.pyplot
 import matplotlib.ticker
 import numpy
-
 # pylint: disable=import-error
-from static import user_satisfaction
-from static import weighted_user_satisfaction
+from simulation.static import user_satisfaction
+from simulation.static import weighted_user_satisfaction
 
 MAX_TIMEOUT = 1200
 STEP = 10
