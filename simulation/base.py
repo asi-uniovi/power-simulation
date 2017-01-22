@@ -1,11 +1,10 @@
 """Base objects for the simulation."""
 
-import abc
 import injector
 from simulation.configuration import Configuration
 
 
-class Base(metaclass=abc.ABCMeta):
+class Base(object):
     """An abstract class with all the basic methods we need across."""
 
     @injector.inject
