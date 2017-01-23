@@ -8,8 +8,7 @@ import injector
 import memory_profiler
 import numpy
 import scipy.stats
-from simulation.activity_distribution import ActivityDistribution
-from simulation.activity_distribution import TrainingDistribution
+from simulation.activity_distribution import DistributionFactory
 from simulation.base import Base
 from simulation.configuration import Configuration
 from simulation.histogram import create_histogram_tables
@@ -27,13 +26,12 @@ class Simulation(Base):
 
     @injector.inject
     # pylint: disable=too-many-arguments
-    def __init__(self, activity_distribution: ActivityDistribution,
-                 training_distribution: TrainingDistribution,
+    def __init__(self, distr_factory: DistributionFactory,
                  user_builder: injector.AssistedBuilder[User],
                  plot: Plot, stats: Stats):
         super(Simulation, self).__init__()
-        self.__activity_distribution = activity_distribution
-        self.__training_distribution = training_distribution
+        self.__activity_distribution = distr_factory()
+        self.__training_distribution = distr_factory(training=True)
         self.__user_builder = user_builder
         self.__plot = plot
         self.__stats = stats

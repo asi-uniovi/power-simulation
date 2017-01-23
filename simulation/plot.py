@@ -7,7 +7,7 @@ import injector
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 import numpy
-from simulation.activity_distribution import TrainingDistribution
+from simulation.activity_distribution import DistributionFactory
 from simulation.static import DAYS
 from simulation.stats import Stats
 
@@ -19,9 +19,8 @@ class Plot:
     """Generates plots from the Stats modules."""
 
     @injector.inject
-    def __init__(self, training_distribution: TrainingDistribution,
-                 stats: Stats):
-        self.__training_distribution = training_distribution
+    def __init__(self, distr_factory: DistributionFactory, stats: Stats):
+        self.__training_distribution = distr_factory(training=True)
         self.__stats = stats
 
     def plot_all(self, histogram: str) -> None:

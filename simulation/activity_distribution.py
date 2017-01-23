@@ -10,6 +10,7 @@ import injector
 import numpy
 from simulation.base import Base
 from simulation.distribution import EmpiricalDistribution
+from simulation.fleet_generator import FleetGenerator
 from simulation.model import Model
 from simulation.static import DAYS
 from simulation.static import timestamp_to_day
@@ -53,6 +54,8 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
                  do_merge: bool, trace_file: str):
         """All the data of this object is loaded from the config object."""
         super(ActivityDistributionBase, self).__init__()
+        if self.get_arg('fleet_generator'):
+            return
         self.__model_builder = model_builder
         self.__do_merge = do_merge
         self.__trace_file = self.get_config(trace_file, section='trace')
@@ -350,3 +353,26 @@ class TrainingDistribution(ActivityDistributionBase):
         """All the data of this object is loaded from the config object."""
         super(TrainingDistribution, self).__init__(
             do_merge=True, trace_file='training_file')
+
+
+@injector.singleton
+class DistributionFactory(Base):
+    """Creates distribution objects based on the command line flags."""
+
+    @injector.inject
+    def __init__(self, activity_distribution: ActivityDistribution,
+                 training_distribution: TrainingDistribution,
+                 fleet_generator: FleetGenerator):
+        super(DistributionFactory, self).__init__()
+        self.__activity_distribution = activity_distribution
+        self.__training_distribution = training_distribution
+        self.__fleet_generator = fleet_generator
+
+    def __call__(self, training=False):
+        """Return one of the distribution objects as needed."""
+        if self.get_arg('fleet_generator'):
+            return self.__fleet_generator
+        elif training:
+            return self.__training_distribution
+        else:
+            return self.__activity_distribution

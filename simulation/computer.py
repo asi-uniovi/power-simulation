@@ -4,8 +4,7 @@ import enum
 import logging
 import injector
 import simpy
-from simulation.activity_distribution import ActivityDistribution
-from simulation.activity_distribution import TrainingDistribution
+from simulation.activity_distribution import DistributionFactory
 from simulation.base import Base
 from simulation.stats import Stats
 
@@ -27,12 +26,11 @@ class Computer(Base):
     """
 
     @injector.inject
-    def __init__(self, activity_distribution: ActivityDistribution,
-                 training_distribution: TrainingDistribution, stats: Stats,
+    def __init__(self, distr_factory: DistributionFactory, stats: Stats,
                  cid: str):
         super(Computer, self).__init__()
-        self.__activity_distribution = activity_distribution
-        self.__training_distribution = training_distribution
+        self.__activity_distribution = distr_factory()
+        self.__training_distribution = distr_factory(training=True)
         self.__stats = stats
         self.__computer_id = cid
         self.__status = ComputerStatus.on

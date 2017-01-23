@@ -88,4 +88,8 @@ class Configuration:
                             type=positive_float, default=0.5,
                             help=('run simulations until the confidence '
                                   'intervals are narrower than this'))
+        parser.add_argument('--fleet_generator',
+                            action='store_true',
+                            help=('Generate random fleets instead of using '
+                                  'training data from usage logs.'))
         self.__args = parser.parse_args()

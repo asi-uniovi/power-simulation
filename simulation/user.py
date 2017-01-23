@@ -3,7 +3,7 @@
 import logging
 import injector
 import numpy
-from simulation.activity_distribution import ActivityDistribution
+from simulation.activity_distribution import DistributionFactory
 from simulation.activity_distribution import timestamp_to_day
 from simulation.base import Base
 from simulation.computer import Computer
@@ -23,11 +23,11 @@ class User(Base):
 
     @injector.inject
     def __init__(self, computer_builder: injector.AssistedBuilder[Computer],
-                 activity_distribution: ActivityDistribution, stats: Stats,
+                 distr_factory: DistributionFactory, stats: Stats,
                  cid: str):
         super(User, self).__init__()
         self.__computer = computer_builder.build(cid=cid)
-        self.__activity_distribution = activity_distribution
+        self.__activity_distribution = distr_factory()
         self.__stats = stats
         self.__current_hour = None
         self.__off_frequency = None

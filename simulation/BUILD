@@ -5,6 +5,7 @@ py_library(
     deps = [
         ":base",
         ":distribution",
+        ":fleet_generator",
         ":model",
         ":static",
     ],
@@ -43,6 +44,16 @@ py_library(
     srcs = ["distribution.py"],
     srcs_version = "PY3",
     visibility = ["//tests:__pkg__"],
+)
+
+py_library(
+    name = "fleet_generator",
+    srcs = ["fleet_generator.py"],
+    srcs_version = "PY3",
+    deps = [
+        ":base",
+        ":static",
+    ],
 )
 
 py_library(

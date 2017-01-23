@@ -4,7 +4,7 @@ import logging
 import typing
 import injector
 import numpy
-from simulation.activity_distribution import TrainingDistribution
+from simulation.activity_distribution import DistributionFactory
 from simulation.base import Base
 from simulation.histogram import Histogram
 from simulation.static import weighted_user_satisfaction
@@ -17,10 +17,10 @@ class Stats(Base):
     """This is just a singleton dict with some helpers."""
 
     @injector.inject
-    def __init__(self, training_distribution: TrainingDistribution,
+    def __init__(self, distr_factory: DistributionFactory,
                  historgram_builder: injector.AssistedBuilder[Histogram]):
         super(Stats, self).__init__()
-        self.__training_distribution = training_distribution
+        self.__training_distribution = distr_factory(training=True)
         self.__histogram_builder = historgram_builder
         self.__default_timeout = self.get_config_int('default_timeout')
         self.__satisfaction_threshold = self.get_config_int(
