@@ -5,8 +5,8 @@ py_library(
 )
 
 py_binary(
-    name = "plot_distribution",
-    srcs = ["plot_distribution.py"],
+    name = "plot_histogram",
+    srcs = ["plot_histogram.py"],
     data = ["//:data"],
     srcs_version = "PY3",
     deps = [
