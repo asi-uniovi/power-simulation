@@ -3,9 +3,6 @@
 """Plots the satisfaction, weighted satisfaction and removed inactivity."""
 
 import argparse
-import itertools
-import json
-import operator
 import sys
 import matplotlib.pyplot
 import matplotlib.ticker
@@ -13,32 +10,10 @@ import numpy
 # pylint: disable=import-error
 from simulation.static import user_satisfaction
 from simulation.static import weighted_user_satisfaction
+from tools.parse_trace import parse_trace
 
 MAX_TIMEOUT = 1200
 STEP = 10
-
-
-# pylint: disable=invalid-name
-def parse_model(traces):
-    """Parses the model for a given trace."""
-    models = {}
-    for t, data in traces.items():
-        for d in data:
-            models.setdefault(t, []).extend(d['Intervals'])
-    return models
-
-
-# pylint: disable=invalid-name
-def parse_trace(trace_file):
-    """Parses the trace file to get a list of inactivity intervals."""
-    with open(trace_file) as trace:
-        trace = json.load(trace)
-        trace = [i for i in trace if i['PC'] != '_Total']
-        key = operator.itemgetter('PC')
-        models = {}
-        for pc, trace in itertools.groupby(sorted(trace, key=key), key=key):
-            models[pc] = parse_model({t['Type']: t['data'] for t in trace})
-        return models
 
 
 # pylint: disable=invalid-name
