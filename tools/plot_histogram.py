@@ -3,6 +3,8 @@
 """Plots the histogram of one of the trace keys."""
 
 import argparse
+import logging
+import math
 import sys
 import matplotlib.mlab
 import matplotlib.pyplot
@@ -15,6 +17,15 @@ def plot_histogram(trace, key, nbins, distribution_to_fit):
     """Plots a trace."""
     all_items = numpy.asarray([
         i for pc in trace.values() for i in pc[key]])
+
+    if nbins is None:
+        # Use the Freedman-Diaconis estimate.
+        nbins = int((numpy.max(all_items) - numpy.min(all_items))
+                    / (2 * scipy.stats.iqr(all_items)
+                       * math.pow(len(all_items), -1/3)))
+        logging.warning('Using %d bins as default for %d samples.',
+                        nbins, len(all_items))
+
     shape, loc, scale = getattr(scipy.stats, distribution_to_fit).fit(all_items)
     fit = getattr(scipy.stats, distribution_to_fit)(shape, loc, scale)
 
@@ -40,7 +51,7 @@ def main():
                         dest='key',
                         help='key in the trace to process')
     parser.add_argument('--bins',
-                        dest='nbins', type=int, default=100,
+                        dest='nbins', type=int, default=None,
                         help='number of histogram hins to have')
     parser.add_argument('--distribution_to_fit',
                         dest='distribution_to_fit', default='norm',
