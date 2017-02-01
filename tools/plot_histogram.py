@@ -32,12 +32,16 @@ def plot_histogram(trace, key, nbins, distribution_to_fit):
     matplotlib.pyplot.style.use('bmh')
     _, axis = matplotlib.pyplot.subplots(1, 1)
 
-    _, bins, _ = axis.hist(all_items, nbins, normed=1)
-    axis.plot(bins, fit.pdf(bins), 'r--', linewidth=1)
+    data, bins, _ = axis.hist(all_items, nbins, normed=1,
+                              label='Histogram for key "%s"' % key)
+    axis.plot(bins, fit.pdf(bins), 'r--', linewidth=1,
+              label='Best %s fit for key "%s"' % (distribution_to_fit, key))
 
-    matplotlib.pyplot.xlabel('Histogram for key "%s"' % key)
+    axis.set_ylim([0.0, max(data)])
+    matplotlib.pyplot.xlabel('Interval duration (s)')
     matplotlib.pyplot.ylabel('Probability')
     axis.grid(True, which='both')
+    axis.legend(loc='best', frameon=False)
     matplotlib.pyplot.savefig('histogram.png')
 
 
