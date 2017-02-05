@@ -4,12 +4,10 @@ pipelines:
   default:
     - step:
         script:
-          - git remote show origin
           - apt-get update
+          - git remote set-url origin "https://m3drano:${APP_PASSWD}@bitbucket.org/m3drano/simulation.git"
+          - TRACE=2 git-lfs pull
           - apt-get -y install pkg-config libfreetype6-dev
           - pip3 install -Ur requirements.txt
-          - git remote remove origin
-          - git remote add "https://m3drano:${APP_PASSWD}@bitbucket.org/m3drano/simulation.git"
-          - TRACE=2 git-lfs pull
           # TODO(m3drano): This should be run with Bazel.
           - python3 main.py --debug --trace --max_runs=1 --config=config/dev.ini --per_pc --per_hour
