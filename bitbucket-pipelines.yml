@@ -7,5 +7,4 @@ pipelines:
           - git remote set-url origin "https://${BITBUCKET_REPO_OWNER}:${APP_PASSWD}@bitbucket.org/${BITBUCKET_REPO_OWNER}/${simulation}.git"
           - TRACE=2 git-lfs pull
           - pip3 install -Ur requirements.txt
-          # TODO(m3drano): This should be run with Bazel.
-          - python3 main.py --debug --trace --max_runs=1 --config=config/dev.ini --per_pc --per_hour
+          - bazel --batch run :main -- --debug --trace --max_runs=1 --config=config/dev.ini --per_pc --per_hour
