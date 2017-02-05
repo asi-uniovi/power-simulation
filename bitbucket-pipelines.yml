@@ -4,6 +4,8 @@ pipelines:
   default:
     - step:
         script:
+          - env
+          - python3 --version
           - apt-get update
           - git remote set-url origin "https://m3drano:${APP_PASSWD}@bitbucket.org/m3drano/simulation.git"
           - TRACE=2 git-lfs pull
