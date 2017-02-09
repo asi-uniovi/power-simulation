@@ -9,6 +9,7 @@ class Base(object):
 
     @injector.inject
     def __init__(self, config: Configuration):
+        super(Base, self).__init__()
         self._config = config
 
     def get_config(self, key: str, section: str='simulation') -> str:
