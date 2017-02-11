@@ -19,8 +19,7 @@ def parse_model(traces):
 def parse_trace(trace_file):
     """Parses the trace file to get a list of inactivity intervals."""
     with open(trace_file) as trace:
-        trace = json.load(trace)
-        trace = [i for i in trace if i['PC'] != '_Total']
+        trace = [i for i in json.load(trace) if i['PC'] != '_Total']
         key = operator.itemgetter('PC')
         models = {}
         for pc, trace in itertools.groupby(sorted(trace, key=key), key=key):
