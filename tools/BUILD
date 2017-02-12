@@ -1,3 +1,5 @@
+#  -*- mode: python -*-
+
 py_library(
     name = "parse_trace",
     srcs = ["parse_trace.py"],

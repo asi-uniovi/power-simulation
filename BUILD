@@ -1,3 +1,5 @@
+# -*- mode: python -*-
+
 filegroup(
     name = "config",
     srcs = glob(["config/*.ini"]),

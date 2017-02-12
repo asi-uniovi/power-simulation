@@ -1,3 +1,5 @@
+# -*- mode: python -*-
+
 py_library(
     name = "activity_distribution",
     srcs = ["activity_distribution.py"],

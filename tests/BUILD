@@ -1,3 +1,5 @@
+#  -*- mode: python -*-
+
 py_binary(
     name = "benchmark",
     srcs = ["benchmark.py"],
