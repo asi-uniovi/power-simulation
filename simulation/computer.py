@@ -26,6 +26,7 @@ class Computer(Base):
     """
 
     @injector.inject
+    @injector.noninjectable('cid')
     def __init__(self, distr_factory: DistributionFactory, stats: Stats,
                  cid: str):
         super(Computer, self).__init__()

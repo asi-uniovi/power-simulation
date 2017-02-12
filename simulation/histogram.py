@@ -14,6 +14,7 @@ class Histogram(Base):
     """Histogram stored in a DB."""
 
     @injector.inject
+    @injector.noninjectable('name')
     def __init__(self, conn: sqlite3.Connection, name: str):
         super(Histogram, self).__init__()
         self.__cache_size = self.get_config_int('cache_size', section='stats')

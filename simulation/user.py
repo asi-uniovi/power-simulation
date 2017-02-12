@@ -22,6 +22,7 @@ class User(Base):
     """
 
     @injector.inject
+    @injector.noninjectable('cid')
     def __init__(self, computer_builder: injector.AssistedBuilder[Computer],
                  distr_factory: DistributionFactory, stats: Stats,
                  cid: str):
