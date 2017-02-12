@@ -4,11 +4,10 @@ import os
 import sqlite3
 import injector
 from simulation.configuration import Configuration
-from simulation.singleton import Singleton
 from simulation.static import KB, MB
 
 
-class Binder(injector.Module, metaclass=Singleton):
+class Module(injector.Module):
     """This binds all the types needed on the simulation."""
 
     @injector.singleton
@@ -31,7 +30,3 @@ class Binder(injector.Module, metaclass=Singleton):
         conn.execute('PRAGMA synchronous = OFF;')
         conn.execute('PRAGMA temp_store = MEMORY;')
         return conn
-
-
-class CustomInjector(injector.Injector, metaclass=Singleton):
-    """This is just a singleton Injector."""

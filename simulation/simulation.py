@@ -12,7 +12,7 @@ from simulation.activity_distribution import DistributionFactory
 from simulation.base import Base
 from simulation.configuration import Configuration
 from simulation.histogram import create_histogram_tables
-from simulation.module import Binder, CustomInjector
+from simulation.module import Module
 from simulation.plot import Plot
 from simulation.static import config_logging, profile
 from simulation.stats import Stats
@@ -131,7 +131,7 @@ def confidence_interval(m: float, alpha: float=0.05):
 # pylint: disable=invalid-name
 def runner() -> None:
     """Bind all and launch the simulation!"""
-    custom_injector = CustomInjector(Binder())
+    custom_injector = injector.Injector([Module])
     configuration = custom_injector.get(Configuration)
     config_logging(configuration)
     create_histogram_tables(custom_injector.get(sqlite3.Connection))

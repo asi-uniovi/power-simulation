@@ -83,7 +83,6 @@ py_library(
     srcs_version = "PY3",
     deps = [
         ":configuration",
-        ":singleton",
         ":static",
     ],
 )
@@ -115,12 +114,6 @@ py_library(
         ":stats",
         ":user",
     ],
-)
-
-py_library(
-    name = "singleton",
-    srcs = ["singleton.py"],
-    srcs_version = "PY3",
 )
 
 py_library(
