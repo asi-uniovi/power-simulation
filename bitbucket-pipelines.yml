@@ -4,6 +4,7 @@ pipelines:
   default:
     - step:
         script:
+          - python --version
           - git remote set-url origin "https://${BITBUCKET_REPO_OWNER}:${APP_PASSWD}@bitbucket.org/${BITBUCKET_REPO_OWNER}/${BITBUCKET_REPO_SLUG}.git"
           - TRACE=2 git-lfs pull
           - pip3 install -Ur requirements.txt
