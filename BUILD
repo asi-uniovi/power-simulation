@@ -5,9 +5,7 @@ filegroup(
 
 filegroup(
     name = "data",
-    srcs = glob([
-        "data/*.json",
-    ]),
+    srcs = glob(["data/*.json"]),
     visibility = ["//tools:__pkg__"],
 )
 
