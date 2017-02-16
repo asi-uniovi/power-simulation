@@ -19,15 +19,6 @@ After cloning the repository, install the packages needed with pip:
 
 `$ pip install -Ur requirements.txt`
 
-### Using Bazel
-
-You can as well use [Bazel](http://bazel.io) for reproducible builds and faster
-clean ups. After [installing it](), run with:
-
-`$ bazel run -c opt :main -- --config=config/dev.ini`
-
-Results will be found on the `bazel-bin/main.runfiles/__main__/` directory.
-
 ## References
 
 1. [SimPy documentation](

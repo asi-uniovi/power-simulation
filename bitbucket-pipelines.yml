@@ -4,8 +4,7 @@ pipelines:
   default:
     - step:
         script:
-          - python --version
           - git remote set-url origin "https://${BITBUCKET_REPO_OWNER}:${APP_PASSWD}@bitbucket.org/${BITBUCKET_REPO_OWNER}/${BITBUCKET_REPO_SLUG}.git"
           - TRACE=2 git-lfs pull
           - pip3 install -Ur requirements.txt
-          - bazel --batch run :main -- --debug --trace --max_runs=1 --config=config/dev.ini --per_pc --per_hour
+          - ./main.py --debug --trace --max_runs=1 --config=config/dev.ini --per_pc --per_hour
