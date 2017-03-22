@@ -1,5 +1,6 @@
 """Module to generate fleets based on very high level parameters."""
 
+import functools
 import math
 import typing
 import scipy.stats
@@ -132,15 +133,16 @@ class FleetGenerator(Base):
         """There are just no events per hour, therefore return 0s."""
         return [0] * 168
 
+    @functools.lru_cache()
     def _get_distribution(self, key):
         if key == 'USER_SHUTDOWN_TIME':
             return lognorm(m=8*3600, s=2*3600)
         elif key == 'AUTO_SHUTDOWN_TIME':
             raise NotImplementedError
         elif key == 'ACTIVITY_TIME':
-            return lognorm(m=300, s=120)
+            return lognorm(m=1800, s=1800)
         elif key == 'INACTIVITY_TIME':
-            return lognorm(m=1200, s=1200)
+            return lognorm(m=3600, s=1800)
         elif key == 'IDLE_TIME':
             raise NotImplementedError
         raise ValueError('Invalid key for _get_distribution(): %s', key)
