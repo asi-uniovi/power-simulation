@@ -5,7 +5,6 @@ import math
 import typing
 import scipy.stats
 from simulation.base import Base
-from simulation.static import timestamp_to_day
 
 USERS = 100
 IN_TIME = 8
@@ -85,23 +84,19 @@ class FleetGenerator(Base):
 
     # pylint: disable=unused-argument,no-self-use
     def random_activity_for_timestamp(self, cid: str, timestamp: int) -> float:
-        """Activity is always a log-normal(30, 60)."""
+        """Activity is always a log-normal."""
         distribution = self._get_distribution('ACTIVITY_TIME')
         act = distribution.rvs()
-        while act <= 0 or act > 300:
+        while act <= 0:
             act = distribution.rvs()
         return act
 
     def random_inactivity_for_timestamp(
             self, cid: str, timestamp: int) -> float:
-        """Inactivity is always a log-normal(60, 120)."""
-        limit = 7200  # 2 hours
-        day, hour = timestamp_to_day(timestamp)
-        if day < 5 and hour in (IN_TIME, OUT_TIME):
-            limit = 300
+        """Inactivity is always a log-normal."""
         distribution = self._get_distribution('INACTIVITY_TIME')
         act = distribution.rvs()
-        while act <= 0 or act > limit:
+        while act <= 0:
             act = distribution.rvs()
         return act
 
@@ -109,7 +104,7 @@ class FleetGenerator(Base):
         """Off interval for a given simulation timestamp."""
         distribution = self._get_distribution('USER_SHUTDOWN_TIME')
         act = distribution.rvs()
-        while act <= 0 or act > 28800:
+        while act <= 0:
             act = distribution.rvs()
         return act
 
