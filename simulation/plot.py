@@ -8,6 +8,7 @@ import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 import numpy
 from simulation.activity_distribution import DistributionFactory
+from simulation.base import Base
 from simulation.static import DAYS
 from simulation.stats import Stats
 
@@ -15,11 +16,13 @@ logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
 
 # pylint: disable=no-member,invalid-name
-class Plot:
+@injector.singleton
+class Plot(Base):
     """Generates plots from the Stats modules."""
 
     @injector.inject
     def __init__(self, distr_factory: DistributionFactory, stats: Stats):
+        super(Plot, self).__init__()
         self.__training_distribution = distr_factory(training=True)
         self.__stats = stats
 
@@ -60,15 +63,19 @@ class Plot:
 
     def plot_mean_medians_comparison(self, histogram: str) -> None:
         """Generates a plot to compare means and medians."""
-        hist = self.__stats.get_all_hourly_summaries(histogram)
-        data = self.__training_distribution.get_all_hourly_summaries(histogram)
+        hists = [(self.__stats.get_all_hourly_summaries(histogram),
+                  'simulation')]
+        if not self.get_arg('fleet_generator'):
+            hists.append(
+                (self.__training_distribution.get_all_hourly_summaries(
+                    histogram), 'data'))
 
         for s in ('mean', 'median'):
             fig, ax = plt.subplots()
             ax.set_title('%s (%s)' % (histogram, s))
             ax.set_xlim(0, 7 * 24 - 1)
 
-            for d, label in ((hist, 'simulation'), (data, 'data')):
+            for d, label in hists:
                 f = [i[s] for i in d]
                 ax.plot(numpy.linspace(1, len(f), len(f)), f, label=label)
 
@@ -80,16 +87,17 @@ class Plot:
 
     def plot_hourly_histogram_count(self, histogram: str) -> None:
         """Generates a plot to show the hourly counts."""
-        hist = self.__stats.get_all_hourly_count(histogram)
-        data = self.__training_distribution.get_all_hourly_count(histogram)
-
         fig, ax = plt.subplots()
         ax.set_title('%s (count)' % histogram)
         ax.set_xlim(0, 7 * 24 - 1)
 
+        hist = self.__stats.get_all_hourly_count(histogram)
         ax.plot(numpy.linspace(1, len(hist), len(hist)), hist,
                 label='simulation')
-        ax.plot(numpy.linspace(1, len(data), len(data)), data, label='data')
+
+        if not self.get_arg('fleet_generator'):
+            data = self.__training_distribution.get_all_hourly_count(histogram)
+            ax.plot(numpy.linspace(1, len(data), len(data)), data, label='data')
 
         _format_ax_line(ax)
         fig.set_size_inches(6, 5)
