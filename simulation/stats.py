@@ -51,7 +51,9 @@ class Stats(Base):
                         self.__satisfaction_threshold)
                         for i in self.get_all_histogram('INACTIVITY_TIME', cid))
                     / count * 100)
-        return numpy.mean(lst)
+        if lst:
+            return numpy.mean(lst)
+        return 0.0
 
     def removed_inactivity(self) -> float:
         """Calculates how much inactive has been removed."""
@@ -71,20 +73,32 @@ class Stats(Base):
 
     def get_all_hourly_histograms(self, key: str) -> typing.List[numpy.ndarray]:
         """Gets all the subhistograms per hour."""
-        return self.__storage[key].get_all_hourly_histograms()
+        try:
+            return self.__storage[key].get_all_hourly_histograms()
+        except KeyError:
+            return []
 
     def get_all_hourly_summaries(
             self, key: str) -> typing.List[typing.Dict[str, float]]:
         """Gets all the summaries per hour."""
-        return self.__storage[key].get_all_hourly_summaries()
+        try:
+            return self.__storage[key].get_all_hourly_summaries()
+        except KeyError:
+            return []
 
     def get_all_histogram(self, key: str, cid: str=None) -> numpy.ndarray:
         """Gets all of the histogram data."""
-        return self.__storage[key].get_all_histogram(cid)
+        try:
+            return self.__storage[key].get_all_histogram(cid)
+        except KeyError:
+            return numpy.asarray([])
 
     def get_all_hourly_count(self, key: str) -> typing.List[int]:
         """Gets all the count per hour."""
-        return self.__storage[key].get_all_hourly_count()
+        try:
+            return self.__storage[key].get_all_hourly_count()
+        except KeyError:
+            return []
 
     def sum_histogram(self, key: str, cid: str=None) -> float:
         """Sums one histogram elements."""
