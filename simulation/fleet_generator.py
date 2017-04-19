@@ -183,23 +183,23 @@ class FleetGenerator(Base):
     def _user_shutdown_time_midday(self, _, hour: int):
         """Shutdown time for today's mid day."""
         assert hour < 12
-        return scipy.stats.norm(loc=(12 - hour) * 3600, scale=3600)
+        return scipy.stats.norm(loc=(12 - hour) * 3600, scale=600)
 
     def _user_shutdown_time_next_in_time(self, day: int, hour: int):
         """Shutdown time for next IN_TIME."""
         time_left = int(24 - hour + IN_TIME) * 3600
         if day == 5:
             time_left += 48 * 3600
-        return scipy.stats.norm(loc=time_left, scale=3600)
+        return scipy.stats.norm(loc=time_left, scale=600)
 
     def _user_shutdown_time_next_midday(self, day: int, hour: int):
         """Shutdown time for next midday."""
         time_left = int(24 - hour + 12) * 3600
         if day == 5:
             time_left += 48 * 3600
-        return scipy.stats.norm(loc=time_left, scale=3600)
+        return scipy.stats.norm(loc=time_left, scale=600)
 
     def _user_shutdown_time_weekend(self, day: int, hour: int):
         """Weekend shutdown time."""
         time_left = int((day / 6) * 24 + (24 - hour + IN_TIME)) * 3600
-        return scipy.stats.norm(loc=time_left, scale=3600)
+        return scipy.stats.norm(loc=time_left, scale=600)
