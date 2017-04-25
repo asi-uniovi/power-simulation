@@ -19,7 +19,7 @@ def _generate_servers(size: int) -> typing.List[str]:
 
 
 # pylint: disable=invalid-name,no-member
-def lognorm(m, s):
+def lognorm(m: float, s: float) -> scipy.stats.lognorm:
     """log-Normal distribution with expected mean and std of m and s.
 
     This is a little wrapper for SciPy's lognorm that creates it in the way that
