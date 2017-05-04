@@ -6,10 +6,10 @@ import logging
 import sys
 import warnings
 import matplotlib
+matplotlib.use('Agg')
+# pylint: disable=wrong-import-position
 from simulation.configuration import Configuration
 from simulation.simulation import runner
-
-matplotlib.use('Agg')
 
 
 def main(_):
