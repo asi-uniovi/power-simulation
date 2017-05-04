@@ -23,6 +23,7 @@ class Stats(Base):
         self.__training_distribution = distr_factory(training=True)
         self.__histogram_builder = historgram_builder
         self.__default_timeout = self.get_config_int('default_timeout')
+        self.__target_satisfaction = self.get_config_int('target_satisfaction')
         self.__satisfaction_threshold = self.get_config_int(
             'satisfaction_threshold', section='stats')
         self.__storage = {}
@@ -37,6 +38,13 @@ class Stats(Base):
         """Reset all stats."""
         for i in self.__storage.values():
             i.truncate()
+
+    def optimal_idle_timeout(self) -> float:
+        """Optimal idle timeout for the simulated data (a posteriori)."""
+        inactivity = self.get_all_histogram('INACTIVITY_TIME')
+        if len(inactivity) == 0:
+            return self.__default_timeout
+        return numpy.percentile(inactivity, self.__target_satisfaction)
 
     def user_satisfaction(self) -> float:
         """Calculates de user satisfaction."""
@@ -57,10 +65,13 @@ class Stats(Base):
 
     def removed_inactivity(self) -> float:
         """Calculates how much inactive has been removed."""
-        return (sum(i - self._idle_timeout()
-                    for i in self.get_all_histogram('INACTIVITY_TIME')
-                    if i > self._idle_timeout())
-                / self.sum_histogram('INACTIVITY_TIME') * 100)
+        try:
+            return (sum(i - self._idle_timeout()
+                        for i in self.get_all_histogram('INACTIVITY_TIME')
+                        if i > self._idle_timeout())
+                    / self.sum_histogram('INACTIVITY_TIME') * 100)
+        except ZeroDivisionError:
+            return 0.0
 
     def append(self, key: str, value: float, cid: str,
                timestamp: int=None) -> None:
