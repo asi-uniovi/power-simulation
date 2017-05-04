@@ -110,11 +110,13 @@ class FleetGenerator(Base):
 
     def off_frequency_for_hour(self, cid: str, day: int, hour: int) -> float:
         """Shutdown frequency for a given simulation hour."""
+        fraction = 0.01
         if 1 <= day <= 5 and IN_TIME <= hour < OUT_TIME:
-            return 0.1 * len(self.servers)
+            fraction = 0.05
         if 1 <= day <= 5 and hour == OUT_TIME:
-            return 0.3 * len(self.servers)
-        return 0.01 * len(self.servers)
+            fraction = 0.95
+        return scipy.stats.norm(loc=fraction * len(self.servers),
+                                shape=math.sqrt(len(self.servers))).rvs()
 
     def get_all_hourly_summaries(
             self, _, summaries: dict=('mean', 'median')
