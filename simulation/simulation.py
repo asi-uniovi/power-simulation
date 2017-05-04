@@ -69,9 +69,11 @@ class Simulation(Base):
         if self._config.get_arg('debug'):
             self.__validate_results()
         results = (self.__stats.user_satisfaction(),
-                   self.__stats.removed_inactivity())
+                   self.__stats.removed_inactivity(),
+                   self.__stats.optimal_idle_timeout())
         logger.debug('RESULT: User Satisfaction (US) = %.2f%%', results[0])
         logger.debug('RESULT: Removed Inactivity (RI) = %.2f%%', results[1])
+        logger.debug('RESULT: Optimal idle timeout = %.2f%%', results[2])
         if self.get_arg('plot'):
             self.__plot_results()
         logger.debug('Run complete.')
@@ -143,20 +145,27 @@ def runner() -> None:
     run = custom_injector.get(profile)(simulator.run)
 
     logger.info('Going to simulate %d users', simulator.servers)
-    logger.info('Average global timeout would be %.2f s', simulator.timeout)
-    (s, i), c = run(), 1
+    if simulator.timeout < math.inf:
+        logger.info('Average global timeout would be %.2f s', simulator.timeout)
+    (s, i, t), c = run(), 1
 
     if max_runs == 1:
         logger.warning('Only one run, cannot calculate confidence intervals.')
-        logger.info('Run 1: US = %.2f%% (d = Inf), RI = %.2f%% (d = Inf)', s, i)
+        logger.info('Run 1: US = %.2f%%, RI = %.2f%%, timeout = %.2f', s, i, t)
     else:
-        satisfaction, inactivity = confidence_interval(s), confidence_interval(i)
-        (xs, ds), (xi, di) = satisfaction.send(None), inactivity.send(None)
-        while di > confidence_width or ds > confidence_width or c < 2:
-            (s, i), c = run(), c + 1
-            (xs, ds), (xi, di) = satisfaction.send(s), inactivity.send(i)
-            logger.info('Run %d: US = %.2f%% (d = %.4f), RI = %.2f%% (d = %.4f)',
-                        c, xs, ds, xi, di)
+        satisfaction = confidence_interval(s)
+        inactivity = confidence_interval(i)
+        timeout = confidence_interval(t)
+        (xs, ds) = satisfaction.send(None)
+        (xi, di) = inactivity.send(None)
+        (xt, dt) = timeout.send(None)
+        while di > confidence_width or ds > confidence_width or dt > confidence_width or c < 2:
+            (s, i, t), c = run(), c + 1
+            (xs, ds) = satisfaction.send(s)
+            (xi, di) = inactivity.send(i)
+            (xt, dt) = timeout.send(t)
+            logger.info('Run %d: US = %.2f%% (d = %.4f), RI = %.2f%% (d = %.4f), timeout = %.2f (d = %.4f)',
+                        c, xs, ds, xi, di, xt, dt)
             if c > max_runs:
                 logger.warning('Finishing simulation runs due to inconvergence.')
                 break

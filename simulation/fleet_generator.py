@@ -74,9 +74,8 @@ class FleetGenerator(Base):
         self.__empty_servers = sorted(self.__empty_servers)
 
     def global_idle_timeout(self) -> float:
-        """Global idle timeout for the log-normal inactivity distribution."""
-        return self._get_distribution('INACTIVITY_TIME').ppf(
-            self.__target_satisfaction / 100)
+        """Timeout is infinite, since it is calculated a posteriori."""
+        return math.inf
 
     # pylint: disable=unused-argument
     def optimal_idle_timeout(self, cid: str, all_timespan: bool=False) -> float:
