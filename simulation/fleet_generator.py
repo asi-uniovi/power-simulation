@@ -19,11 +19,21 @@ def _generate_servers(size: int) -> typing.List[str]:
 
 
 # pylint: disable=invalid-name,no-member
-def lognorm(m: float, s: float) -> scipy.stats.lognorm:
+def norm(m: float, s: float = None) -> scipy.stats.norm:
+    """Normal distribution with expected mean and std of m and s."""
+    if s is None:
+        s = m / 4
+    return scipy.stats.norm(loc=m, scale=s)
+
+
+# pylint: disable=invalid-name,no-member
+def lognorm(m: float, s: float = None) -> scipy.stats.lognorm:
     """log-Normal distribution with expected mean and std of m and s.
 
     This is a little wrapper for SciPy's lognorm that creates it in the way that
     its mean will be m and its standard deviation s."""
+    if s is None:
+        s = m / 4
     m2 = m**2
     phi = math.sqrt(s**2 + m2)
     sigma = math.sqrt(math.log(phi**2 / m2))
@@ -115,8 +125,8 @@ class FleetGenerator(Base):
             fraction = 0.05
         if 1 <= day <= 5 and hour == OUT_TIME:
             fraction = 0.95
-        return scipy.stats.norm(loc=fraction * len(self.servers),
-                                shape=math.sqrt(len(self.servers))).rvs()
+        return norm(m=fraction * len(self.servers),
+                    s=math.sqrt(len(self.servers))).rvs()
 
     def get_all_hourly_summaries(
             self, _, summaries: dict=('mean', 'median')
@@ -136,9 +146,9 @@ class FleetGenerator(Base):
         elif key == 'AUTO_SHUTDOWN_TIME':
             raise NotImplementedError
         elif key == 'ACTIVITY_TIME':
-            return lognorm(m=1800, s=1800)
+            return lognorm(m=600)
         elif key == 'INACTIVITY_TIME':
-            return lognorm(m=3600, s=1800)
+            return lognorm(m=3600)
         elif key == 'IDLE_TIME':
             raise NotImplementedError
         raise ValueError('Invalid key for _get_distribution(): %s', key)
@@ -184,23 +194,23 @@ class FleetGenerator(Base):
     def _user_shutdown_time_midday(self, _, hour: int):
         """Shutdown time for today's mid day."""
         assert hour < 12
-        return scipy.stats.norm(loc=(12 - hour) * 3600, scale=600)
+        return norm((12 - hour) * 3600)
 
     def _user_shutdown_time_next_in_time(self, day: int, hour: int):
         """Shutdown time for next IN_TIME."""
         time_left = int(24 - hour + IN_TIME) * 3600
         if day == 5:
-            time_left += 48 * 3600
-        return scipy.stats.norm(loc=time_left, scale=600)
+            return norm(time_left + 48 * 3600, 3600)
+        return norm(time_left)
 
     def _user_shutdown_time_next_midday(self, day: int, hour: int):
         """Shutdown time for next midday."""
         time_left = int(24 - hour + 12) * 3600
         if day == 5:
-            time_left += 48 * 3600
-        return scipy.stats.norm(loc=time_left, scale=600)
+            return norm(time_left + 48 * 3600, 3600)
+        return norm(time_left)
 
     def _user_shutdown_time_weekend(self, day: int, hour: int):
         """Weekend shutdown time."""
         time_left = int((day / 6) * 24 + (24 - hour + IN_TIME)) * 3600
-        return scipy.stats.norm(loc=time_left, scale=600)
+        return norm(time_left)
