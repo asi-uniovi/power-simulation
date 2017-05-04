@@ -5,8 +5,11 @@
 import logging
 import sys
 import warnings
+import matplotlib
 from simulation.configuration import Configuration
 from simulation.simulation import runner
+
+matplotlib.use('Agg')
 
 
 def main(_):
