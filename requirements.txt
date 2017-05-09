@@ -7,4 +7,3 @@ psutil
 pylint
 scipy
 simpy
-typing<3.5.3
