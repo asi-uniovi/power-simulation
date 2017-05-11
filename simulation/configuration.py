@@ -48,7 +48,7 @@ class Configuration:
         """Forwards the get action to the args container."""
         return getattr(self.__args, key)
 
-    def get_config(self, key: str, section: str='simulation') -> str:
+    def get_config(self, key: str, section: str = 'simulation') -> str:
         """Forwards the get action to the config container."""
         return self.__config.get(section, key)
 

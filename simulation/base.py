@@ -12,15 +12,15 @@ class Base(object):
         super(Base, self).__init__()
         self._config = config
 
-    def get_config(self, key: str, section: str='simulation') -> str:
+    def get_config(self, key: str, section: str = 'simulation') -> str:
         """Retrieves a key from the configuration."""
         return self._config.get_config(key, section)
 
-    def get_config_int(self, key: str, section: str='simulation') -> int:
+    def get_config_int(self, key: str, section: str = 'simulation') -> int:
         """Retrieves a key from the configuration (converts to int)."""
         return int(self.get_config(key, section))
 
-    def get_config_float(self, key: str, section: str='simulation') -> float:
+    def get_config_float(self, key: str, section: str = 'simulation') -> float:
         """Retrieves a key from the configuration (converts to float)."""
         return float(self.get_config(key, section))
 

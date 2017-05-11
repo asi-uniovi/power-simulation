@@ -32,7 +32,7 @@ class EmpiricalDistribution:
         """Median of the distribution."""
         return numpy.median(self.__data)
 
-    def rvs(self, size: int=None) -> float:
+    def rvs(self, size: int = None) -> float:
         """Sample the spline that has the inverse CDF."""
         if self.__data.size < 2:
             # pylint: disable=no-member

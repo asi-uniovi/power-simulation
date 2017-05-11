@@ -34,7 +34,7 @@ class Histogram(Base):
 
     def flush(self) -> None:
         """Dump the cache to the database."""
-        if len(self.__write_cache) > 0:
+        if self.__write_cache:
             self.__cursor.executemany(
                 ('INSERT INTO histogram(histogram, timestamp, computer, value) '
                  "VALUES('%s', ?, ?, ?);") % self.__name, self.__write_cache)
@@ -63,7 +63,7 @@ class Histogram(Base):
                    self.__cursor.fetchall(), operator.itemgetter(0))}
         return [dct.get(i, []) for i in range(168)]
 
-    def get_all_histogram(self, cid: str=None) -> numpy.ndarray:
+    def get_all_histogram(self, cid: str = None) -> numpy.ndarray:
         """Gets all the data from the histogram."""
         self.flush()
         if cid is None:
@@ -108,7 +108,7 @@ class Histogram(Base):
         dct = dict(self.__cursor.fetchall())
         return [dct.get(i, 0) for i in range(168)]
 
-    def sum_histogram(self, cid: str=None) -> int:
+    def sum_histogram(self, cid: str = None) -> int:
         """Sums up all the elements of this histogram."""
         if cid is None:
             return self.__sum
@@ -121,7 +121,7 @@ class Histogram(Base):
             (self.__name, cid))
         return int(self.__cursor.fetchone()['sum'])
 
-    def count_histogram(self, cid: str=None) -> int:
+    def count_histogram(self, cid: str = None) -> int:
         """Counts the number of elements in this histogram."""
         if cid is None:
             return self.__count

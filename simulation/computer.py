@@ -12,13 +12,13 @@ logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
 
 @enum.unique
-# pylint: disable=invalid-name
 class ComputerStatus(enum.Enum):
     """States of a computer along the simulation."""
     off = 0
-    on = 1
+    on = 1  # pylint: disable=invalid-name
 
 
+# pylint: disable=too-many-instance-attributes
 class Computer(Base):
     """A simple server.
 
@@ -44,8 +44,8 @@ class Computer(Base):
         """Read only computer ID."""
         return self.__computer_id
 
-    def change_status(
-            self, status: 'Computer', interrupt_idle_timer: bool=True) -> None:
+    def change_status(self, status: 'Computer',
+                      interrupt_idle_timer: bool = True) -> None:
         """Changes the state of the computer, and takes any side action."""
         if interrupt_idle_timer and self.__idle_timer.is_alive:
             self.__idle_timer.interrupt()

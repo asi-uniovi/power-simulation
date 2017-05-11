@@ -119,7 +119,7 @@ class Simulation(Base):
 
 
 # pylint: disable=invalid-name
-def confidence_interval(m: float, alpha: float=0.05):
+def confidence_interval(m: float, alpha: float = 0.05):
     """Generator to calculate confidence intervals in a more nicely fashion."""
     x, s, d, i = m, 0, 0, 1
     while True:
@@ -130,7 +130,7 @@ def confidence_interval(m: float, alpha: float=0.05):
         d = scipy.stats.t.interval(1 - alpha, i - 1)[1] * math.sqrt(s / i)
 
 
-# pylint: disable=invalid-name
+# pylint: disable=invalid-name,too-many-locals
 def runner() -> None:
     """Bind all and launch the simulation!"""
     custom_injector = injector.Injector([Module])
@@ -159,15 +159,17 @@ def runner() -> None:
         (xs, ds) = satisfaction.send(None)
         (xi, di) = inactivity.send(None)
         (xt, dt) = timeout.send(None)
-        while di > confidence_width or ds > confidence_width or dt > confidence_width or c < 2:
+        while (di > confidence_width or ds > confidence_width
+               or dt > confidence_width or c < 2):
             (s, i, t), c = run(), c + 1
             (xs, ds) = satisfaction.send(s)
             (xi, di) = inactivity.send(i)
             (xt, dt) = timeout.send(t)
-            logger.info('Run %d: US = %.2f%% (d = %.4f), RI = %.2f%% (d = %.4f), timeout = %.2f (d = %.4f)',
+            logger.info('Run %d: US = %.2f%% (d = %.4f), '
+                        'RI = %.2f%% (d = %.4f), timeout = %.2f (d = %.4f)',
                         c, xs, ds, xi, di, xt, dt)
             if c > max_runs:
-                logger.warning('Finishing simulation runs due to inconvergence.')
+                logger.warning('Finishing runs due to inconvergence.')
                 break
         logger.info('All runs done (%d).', c)
 

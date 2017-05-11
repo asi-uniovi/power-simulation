@@ -15,7 +15,7 @@ from simulation.stats import Stats
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
 
-# pylint: disable=no-member,invalid-name
+# pylint: disable=invalid-name
 @injector.singleton
 class Plot(Base):
     """Generates plots from the Stats modules."""
@@ -52,6 +52,7 @@ class Plot(Base):
                 except IndexError:
                     data.append(0)
 
+            # pylint: disable=no-member
             ax.plot(numpy.linspace(1, len(data), len(data)), data,
                     label='%d%%' % p, color=cm.hot(1.0 - p / 100.0))
 

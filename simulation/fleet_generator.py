@@ -83,16 +83,18 @@ class FleetGenerator(Base):
         self.__servers = sorted(set(self.__servers) - self.__empty_servers)
         self.__empty_servers = sorted(self.__empty_servers)
 
+    # pylint: disable=no-self-use
     def global_idle_timeout(self) -> float:
         """Timeout is infinite, since it is calculated a posteriori."""
         return math.inf
 
     # pylint: disable=unused-argument
-    def optimal_idle_timeout(self, cid: str, all_timespan: bool=False) -> float:
+    def optimal_idle_timeout(
+            self, cid: str, all_timespan: bool = False) -> float:
         """The timeout is unique in this setup."""
         return self.global_idle_timeout()
 
-    # pylint: disable=unused-argument,no-self-use
+    # pylint: disable=unused-argument
     def random_activity_for_timestamp(self, cid: str, timestamp: int) -> float:
         """Activity is always a log-normal."""
         distribution = self._get_distribution('ACTIVITY_TIME')
@@ -129,7 +131,7 @@ class FleetGenerator(Base):
                     s=math.sqrt(len(self.servers))).rvs()
 
     def get_all_hourly_summaries(
-            self, _, summaries: dict=('mean', 'median')
+            self, _, summaries: dict = ('mean', 'median')
     ) -> typing.List[typing.Dict[str, float]]:
         """There are just no events per hour, therefore return 0s."""
         s = {s: 0.0 for s in summaries}
@@ -140,7 +142,7 @@ class FleetGenerator(Base):
         return [0] * 168
 
     @functools.lru_cache()
-    def _get_distribution(self, key, timestamp: int=None):
+    def _get_distribution(self, key, timestamp: int = None):
         if key == 'USER_SHUTDOWN_TIME':
             return self._user_shutdown_time(timestamp)
         elif key == 'AUTO_SHUTDOWN_TIME':
@@ -158,23 +160,21 @@ class FleetGenerator(Base):
         day, hour = timestamp_to_day(timestamp)
         if day in (0, 6):
             return self._user_shutdown_time_weekend(day, hour)
-        else:
-            return self._user_shutdown_time_week(day, hour)
+        return self._user_shutdown_time_week(day, hour)
 
     def _user_shutdown_time_week(self, day: int, hour: int):
         """Week shutdown time."""
         if hour < 10:
             return self._user_shutdown_time_week_prob(
                 day, hour, 0.8, 0.9, 1.0)
-        elif hour < 12:
+        if hour < 12:
             return self._user_shutdown_time_week_prob(
                 day, hour, 0.05, 0.95, 1.0)
-        elif hour < 16:
+        if hour < 16:
             return self._user_shutdown_time_week_prob(
                 day, hour, 0.9, 0.9, 0.95)
-        else:
-            return self._user_shutdown_time_week_prob(
-                day, hour, 0.05, 0.05, 0.95)
+        return self._user_shutdown_time_week_prob(
+            day, hour, 0.05, 0.05, 0.95)
 
     # pylint: disable=too-many-arguments
     def _user_shutdown_time_week_prob(
@@ -184,12 +184,11 @@ class FleetGenerator(Base):
         rnd = scipy.rand()
         if rnd <= short:
             return lognorm(300, 60)
-        elif rnd <= midday:
+        if rnd <= midday:
             return self._user_shutdown_time_midday(day, hour)
-        elif rnd <= next_in_time:
+        if rnd <= next_in_time:
             return self._user_shutdown_time_next_in_time(day, hour)
-        else:
-            return self._user_shutdown_time_next_midday(day, hour)
+        return self._user_shutdown_time_next_midday(day, hour)
 
     def _user_shutdown_time_midday(self, _, hour: int):
         """Shutdown time for today's mid day."""

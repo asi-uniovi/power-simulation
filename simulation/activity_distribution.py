@@ -30,8 +30,8 @@ def previous_hour(day: int, hour: int) -> int:
 
 
 def draw_from_distribution(distribution: EmpiricalDistribution,
-                           min_value: float=0,
-                           max_value: float=float('inf')) -> float:
+                           min_value: float = 0,
+                           max_value: float = float('inf')) -> float:
     """Gets a value from a distribution bounding the limit."""
     if distribution is None:
         return min_value
@@ -68,7 +68,6 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
         self.__xmax = self.get_config_float('xmax', section='trace')
         self.__servers = []
         self.__empty_servers = []
-        # pylint: disable=invalid-name
         self.__models = {}
         self.__optimal_timeout = None
         self.__parse_trace()
@@ -106,13 +105,13 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
                 cid, all_timespan=True) for cid in self.__servers])
         return self.__optimal_timeout
 
-    def optimal_idle_timeout(self, cid: str, all_timespan: bool=False) -> float:
+    def optimal_idle_timeout(
+            self, cid: str, all_timespan: bool = False) -> float:
         """Calculates the value of the idle timer for a given satisfaction."""
         if all_timespan:
             return self.__optimal_timeout_all(cid)
-        else:
-            return self.__optimal_timeout_timestamp(
-                cid, *timestamp_to_day(self._config.env.now))
+        return self.__optimal_timeout_timestamp(
+            cid, *timestamp_to_day(self._config.env.now))
 
     def random_activity_for_timestamp(self, cid: str, timestamp: int) -> float:
         """Queries the activity distribution and generates a random sample."""
@@ -147,7 +146,7 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
             self.__distribution_for_hour(cid, day, hour).off_fraction)
 
     def get_all_hourly_summaries(
-            self, key: str, summaries: dict=('mean', 'median')
+            self, key: str, summaries: dict = ('mean', 'median')
     ) -> typing.List[typing.Dict[str, float]]:
         """Returns the summaries per hour."""
         hours = []
@@ -157,7 +156,7 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
                 data = numpy.array(
                     [d for i in transposed.get(day, {}).get(hour, [])
                      for d in i.resolve_key(key)])
-                if len(data) > 0:
+                if data.size > 0:
                     hours.append(
                         {s: getattr(numpy, s)(data) for s in summaries})
                 else:
@@ -372,7 +371,6 @@ class DistributionFactory(Base):
         """Return one of the distribution objects as needed."""
         if self.get_arg('fleet_generator'):
             return self.__fleet_generator
-        elif training:
+        if training:
             return self.__training_distribution
-        else:
-            return self.__activity_distribution
+        return self.__activity_distribution

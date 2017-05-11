@@ -28,7 +28,7 @@ class Stats(Base):
             'satisfaction_threshold', section='stats')
         self.__storage = {}
 
-    def _idle_timeout(self, cid: str=None) -> float:
+    def _idle_timeout(self, cid: str = None) -> float:
         """Indicates the global idle timeout."""
         if cid is None:
             return self.__training_distribution.global_idle_timeout()
@@ -42,7 +42,7 @@ class Stats(Base):
     def optimal_idle_timeout(self) -> float:
         """Optimal idle timeout for the simulated data (a posteriori)."""
         inactivity = self.get_all_histogram('INACTIVITY_TIME')
-        if len(inactivity) == 0:
+        if inactivity.size == 0:
             return self.__default_timeout
         return numpy.percentile(inactivity, self.__target_satisfaction)
 
@@ -74,7 +74,7 @@ class Stats(Base):
             return 0.0
 
     def append(self, key: str, value: float, cid: str,
-               timestamp: int=None) -> None:
+               timestamp: int = None) -> None:
         """Inserts a new value for a key at now.."""
         if key not in self.__storage:
             self.__storage[key] = self.__histogram_builder.build(name=key)
@@ -97,7 +97,7 @@ class Stats(Base):
         except KeyError:
             return []
 
-    def get_all_histogram(self, key: str, cid: str=None) -> numpy.ndarray:
+    def get_all_histogram(self, key: str, cid: str = None) -> numpy.ndarray:
         """Gets all of the histogram data."""
         try:
             return self.__storage[key].get_all_histogram(cid)
@@ -111,14 +111,14 @@ class Stats(Base):
         except KeyError:
             return []
 
-    def sum_histogram(self, key: str, cid: str=None) -> float:
+    def sum_histogram(self, key: str, cid: str = None) -> float:
         """Sums one histogram elements."""
         try:
             return self.__storage[key].sum_histogram(cid)
         except KeyError:
             return 0.0
 
-    def count_histogram(self, key: str, cid: str=None) -> int:
+    def count_histogram(self, key: str, cid: str = None) -> int:
         """Counts one histogram elements."""
         try:
             return self.__storage[key].count_histogram(cid)

@@ -73,7 +73,6 @@ class Model(Base):
 
     def extend(self, other: 'Model') -> None:
         """Appends the data from another model to this one."""
-        # pylint: disable=no-member
         self.__inactivity.extend(other.inactivity)
         self.__activity.extend(other.activity)
         self.__off_duration.extend(other.off_duration)
