@@ -35,10 +35,6 @@ After cloning the repository, install the packages needed with pip:
     https://docs.python.org/3/library/sqlite3.html)
 1. [Building and installing NumPy](
     http://docs.scipy.org/doc/numpy/user/install.html)
-1. [Installing Bazel](
-    http://bazel.io/docs/install.html)
-1. [Bazel BUILD Encyclopedia of Functions](
-    http://bazel.io/docs/be/overview.html)
 1. [Mardown: Syntax](
     https://daringfireball.net/projects/markdown/syntax)
 1. [SQLite PRAGMA Statements](
