@@ -6,9 +6,9 @@
 
 Create a Python virtualenv by using virtualenv activate it:
 
-`$ virtualenv ~/.virtualenvs/simulacion --python="$(which python3)"`
+`$ virtualenv ~/.virtualenvs/simulation --python="$(which python3)"`
 
-`$ source ~/.virtualenvs/simulacion/bin/activate`
+`$ source ~/.virtualenvs/simulation/bin/activate`
 
 You might need to install dependencies, in order to build from source the
 packages, for instance, in the case of Debian/Ubuntu:
