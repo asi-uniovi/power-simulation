@@ -43,3 +43,5 @@ After cloning the repository, install the packages needed with pip:
     https://docs.python.org/3/library/profile.html)
 1. [Python Performance Tips](
     https://wiki.python.org/moin/PythonSpeed/PerformanceTips)
+
+**This is not an official Google product**.
