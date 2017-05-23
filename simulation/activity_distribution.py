@@ -32,7 +32,7 @@ from simulation.static import timestamp_to_day
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
 
-def previous_hour(day: int, hour: int) -> int:
+def previous_hour(day: int, hour: int) -> typing.Tuple[int, int]:
     """Gets the previous hour with wrap."""
     hour -= 1
     if hour < 0:
