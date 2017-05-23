@@ -75,7 +75,7 @@ class Histogram(Base):
         dct = {i: numpy.ascontiguousarray([i[1] for i in g])
                for i, g in itertools.groupby(
                    self.__cursor.fetchall(), operator.itemgetter(0))}
-        return [dct.get(i, []) for i in range(168)]
+        return [dct.get(i, numpy.asarray([])) for i in range(168)]
 
     def get_all_histogram(self, cid: str = None) -> numpy.ndarray:
         """Gets all the data from the histogram."""
