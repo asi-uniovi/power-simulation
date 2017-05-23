@@ -188,6 +188,19 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
                         for i in transposed.get(day, {}).get(hour, [])))
         return hours
 
+    def get_all_hourly_distributions(
+            self, key: str) -> typing.List[EmpiricalDistribution]:
+        """Returns the counts per hour."""
+        hours = []
+        transposed = self.__transpose_histogram()
+        for day in range(7):
+            for hour in range(24):
+                merged_model = self.__model_builder.build()
+                for i in transposed.get(day, {}).get(hour, []):
+                    merged_model.extend(i)
+                hours.append(merged_model.resolve_key(key))
+        return hours
+
     def __optimal_timeout_all(self, cid: str) -> float:
         flat_model = self.__model_builder.build()
         for day in self.__models[cid].values():
