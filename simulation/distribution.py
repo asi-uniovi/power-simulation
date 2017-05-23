@@ -30,6 +30,7 @@ class EmpiricalDistribution:
     def __init__(self, data: typing.Any):
         self.__data = numpy.asarray(data)
         self.__tck = None
+        self.__cdf = None
 
     @property
     def data(self) -> numpy.ndarray:
@@ -52,20 +53,34 @@ class EmpiricalDistribution:
             # pylint: disable=no-member
             return numpy.random.choice(self.__data, size=size)
         if self.__tck is None:
-            self.__fit()
+            self.__fit_tck()
         return scipy.interpolate.splev(
             numpy.random.random(size=size), self.__tck, der=0)
+
+    def cdf(self, vals: numpy.ndarray) -> numpy.ndarray:
+        """Cumulative distribution function."""
+        if self.__data.size == 0:
+            return numpy.zeros(len(vals))
+        if self.__cdf is None:
+            self.__fit_cdf()
+        return scipy.interpolate.splev(vals, self.__cdf, der=0)
 
     def extend(self, other: 'EmpiricalDistribution') -> None:
         """This extends this distribution with data from another."""
         self.__data = numpy.append(self.__data, other.data)
         self.__tck = None
 
-    def __fit(self) -> None:
+    def __fit_tck(self) -> None:
         """Fits the distribution for generating random values."""
         self.__data.sort()
         self.__tck = scipy.interpolate.splrep(
             numpy.linspace(0, 1, self.__data.size), self.__data, k=1)
+
+    def __fit_cdf(self) -> None:
+        """Fits the distribution for generating CDF."""
+        self.__data.sort()
+        self.__cdf = scipy.interpolate.splrep(
+            self.__data, numpy.linspace(0, 1, self.__data.size), k=1)
 
     def __len__(self) -> int:
         return self.__data.size
