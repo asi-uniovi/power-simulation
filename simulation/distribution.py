@@ -59,11 +59,13 @@ class EmpiricalDistribution:
 
     def cdf(self, vals: numpy.ndarray) -> numpy.ndarray:
         """Cumulative distribution function."""
-        if self.__data.size == 0:
+        if self.__data.size < 2:
             return numpy.zeros(len(vals))
         if self.__cdf is None:
             self.__fit_cdf()
-        return scipy.interpolate.splev(vals, self.__cdf, der=0)
+        # pylint: disable=no-member
+        return numpy.maximum(0, numpy.minimum(
+            1, scipy.interpolate.splev(vals, self.__cdf, der=0)))
 
     def extend(self, other: 'EmpiricalDistribution') -> None:
         """This extends this distribution with data from another."""
