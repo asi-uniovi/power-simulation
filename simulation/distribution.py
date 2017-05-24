@@ -69,6 +69,7 @@ class EmpiricalDistribution:
         """This extends this distribution with data from another."""
         self.__data = numpy.append(self.__data, other.data)
         self.__tck = None
+        self.__cdf = None
 
     def __fit_tck(self) -> None:
         """Fits the distribution for generating random values."""
