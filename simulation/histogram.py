@@ -54,15 +54,6 @@ class Histogram(Base):
                  "VALUES('%s', ?, ?, ?);") % self.__name, self.__write_cache)
             self.__write_cache = []
 
-    def truncate(self) -> None:
-        """Deletes all the data from the table."""
-        self.__sum = 0
-        self.__count = 0
-        self.__write_cache = []
-        self.__cursor.execute('DELETE FROM histogram WHERE histogram = ?;',
-                              (self.__name,))
-        self.__cursor.execute('VACUUM;')
-
     def get_all_hourly_histograms(self) -> typing.List[numpy.ndarray]:
         """Gets all the subhistograms per hour."""
         self.flush()
