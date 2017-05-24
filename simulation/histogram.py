@@ -140,7 +140,7 @@ class Histogram(Base):
         return int(self.__cursor.fetchone()['count'])
 
 
-def create_histogram_tables(conn: sqlite3.Connection):
+def create_histogram_tables(conn: sqlite3.Connection) -> None:
     """Creates the tables on the database."""
     cursor = conn.cursor()
     cursor.execute('DROP TRIGGER IF EXISTS t_hour;')
