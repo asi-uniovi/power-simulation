@@ -106,4 +106,8 @@ class Configuration:
                             action='store_true',
                             help=('Generate random fleets instead of using '
                                   'training data from usage logs.'))
+        parser.add_argument('--disable_auto_shutdown',
+                            action='store_true',
+                            help=('Disable the control that turns computers '
+                                  'off automatically.'))
         self.__args = parser.parse_args()

@@ -95,6 +95,8 @@ class Computer(Base):
 
     def __idle_timer_runner(self) -> None:
         """Process for the idle timer control."""
+        if self._config.get_arg('disable_auto_shutdown'):
+            return
         if not self.__started and self.get_arg('fleet_generator'):
             # If generating a random fleet, we start inactive until Monday.
             try:
