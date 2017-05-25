@@ -157,6 +157,7 @@ class FleetGenerator(Base):
 
     @functools.lru_cache()
     def _get_distribution(self, key, timestamp: int = None):
+        """Resolve a key to a distribution."""
         if key == 'USER_SHUTDOWN_TIME':
             return self._user_shutdown_time(timestamp)
         elif key == 'AUTO_SHUTDOWN_TIME':

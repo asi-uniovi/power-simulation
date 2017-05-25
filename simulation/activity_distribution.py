@@ -202,6 +202,7 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
         return hours
 
     def __optimal_timeout_all(self, cid: str) -> float:
+        """Calculate the optimal timeout for all the simulation."""
         flat_model = self.__model_builder.build()
         for day in self.__models[cid].values():
             for model in day.values():
@@ -210,6 +211,7 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
 
     def __optimal_timeout_timestamp(
             self, cid: str, day: int, hour: int) -> float:
+        """Calculate the optimal timestamp for a given timestamp."""
         hist = self.__distribution_for_hour(cid, day, hour)
         if hist is None:
             return self.__optimal_timeout_all(cid)

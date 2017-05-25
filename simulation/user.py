@@ -63,8 +63,8 @@ class User(Base):
                 self.__stats.append('USER_SHUTDOWN_TIME', shutdown_time,
                                     self.__computer.cid, timestamp=now)
             else:
-                inactivity_time = (
-                    self.__activity_distribution.random_inactivity_for_timestamp(
+                inactivity_time = (self.__activity_distribution
+                                   .random_inactivity_for_timestamp(
                         self.__computer.cid, self._config.env.now))
                 yield self._config.env.timeout(inactivity_time)
                 self.__stats.append('INACTIVITY_TIME', inactivity_time,
