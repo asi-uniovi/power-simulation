@@ -26,6 +26,7 @@ from simulation.static import WEEK
 
 class Histogram(Base):
     """Histogram stored in a DB."""
+    __run = 0
 
     @injector.inject
     @injector.noninjectable('name')
@@ -37,6 +38,16 @@ class Histogram(Base):
         self.__sum = 0
         self.__count = 0
         self.__write_cache = []
+
+    @classmethod
+    def new_run(cls):
+        """Increment the run counter."""
+        cls.__run += 1
+
+    @property
+    def run(self):
+        """Indicates the number of runs."""
+        return self.__run
 
     def append(self, timestamp: int, cid: str, value: float) -> None:
         """Inserts into the histogram, just in cache for now."""
@@ -50,8 +61,10 @@ class Histogram(Base):
         """Dump the cache to the database."""
         if self.__write_cache:
             self.__cursor.executemany(
-                ('INSERT INTO histogram(histogram, timestamp, computer, value) '
-                 "VALUES('%s', ?, ?, ?);") % self.__name, self.__write_cache)
+                '''INSERT INTO histogram
+                       (run, histogram, timestamp, computer, value)
+                   VALUES(%d, '%s', ?, ?, ?);''' % (self.__run, self.__name),
+                self.__write_cache)
             self.__write_cache = []
 
     def get_all_hourly_histograms(self) -> typing.List[numpy.ndarray]:
@@ -149,6 +162,7 @@ def create_histogram_tables(conn: sqlite3.Connection) -> None:
     cursor.execute('''
         CREATE TABLE histogram (
           id        INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+          run       INTEGER NOT NULL,
           hour      INTEGER,
           histogram TEXT    NOT NULL,
           computer  TEXT    NOT NULL,
@@ -161,6 +175,8 @@ def create_histogram_tables(conn: sqlite3.Connection) -> None:
         'CREATE INDEX i_computer ON histogram(computer);')
     cursor.execute(
         'CREATE INDEX i_hour ON histogram(hour);')
+    cursor.execute(
+        'CREATE INDEX i_run ON histogram(run);')
     cursor.execute('''
         CREATE TRIGGER t_hour AFTER INSERT ON histogram
         FOR EACH ROW BEGIN

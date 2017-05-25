@@ -66,6 +66,7 @@ class Simulation(Base):
     def run(self) -> typing.Tuple[float, float]:
         """Sets up and starts a new simulation."""
         self._config.reset()
+        self.__stats.new_run()
         logger.debug('Simulating %d users (%d s)',
                      self.servers, self.__simulation_time)
         logger.debug(
