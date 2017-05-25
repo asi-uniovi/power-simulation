@@ -169,19 +169,15 @@ def runner() -> None:
     else:
         satisfaction = confidence_interval(s)
         inactivity = confidence_interval(i)
-        timeout = confidence_interval(t)
         (xs, ds) = satisfaction.send(None)
         (xi, di) = inactivity.send(None)
-        (xt, dt) = timeout.send(None)
-        while (di > confidence_width or ds > confidence_width
-               or dt > confidence_width or c < 2):
+        while di > confidence_width or ds > confidence_width or c < 2:
             (s, i, t), c = run(), c + 1
             (xs, ds) = satisfaction.send(s)
             (xi, di) = inactivity.send(i)
-            (xt, dt) = timeout.send(t)
             logger.info('Run %d: US = %.2f%% (d = %.4f), '
-                        'RI = %.2f%% (d = %.4f), timeout = %.2f (d = %.4f)',
-                        c, xs, ds, xi, di, xt, dt)
+                        'RI = %.2f%% (d = %.4f), timeout = %.2f',
+                        c, xs, ds, xi, di, t)
             if c > max_runs:
                 logger.warning('Finishing runs due to inconvergence.')
                 break
