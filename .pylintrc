@@ -1,3 +1,0 @@
-[pre-commit-hook]
-params=-j 2 --rcfile=~/.pylintrc
-limit=9.0
