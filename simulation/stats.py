@@ -48,7 +48,8 @@ class Stats(Base):
             return self.__training_distribution.global_idle_timeout()
         return self.__training_distribution.optimal_idle_timeout(cid)
 
-    def new_run(self):
+    @staticmethod
+    def new_run():
         """Increment the run counter."""
         Histogram.new_run()
 
