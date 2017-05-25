@@ -1,9 +1,7 @@
-git-pylint-commit-hook
 injector
 matplotlib
 memory_profiler
 numpy
 psutil
-pylint
 scipy
 simpy
