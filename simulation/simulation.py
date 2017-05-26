@@ -88,19 +88,8 @@ class Simulation(Base):
         logger.debug('RESULT: User Satisfaction (US) = %.2f%%', results[0])
         logger.debug('RESULT: Removed Inactivity (RI) = %.2f%%', results[1])
         logger.debug('RESULT: Optimal idle timeout = %.2f%%', results[2])
-        if self.get_arg('plot'):
-            self.__plot_results()
         logger.debug('Run complete.')
         return results
-
-    def __plot_results(self) -> None:
-        """Plots the results."""
-        logger.debug('Storing plots.')
-        self.__plot.plot_all('USER_SHUTDOWN_TIME')
-        self.__plot.plot_all('AUTO_SHUTDOWN_TIME')
-        self.__plot.plot_all('ACTIVITY_TIME')
-        self.__plot.plot_all('INACTIVITY_TIME')
-        self.__plot.plot_all('IDLE_TIME')
 
     def __validate_results(self) -> None:
         """Performs vaidations on the simulation results and warns on errors."""
@@ -182,6 +171,15 @@ def runner() -> None:
                 logger.warning('Finishing runs due to inconvergence.')
                 break
         logger.info('All runs done (%d).', c)
+
+    if configuration.get_arg('plot'):
+        logger.debug('Storing plots.')
+        plot = custom_injector.get(Plot)
+        plot.plot_all('USER_SHUTDOWN_TIME')
+        plot.plot_all('AUTO_SHUTDOWN_TIME')
+        plot.plot_all('ACTIVITY_TIME')
+        plot.plot_all('INACTIVITY_TIME')
+        plot.plot_all('IDLE_TIME')
 
     logger.info(
         'Process memory footprint: %.2f MiB', memory_profiler.memory_usage()[0])
