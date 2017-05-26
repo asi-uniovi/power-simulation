@@ -44,10 +44,10 @@ class Histogram(Base):
         """Increment the run counter."""
         cls.__run += 1
 
-    @property
-    def run(self):
+    @classmethod
+    def runs(cls):
         """Indicates the number of runs."""
-        return self.__run
+        return cls.__run
 
     def append(self, timestamp: int, cid: str, value: float) -> None:
         """Inserts into the histogram, just in cache for now."""
@@ -63,7 +63,7 @@ class Histogram(Base):
             self.__cursor.executemany(
                 '''INSERT INTO histogram
                        (run, histogram, timestamp, computer, value)
-                   VALUES(%d, '%s', ?, ?, ?);''' % (self.__run, self.__name),
+                   VALUES(%d, '%s', ?, ?, ?);''' % (self.runs(), self.__name),
                 self.__write_cache)
             self.__write_cache = []
 

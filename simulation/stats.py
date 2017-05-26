@@ -53,10 +53,10 @@ class Stats(Base):
         """Increment the run counter."""
         Histogram.new_run()
 
-    @property
-    def run(self):
-        """Indicates the number of runs."""
-        return Histogram.run
+    @staticmethod
+    def runs():
+        """Shows the current number of runs."""
+        return Histogram.runs()
 
     def optimal_idle_timeout(self) -> float:
         """Optimal idle timeout for the simulated data (a posteriori)."""
