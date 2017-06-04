@@ -78,7 +78,8 @@ def main():
     parser.add_argument('--trace',
                         dest='trace_file',
                         help='path to the trace file to analyse')
-    plot_trace(parse_trace(parser.parse_args().trace_file))
+    args = parser.parse_args()
+    plot_trace(parse_trace(args.trace_file))
 
 
 if __name__ == '__main__':
