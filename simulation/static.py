@@ -17,6 +17,7 @@
 import cProfile
 import functools
 import logging
+import math
 import typing
 import injector
 import numpy
@@ -105,3 +106,9 @@ def weighted_user_satisfaction(
 def user_satisfaction(t: float, timeout: float) -> float:
     """Calculates plain old user satisfaction."""
     return numpy.where(t < timeout, 1.0, 0.0)
+
+
+def generate_servers(size: int) -> typing.List[str]:
+    """Generates a list of servers randomly generated."""
+    fill = math.ceil(math.log(size, 10))
+    return ['workstation' + str(i).zfill(fill) for i in range(size)]

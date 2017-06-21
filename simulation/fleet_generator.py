@@ -19,17 +19,12 @@ import math
 import typing
 import scipy.stats
 from simulation.base import Base
+from simulation.static import generate_servers
 from simulation.static import timestamp_to_day
 
 USERS = 100
 IN_TIME = 8
 OUT_TIME = 17
-
-
-def _generate_servers(size: int) -> typing.List[str]:
-    """Generates a list of servers randomly generated."""
-    fill = math.ceil(math.log(size, 10))
-    return ['workstation' + str(i).zfill(fill) for i in range(size)]
 
 
 # pylint: disable=invalid-name,no-member
@@ -72,7 +67,7 @@ class FleetGenerator(Base):
         super(FleetGenerator, self).__init__()
         self.__target_satisfaction = self.get_config_int('target_satisfaction')
         self.__empty_servers = []
-        self.__servers = _generate_servers(USERS)
+        self.__servers = generate_servers(USERS)
 
     @property
     def servers(self) -> typing.List[str]:
