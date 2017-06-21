@@ -1,0 +1,9 @@
+sudo: false
+language: python
+python:
+  - "3.6"
+
+install:
+  - pip install requirements.txt
+
+script: python main.py --config=config/test.ini --per_hour --per_pc
