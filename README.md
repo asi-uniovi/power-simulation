@@ -1,4 +1,4 @@
-# Power managemnet simulaton for computer fleets
+# Power management simulaton for computer fleets
 
 [![Build Status](https://travis-ci.org/m3drano/power-simulation.svg?branch=master)](https://travis-ci.org/m3drano/power-simulation)
 
