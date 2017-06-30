@@ -51,7 +51,10 @@ class User(Base):
         """Generates requests af the defined frequency."""
         if self.get_arg('fleet_generator'):
             # If generating a random fleet, we start inactive until Monday.
+            now = self._config.env.now
             yield self._config.env.timeout((24 + 8) * 3600)
+            self.__stats.append('INACTIVITY_TIME', (24 + 8) * 3600,
+                                self.__computer.cid, timestamp=now)
         while True:
             yield self._config.env.process(self.__computer.serve())
             now = self._config.env.now
