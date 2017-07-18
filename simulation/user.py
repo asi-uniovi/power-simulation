@@ -78,8 +78,8 @@ class User(Base):
             self.__off_frequency = (
                 self.__activity_distribution.off_frequency_for_hour(
                     self.__computer.cid, *hour))
-        if self.__off_frequency > 0:
-            self.__off_frequency -= 1
+        if self.__off_frequency > numpy.random.random():
+            self.__off_frequency -= 1.0
             return True
         return False
 
