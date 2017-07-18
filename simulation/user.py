@@ -86,9 +86,8 @@ class User(Base):
     def __shutdown_interval(self) -> float:
         """Generates shutdown interval lengths."""
         try:
-            shutdown = numpy.ceil(
+            return numpy.around(
                 self.__activity_distribution.off_interval_for_timestamp(
                     self.__computer.cid, self._config.env.now))
-            return shutdown
         except TypeError:
             return 0
