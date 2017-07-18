@@ -94,7 +94,8 @@ class Plot(Base):
 
             for d, label in hists:
                 f = [i[s] for i in d]
-                ax.plot(numpy.linspace(1, len(f), len(f)), f, label=label)
+                ax.plot(numpy.linspace(1, len(f), len(f)), f, label=label,
+                        linewidth=3)
 
             _format_ax_line(ax)
             fig.set_size_inches(6, 5)
@@ -110,7 +111,7 @@ class Plot(Base):
 
         hist = numpy.asarray(self.__stats.get_all_hourly_count(histogram))
         ax.plot(numpy.linspace(1, len(hist), len(hist)),
-                hist / self.__stats.runs(), label='simulation')
+                hist / self.__stats.runs(), label='simulation', linewidth=3)
 
         if not self.get_arg('fleet_generator'):
             data = self.__training_distribution.get_all_hourly_count(histogram)
