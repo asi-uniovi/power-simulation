@@ -81,10 +81,10 @@ class Computer(Base):
         activity_time = (
             self.__activity_distribution.random_activity_for_timestamp(
                 self.__computer_id, self._config.env.now))
-        now = self._config.env.now
-        yield self._config.env.timeout(activity_time)
         self.__stats.append(
-            'ACTIVITY_TIME', activity_time, self.__computer_id, timestamp=now)
+            'ACTIVITY_TIME', activity_time, self.__computer_id,
+            timestamp=self._config.env.now)
+        yield self._config.env.timeout(activity_time)
         self.__idle_timer = self._config.env.process(self.__idle_timer_runner())
 
     def __idle_timeout(self) -> float:
@@ -106,12 +106,11 @@ class Computer(Base):
                 pass
         try:
             idle_start = self._config.env.now
+            self.__stats.append('IDLE_TIME', self._config.env.now - idle_start,
+                                self.__computer_id, timestamp=idle_start)
             yield self._config.env.timeout(self.__idle_timeout())
             self.change_status(ComputerStatus.off,
                                interrupt_idle_timer=False)
             self.__last_auto_shutdown = self._config.env.now
         except simpy.Interrupt:
             pass
-        finally:
-            self.__stats.append('IDLE_TIME', self._config.env.now - idle_start,
-                                self.__computer_id, timestamp=idle_start)

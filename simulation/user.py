@@ -51,28 +51,24 @@ class User(Base):
         """Generates requests af the defined frequency."""
         if self.get_arg('fleet_generator'):
             # If generating a random fleet, we start inactive until Monday.
-            now = self._config.env.now
             yield self._config.env.timeout((24 + 8) * 3600)
-            self.__stats.append('INACTIVITY_TIME', (24 + 8) * 3600,
-                                self.__computer.cid, timestamp=now)
         while True:
-            yield self._config.env.process(self.__computer.serve())
-            now = self._config.env.now
             if self.__indicate_shutdown():
                 logger.debug('User is shutting down PC %s', self.__computer.cid)
                 shutdown_time = self.__shutdown_interval()
                 self.__computer.change_status(ComputerStatus.off)
+                self.__stats.append(
+                    'USER_SHUTDOWN_TIME', shutdown_time,
+                    self.__computer.cid, timestamp=self._config.env.now)
                 yield self._config.env.timeout(shutdown_time)
-                self.__stats.append('USER_SHUTDOWN_TIME', shutdown_time,
-                                    self.__computer.cid, timestamp=now)
-            else:
-                inactivity_time = (self.__activity_distribution
-                                   .random_inactivity_for_timestamp(
-                                       self.__computer.cid,
-                                       self._config.env.now))
-                yield self._config.env.timeout(inactivity_time)
-                self.__stats.append('INACTIVITY_TIME', inactivity_time,
-                                    self.__computer.cid, timestamp=now)
+            yield self._config.env.process(self.__computer.serve())
+            inactivity_time = (self.__activity_distribution
+                               .random_inactivity_for_timestamp(
+                                   self.__computer.cid, self._config.env.now))
+            self.__stats.append(
+                'INACTIVITY_TIME', inactivity_time,
+                self.__computer.cid, timestamp=self._config.env.now)
+            yield self._config.env.timeout(inactivity_time)
 
     def __indicate_shutdown(self) -> bool:
         """Indicates whether we need to shutdown or not."""
