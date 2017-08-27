@@ -143,3 +143,8 @@ class Stats(Base):
             return self.__storage[key].count_histogram(cid)
         except KeyError:
             return 0
+
+    def flush(self):
+        """Flushes all histograms stored."""
+        for hist in self.__storage.values():
+            hist.flush()

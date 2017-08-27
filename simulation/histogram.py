@@ -15,6 +15,7 @@
 """Database backed histogram."""
 
 import itertools
+import logging
 import operator
 import typing
 import sqlite3
@@ -22,6 +23,8 @@ import injector
 import numpy
 from simulation.base import Base
 from simulation.static import WEEK
+
+logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
 
 class Histogram(Base):
@@ -60,6 +63,8 @@ class Histogram(Base):
     def flush(self) -> None:
         """Dump the cache to the database."""
         if self.__write_cache:
+            logger.debug('Histogram is being flushed with %d elements.',
+                         len(self.__write_cache))
             self.__cursor.executemany(
                 '''INSERT INTO histogram
                        (run, histogram, timestamp, computer, value)

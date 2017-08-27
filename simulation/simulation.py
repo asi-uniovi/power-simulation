@@ -80,6 +80,7 @@ class Simulation(Base):
         logger.debug('Simulation starting')
         self._config.env.run(until=self.__simulation_time)
         logger.debug('Simulation ended at %d s', self._config.env.now)
+        self.__stats.flush()
         if self.debug:
             self.__validate_results()
         results = (self.__stats.user_satisfaction(),
