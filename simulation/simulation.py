@@ -71,7 +71,7 @@ class Simulation(Base):
                      self.servers, self.__simulation_time)
         logger.debug(
             'Target user satisfaction %d%%', self.__target_satisfaction)
-        if self._config.get_arg('debug'):
+        if self.debug:
             self._config.env.process(self.__monitor_time())
         for cid in self.__training_distribution.servers:
             if cid in self.__activity_distribution.servers:
@@ -80,7 +80,7 @@ class Simulation(Base):
         logger.debug('Simulation starting')
         self._config.env.run(until=self.__simulation_time)
         logger.debug('Simulation ended at %d s', self._config.env.now)
-        if self._config.get_arg('debug'):
+        if self.debug:
             self.__validate_results()
         results = (self.__stats.user_satisfaction(),
                    self.__stats.removed_inactivity(),

@@ -26,6 +26,11 @@ class Base(object):
         super(Base, self).__init__()
         self._config = config
 
+    @property
+    def debug(self):
+        """Indicates if this is a debug run."""
+        return bool(self.get_arg('debug'))
+
     def get_config(self, key: str, section: str = 'simulation') -> str:
         """Retrieves a key from the configuration."""
         return self._config.get_config(key, section)
