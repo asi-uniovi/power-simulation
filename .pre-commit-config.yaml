@@ -24,3 +24,10 @@
     -   id: pretty-format-json
     -   id: requirements-txt-fixer
     -   id: trailing-whitespace
+-   repo: local
+    hooks:
+    -   id: system
+        name: Pylint
+        entry: python -m pylint.__main__
+        language: system
+        files: \.py$
