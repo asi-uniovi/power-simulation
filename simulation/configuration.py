@@ -18,7 +18,6 @@ import argparse
 import configparser
 import os
 import injector
-import simpy
 
 
 # pylint: disable=invalid-name
@@ -45,18 +44,8 @@ class Configuration(object):
 
     def __init__(self):
         super(Configuration, self).__init__()
-        self.__env = simpy.Environment()
         self.__parse_args()
         self.__parse_config()
-
-    @property
-    def env(self) -> simpy.Environment:
-        """Current simulation environment."""
-        return self.__env
-
-    def reset(self) -> None:
-        """Resets the configuration to be able to start a new run."""
-        self.__env = simpy.Environment()
 
     def get_arg(self, key: str) -> str:
         """Forwards the get action to the args container."""

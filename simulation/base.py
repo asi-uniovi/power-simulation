@@ -25,6 +25,7 @@ class Base(object):
     @injector.inject
     def __init__(self, config: Configuration):
         super(Base, self).__init__()
+        self.__env = simpy.Environment()
         self.__config = config
 
     @property
@@ -35,11 +36,11 @@ class Base(object):
     @property
     def env(self) -> simpy.Environment:
         """SimPy environment currently in use."""
-        return self.__config.env
+        return self.__env
 
     def reset(self) -> None:
         """Resets the simulation for a new run."""
-        self.__config.reset()
+        self.__env = simpy.Environment()
 
     def get_config(self, key: str, section: str = 'simulation') -> str:
         """Retrieves a key from the configuration."""
