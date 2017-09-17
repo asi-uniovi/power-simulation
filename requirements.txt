@@ -2,6 +2,8 @@ injector
 matplotlib
 memory_profiler
 numpy
+pre-commit
 psutil
+pylint
 scipy
 simpy
