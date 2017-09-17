@@ -29,7 +29,6 @@ logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
 class Histogram(Base):
     """Histogram stored in a DB."""
-    __run = 0
 
     @injector.inject
     @injector.noninjectable('name')
@@ -39,16 +38,6 @@ class Histogram(Base):
         self.__cursor = conn.cursor()
         self.__name = name
         self.__write_cache = []
-
-    @classmethod
-    def new_run(cls) -> None:
-        """Increment the run counter."""
-        cls.__run += 1
-
-    @classmethod
-    def runs(cls) -> None:
-        """Indicates the number of runs."""
-        return cls.__run
 
     def append(self, timestamp: int, cid: str, value: float) -> None:
         """Inserts into the histogram, just in cache for now."""
@@ -64,7 +53,7 @@ class Histogram(Base):
             self.__cursor.executemany(
                 '''INSERT INTO histogram
                        (run, histogram, timestamp, computer, value)
-                   VALUES(%d, '%s', ?, ?, ?);''' % (self.runs(), self.__name),
+                   VALUES(%d, '%s', ?, ?, ?);''' % (self.runs, self.__name),
                 self.__write_cache)
             self.__write_cache = []
 
@@ -72,7 +61,7 @@ class Histogram(Base):
             self, run: int = None) -> typing.List[numpy.ndarray]:
         """Gets all the subhistograms per hour."""
         if run is None:
-            run = self.runs()
+            run = self.runs
         self.flush()
         self.__cursor.execute(
             '''SELECT hour, value
@@ -90,7 +79,7 @@ class Histogram(Base):
             self, cid: str = None, run: int = None) -> numpy.ndarray:
         """Gets all the data from the histogram."""
         if run is None:
-            run = self.runs()
+            run = self.runs
         self.flush()
         if cid is None:
             self.__cursor.execute(
@@ -113,7 +102,7 @@ class Histogram(Base):
             self, run: int = None) -> typing.List[typing.Dict[str, float]]:
         """Gets all the summaries per hour."""
         if run is None:
-            run = self.runs()
+            run = self.runs
         ret = []
         for hist in self.get_all_hourly_histograms(run):
             dct = {}
@@ -128,7 +117,7 @@ class Histogram(Base):
     def get_all_hourly_count(self, run: int = None) -> typing.List[int]:
         """Gets all the count per hour."""
         if run is None:
-            run = self.runs()
+            run = self.runs
         self.flush()
         self.__cursor.execute(
             '''SELECT hour, COUNT(*) AS count
@@ -144,7 +133,7 @@ class Histogram(Base):
     def sum_histogram(self, cid: str = None, run: int = None) -> int:
         """Sums up all the elements of this histogram."""
         if run is None:
-            run = self.runs()
+            run = self.runs
         self.flush()
         if cid is None:
             self.__cursor.execute(
@@ -166,7 +155,7 @@ class Histogram(Base):
     def count_histogram(self, cid: str = None, run: int = None) -> int:
         """Counts the number of elements in this histogram."""
         if run is None:
-            run = self.runs()
+            run = self.runs
         self.flush()
         if cid is None:
             self.__cursor.execute(

@@ -48,16 +48,6 @@ class Stats(Base):
             return self.__training_distribution.global_idle_timeout()
         return self.__training_distribution.optimal_idle_timeout(cid)
 
-    @staticmethod
-    def new_run():
-        """Increment the run counter."""
-        Histogram.new_run()
-
-    @staticmethod
-    def runs():
-        """Shows the current number of runs."""
-        return Histogram.runs()
-
     def optimal_idle_timeout(self) -> float:
         """Optimal idle timeout for the simulated data (a posteriori)."""
         inactivity = self.get_all_histogram('INACTIVITY_TIME')

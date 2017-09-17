@@ -111,7 +111,7 @@ class Plot(Base):
 
         hist = numpy.asarray(self.__stats.get_all_hourly_count(histogram))
         ax.plot(numpy.linspace(1, len(hist), len(hist)),
-                hist / self.__stats.runs(), label='simulation', linewidth=3)
+                hist / self.runs, label='simulation', linewidth=3)
 
         if not self.get_arg('fleet_generator'):
             data = self.__training_distribution.get_all_hourly_count(histogram)

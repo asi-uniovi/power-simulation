@@ -65,8 +65,7 @@ class Simulation(Base):
 
     def run(self) -> typing.Tuple[float, float]:
         """Sets up and starts a new simulation."""
-        self.reset()
-        self.__stats.new_run()
+        self.new_run()
         if self.debug:
             self.env.process(self.__monitor_time())
         for cid in self.__training_distribution.servers:
