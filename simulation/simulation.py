@@ -49,8 +49,8 @@ class Simulation(Base):
         self.__user_builder = user_builder
         self.__plot = plot
         self.__stats = stats
-        self.__simulation_time = self.get_config_int('simulation_time')
-        self.__target_satisfaction = self.get_config_int('target_satisfaction')
+        self.simulation_time = self.get_config_int('simulation_time')
+        self.target_satisfaction = self.get_config_int('target_satisfaction')
         self.__activity_distribution.intersect(self.__training_distribution)
 
     @property
@@ -67,10 +67,6 @@ class Simulation(Base):
         """Sets up and starts a new simulation."""
         self._config.reset()
         self.__stats.new_run()
-        logger.debug('Simulating %d users (%d s)',
-                     self.servers, self.__simulation_time)
-        logger.debug(
-            'Target user satisfaction %d%%', self.__target_satisfaction)
         if self.debug:
             self._config.env.process(self.__monitor_time())
         for cid in self.__training_distribution.servers:
@@ -78,7 +74,7 @@ class Simulation(Base):
                 self._config.env.process(
                     self.__user_builder.build(cid=cid).run())
         logger.debug('Simulation starting')
-        self._config.env.run(until=self.__simulation_time)
+        self._config.env.run(until=self.simulation_time)
         logger.debug('Simulation ended at %d s', self._config.env.now)
         self.__stats.flush()
         if self.debug:
@@ -100,8 +96,8 @@ class Simulation(Base):
         it = self.__stats.sum_histogram('INACTIVITY_TIME') / self.servers
         ast = self.__stats.sum_histogram('AUTO_SHUTDOWN_TIME') / self.servers
         idt = self.__stats.sum_histogram('IDLE_TIME') / self.servers
-        val1 = abs((ust + at + it) / self.__simulation_time - 1)
-        val2 = abs((ust + at + idt + ast) / self.__simulation_time - 1)
+        val1 = abs((ust + at + it) / self.simulation_time - 1)
+        val2 = abs((ust + at + idt + ast) / self.simulation_time - 1)
         val3 = abs((ast + idt) / it - 1)
 
         if val1 > 0.1:
@@ -118,8 +114,8 @@ class Simulation(Base):
         """Indicates how te simulation is progressing."""
         while True:
             logger.debug('%.2f%% completed',
-                         self._config.env.now / self.__simulation_time * 100.0)
-            yield self._config.env.timeout(self.__simulation_time / 10.0)
+                         self._config.env.now / self.simulation_time * 100.0)
+            yield self._config.env.timeout(self.simulation_time / 10.0)
 
 
 # pylint: disable=invalid-name
@@ -148,14 +144,19 @@ def runner() -> None:
     confidence_width = configuration.get_arg('max_confidence_interval_width')
     run = custom_injector.get(profile)(simulator.run)
 
-    logger.info('Going to simulate %d users', simulator.servers)
+    logger.info('Simulating %d users during %d s (%.1f week(s)).',
+                simulator.servers, simulator.simulation_time,
+                simulator.simulation_time / 604800)
+    logger.info(
+        'User Satisfaction (US) target is %d%%.', simulator.target_satisfaction)
     if simulator.timeout < math.inf:
-        logger.info('Average global timeout would be %.2f s', simulator.timeout)
+        logger.info('Average global timeout will be %.2f s (%.2f min).',
+                    simulator.timeout, simulator.timeout / 60)
     (s, i, t), c = run(), 1
+    logger.info('Run 1: US = %.2f%%, RI = %.2f%%, timeout = %.2f', s, i, t)
 
     if max_runs == 1:
-        logger.warning('Only one run, cannot calculate confidence intervals.')
-        logger.info('Run 1: US = %.2f%%, RI = %.2f%%, timeout = %.2f', s, i, t)
+        logger.warning('Only one run, cannot calculate confidence intervals')
     else:
         satisfaction = confidence_interval(s)
         inactivity = confidence_interval(i)
@@ -165,11 +166,11 @@ def runner() -> None:
             (s, i, t), c = run(), c + 1
             (xs, ds) = satisfaction.send(s)
             (xi, di) = inactivity.send(i)
-            logger.info('Run %d: US = %.2f%% (d = %.4f), '
-                        'RI = %.2f%% (d = %.4f), timeout = %.2f',
+            logger.info('Run %d: US = %.2f%% (d = %.3f), '
+                        'RI = %.2f%% (d = %.3f), timeout = %.2f',
                         c, xs, ds, xi, di, t)
-            if c > max_runs:
-                logger.warning('Finishing runs due to inconvergence.')
+            if c >= max_runs:
+                logger.warning('Max runs (%d) reached, stopping.', max_runs)
                 break
         logger.info('All runs done (%d).', c)
 
@@ -182,5 +183,5 @@ def runner() -> None:
         plot.plot_all('INACTIVITY_TIME')
         plot.plot_all('IDLE_TIME')
 
-    logger.info(
+    logger.debug(
         'Process memory footprint: %.2f MiB', memory_profiler.memory_usage()[0])
