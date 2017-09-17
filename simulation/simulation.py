@@ -65,17 +65,17 @@ class Simulation(Base):
 
     def run(self) -> typing.Tuple[float, float]:
         """Sets up and starts a new simulation."""
-        self._config.reset()
+        self.reset()
         self.__stats.new_run()
         if self.debug:
-            self._config.env.process(self.__monitor_time())
+            self.env.process(self.__monitor_time())
         for cid in self.__training_distribution.servers:
             if cid in self.__activity_distribution.servers:
-                self._config.env.process(
+                self.env.process(
                     self.__user_builder.build(cid=cid).run())
         logger.debug('Simulation starting')
-        self._config.env.run(until=self.simulation_time)
-        logger.debug('Simulation ended at %d s', self._config.env.now)
+        self.env.run(until=self.simulation_time)
+        logger.debug('Simulation ended at %d s', self.env.now)
         self.__stats.flush()
         if self.debug:
             self.__validate_results()
@@ -114,8 +114,8 @@ class Simulation(Base):
         """Indicates how te simulation is progressing."""
         while True:
             logger.debug('%.2f%% completed',
-                         self._config.env.now / self.simulation_time * 100.0)
-            yield self._config.env.timeout(self.simulation_time / 10.0)
+                         self.env.now / self.simulation_time * 100.0)
+            yield self.env.timeout(self.simulation_time / 10.0)
 
 
 # pylint: disable=invalid-name

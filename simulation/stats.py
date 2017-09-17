@@ -98,7 +98,7 @@ class Stats(Base):
         if key not in self.__storage:
             self.__storage[key] = self.__histogram_builder.build(name=key)
         if timestamp is None:
-            timestamp = self._config.env.now
+            timestamp = self.env.now
         self.__storage[key].append(timestamp, cid, value)
 
     def get_all_hourly_histograms(self, key: str) -> typing.List[numpy.ndarray]:

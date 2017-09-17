@@ -51,7 +51,7 @@ class Computer(Base):
         self.__status = ComputerStatus.on
         self.__last_auto_shutdown = None
         self.__started = False
-        self.__idle_timer = self._config.env.process(self.__idle_timer_runner())
+        self.__idle_timer = self.env.process(self.__idle_timer_runner())
 
     @property
     def cid(self) -> str:
@@ -67,7 +67,7 @@ class Computer(Base):
                 and self.__last_auto_shutdown is not None):
             self.__stats.append(
                 'AUTO_SHUTDOWN_TIME',
-                self._config.env.now - self.__last_auto_shutdown,
+                self.env.now - self.__last_auto_shutdown,
                 self.__computer_id, timestamp=self.__last_auto_shutdown)
             self.__last_auto_shutdown = None
         self.__status = status
@@ -80,12 +80,11 @@ class Computer(Base):
             self.__idle_timer.interrupt()
         activity_time = (
             self.__activity_distribution.random_activity_for_timestamp(
-                self.__computer_id, self._config.env.now))
+                self.__computer_id, self.env.now))
         self.__stats.append(
-            'ACTIVITY_TIME', activity_time, self.__computer_id,
-            timestamp=self._config.env.now)
-        yield self._config.env.timeout(activity_time)
-        self.__idle_timer = self._config.env.process(self.__idle_timer_runner())
+            'ACTIVITY_TIME', activity_time, self.__computer_id)
+        yield self.env.timeout(activity_time)
+        self.__idle_timer = self.env.process(self.__idle_timer_runner())
 
     def __idle_timeout(self) -> float:
         """Indicates this computer idle time."""
@@ -95,22 +94,21 @@ class Computer(Base):
 
     def __idle_timer_runner(self) -> None:
         """Process for the idle timer control."""
-        if self._config.get_arg('disable_auto_shutdown'):
+        if self.get_arg('disable_auto_shutdown'):
             return
         if not self.__started and self.get_arg('fleet_generator'):
             # If generating a random fleet, we start inactive until Monday.
             try:
                 self.__started = True
-                yield self._config.env.timeout((24 + 8) * 3600)
+                yield self.env.timeout((24 + 8) * 3600)
             except simpy.Interrupt:
                 pass
         try:
-            idle_start = self._config.env.now
-            self.__stats.append('IDLE_TIME', self._config.env.now - idle_start,
-                                self.__computer_id, timestamp=idle_start)
-            yield self._config.env.timeout(self.__idle_timeout())
+            idle_timeout = self.__idle_timeout()
+            self.__stats.append('IDLE_TIME', idle_timeout, self.__computer_id)
+            yield self.env.timeout(idle_timeout)
             self.change_status(ComputerStatus.off,
                                interrupt_idle_timer=False)
-            self.__last_auto_shutdown = self._config.env.now
+            self.__last_auto_shutdown = self.env.now
         except simpy.Interrupt:
             pass

@@ -15,6 +15,7 @@
 """Base objects for the simulation."""
 
 import injector
+import simpy
 from simulation.configuration import Configuration
 
 
@@ -24,16 +25,25 @@ class Base(object):
     @injector.inject
     def __init__(self, config: Configuration):
         super(Base, self).__init__()
-        self._config = config
+        self.__config = config
 
     @property
-    def debug(self):
+    def debug(self) -> bool:
         """Indicates if this is a debug run."""
         return bool(self.get_arg('debug'))
 
+    @property
+    def env(self) -> simpy.Environment:
+        """SimPy environment currently in use."""
+        return self.__config.env
+
+    def reset(self):
+        """Resets the simulation for a new run."""
+        self.__config.reset()
+
     def get_config(self, key: str, section: str = 'simulation') -> str:
         """Retrieves a key from the configuration."""
-        return self._config.get_config(key, section)
+        return self.__config.get_config(key, section)
 
     def get_config_int(self, key: str, section: str = 'simulation') -> int:
         """Retrieves a key from the configuration (converts to int)."""
@@ -45,4 +55,4 @@ class Base(object):
 
     def get_arg(self, key: str) -> str:
         """Gets the value of a command line argument."""
-        return self._config.get_arg(key)
+        return self.__config.get_arg(key)

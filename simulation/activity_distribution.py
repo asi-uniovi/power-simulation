@@ -125,7 +125,7 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
         if all_timespan:
             return self.__optimal_timeout_all(cid)
         return self.__optimal_timeout_timestamp(
-            cid, *timestamp_to_day(self._config.env.now))
+            cid, *timestamp_to_day(self.env.now))
 
     def random_activity_for_timestamp(self, cid: str, timestamp: int) -> float:
         """Queries the activity distribution and generates a random sample."""

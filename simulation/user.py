@@ -51,7 +51,7 @@ class User(Base):
         """Generates requests af the defined frequency."""
         if self.get_arg('fleet_generator'):
             # If generating a random fleet, we start inactive until Monday.
-            yield self._config.env.timeout((24 + 8) * 3600)
+            yield self.env.timeout((24 + 8) * 3600)
         while True:
             if self.__indicate_shutdown():
                 logger.debug('User is shutting down PC %s', self.__computer.cid)
@@ -59,20 +59,20 @@ class User(Base):
                 self.__computer.change_status(ComputerStatus.off)
                 self.__stats.append(
                     'USER_SHUTDOWN_TIME', shutdown_time,
-                    self.__computer.cid, timestamp=self._config.env.now)
-                yield self._config.env.timeout(shutdown_time)
-            yield self._config.env.process(self.__computer.serve())
+                    self.__computer.cid, timestamp=self.env.now)
+                yield self.env.timeout(shutdown_time)
+            yield self.env.process(self.__computer.serve())
             inactivity_time = (self.__activity_distribution
                                .random_inactivity_for_timestamp(
-                                   self.__computer.cid, self._config.env.now))
+                                   self.__computer.cid, self.env.now))
             self.__stats.append(
                 'INACTIVITY_TIME', inactivity_time,
-                self.__computer.cid, timestamp=self._config.env.now)
-            yield self._config.env.timeout(inactivity_time)
+                self.__computer.cid, timestamp=self.env.now)
+            yield self.env.timeout(inactivity_time)
 
     def __indicate_shutdown(self) -> bool:
         """Indicates whether we need to shutdown or not."""
-        hour = timestamp_to_day(self._config.env.now)
+        hour = timestamp_to_day(self.env.now)
         if self.__current_hour != hour:
             self.__current_hour = hour
             self.__off_frequency = (
@@ -88,6 +88,6 @@ class User(Base):
         try:
             return numpy.around(
                 self.__activity_distribution.off_interval_for_timestamp(
-                    self.__computer.cid, self._config.env.now))
+                    self.__computer.cid, self.env.now))
         except TypeError:
             return 0
