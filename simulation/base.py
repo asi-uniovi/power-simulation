@@ -37,7 +37,7 @@ class Base(object):
         """SimPy environment currently in use."""
         return self.__config.env
 
-    def reset(self):
+    def reset(self) -> None:
         """Resets the simulation for a new run."""
         self.__config.reset()
 
