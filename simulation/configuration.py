@@ -40,7 +40,7 @@ def positive_float(x: str) -> float:
 
 
 @injector.singleton
-class Configuration:
+class Configuration(object):
     """Wrapper for the command line arguments and other global configs."""
 
     def __init__(self):
