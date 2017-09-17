@@ -72,43 +72,55 @@ class Histogram(Base):
                 self.__write_cache)
             self.__write_cache = []
 
-    def get_all_hourly_histograms(self) -> typing.List[numpy.ndarray]:
+    def get_all_hourly_histograms(
+            self, run: int = None) -> typing.List[numpy.ndarray]:
         """Gets all the subhistograms per hour."""
+        if run is None:
+            run = self.runs()
         self.flush()
         self.__cursor.execute(
             '''SELECT hour, value
                  FROM histogram
                 WHERE histogram = ?
+                      AND run = ?
              ORDER BY hour ASC;''',
-            (self.__name,))
+            (self.__name, run))
         dct = {i: numpy.ascontiguousarray([i[1] for i in g])
                for i, g in itertools.groupby(
                    self.__cursor.fetchall(), operator.itemgetter(0))}
         return [dct.get(i, numpy.asarray([])) for i in range(168)]
 
-    def get_all_histogram(self, cid: str = None) -> numpy.ndarray:
+    def get_all_histogram(
+            self, cid: str = None, run: int = None) -> numpy.ndarray:
         """Gets all the data from the histogram."""
+        if run is None:
+            run = self.runs()
         self.flush()
         if cid is None:
             self.__cursor.execute(
                 '''SELECT value
                      FROM histogram
-                    WHERE histogram = ?;''',
-                (self.__name,))
+                    WHERE histogram = ?
+                          AND run = ?;''',
+                (self.__name, run))
         else:
             self.__cursor.execute(
                 '''SELECT value
                      FROM histogram
                     WHERE histogram = ?
-                          AND computer = ?;''',
-                (self.__name, cid))
+                          AND computer = ?
+                          AND run = ?;''',
+                (self.__name, cid, run))
         return numpy.ascontiguousarray(
             [i['value'] for i in self.__cursor.fetchall()])
 
-    def get_all_hourly_summaries(self) -> typing.List[typing.Dict[str, float]]:
+    def get_all_hourly_summaries(
+            self, run: int = None) -> typing.List[typing.Dict[str, float]]:
         """Gets all the summaries per hour."""
+        if run is None:
+            run = self.runs()
         ret = []
-        for hist in self.get_all_hourly_histograms():
+        for hist in self.get_all_hourly_histograms(run):
             dct = {}
             for summary in ('mean', 'median'):
                 try:
@@ -118,43 +130,52 @@ class Histogram(Base):
             ret.append(dct)
         return ret
 
-    def get_all_hourly_count(self) -> typing.List[int]:
+    def get_all_hourly_count(self, run: int = None) -> typing.List[int]:
         """Gets all the count per hour."""
+        if run is None:
+            run = self.runs()
         self.flush()
         self.__cursor.execute(
             '''SELECT hour, COUNT(*) AS count
                  FROM histogram
                 WHERE histogram = ?
+                      AND run = ?
              GROUP BY hour
              ORDER BY hour ASC;''',
-            (self.__name,))
+            (self.__name, run))
         dct = dict(self.__cursor.fetchall())
         return [dct.get(i, 0) for i in range(168)]
 
-    def sum_histogram(self, cid: str = None) -> int:
+    def sum_histogram(self, cid: str = None, run: int = None) -> int:
         """Sums up all the elements of this histogram."""
         if cid is None:
             return self.__sum
+        if run is None:
+            run = self.runs()
         self.flush()
         self.__cursor.execute(
             '''SELECT SUM(value) AS sum
                  FROM histogram
                 WHERE histogram = ?
-                      AND computer = ?;''',
-            (self.__name, cid))
+                      AND computer = ?
+                      AND run = ?;''',
+            (self.__name, cid, run))
         return int(self.__cursor.fetchone()['sum'])
 
-    def count_histogram(self, cid: str = None) -> int:
+    def count_histogram(self, cid: str = None, run: int = None) -> int:
         """Counts the number of elements in this histogram."""
         if cid is None:
             return self.__count
+        if run is None:
+            run = self.runs()
         self.flush()
         self.__cursor.execute(
             '''SELECT COUNT(*) AS count
                  FROM histogram
                 WHERE histogram = ?
-                      AND computer = ?;''',
-            (self.__name, cid))
+                      AND computer = ?
+                      AND run = ?;''',
+            (self.__name, cid, run))
         return int(self.__cursor.fetchone()['count'])
 
 
@@ -175,13 +196,13 @@ def create_histogram_tables(conn: sqlite3.Connection) -> None:
           value     REAL    NOT NULL
         );''')
     cursor.execute(
-        'CREATE INDEX i_histogram ON histogram(histogram);')
+        'CREATE INDEX i_hist_run ON histogram(histogram, run);')
     cursor.execute(
-        'CREATE INDEX i_computer ON histogram(computer);')
+        'CREATE INDEX i_comp_run ON histogram(computer, run);')
+    cursor.execute(
+        'CREATE INDEX i_hist_comp_run ON histogram(histogram, computer, run);')
     cursor.execute(
         'CREATE INDEX i_hour ON histogram(hour);')
-    cursor.execute(
-        'CREATE INDEX i_run ON histogram(run);')
     cursor.execute('''
         CREATE TRIGGER t_hour AFTER INSERT ON histogram
         FOR EACH ROW BEGIN
