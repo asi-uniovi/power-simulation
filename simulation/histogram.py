@@ -190,7 +190,8 @@ def create_histogram_tables(conn: sqlite3.Connection) -> None:
     """Creates the tables on the database."""
     cursor = conn.cursor()
     cursor.execute('DROP TRIGGER IF EXISTS t_hour;')
-    cursor.execute('DROP INDEX IF EXISTS i_histogram_hour;')
+    cursor.execute('DROP INDEX IF EXISTS i_hist_run_comp;')
+    cursor.execute('DROP INDEX IF EXISTS i_hist_run_hour;')
     cursor.execute('DROP TABLE IF EXISTS histogram;')
     cursor.execute('''
         CREATE TABLE histogram (
@@ -203,13 +204,9 @@ def create_histogram_tables(conn: sqlite3.Connection) -> None:
           value     REAL    NOT NULL
         );''')
     cursor.execute(
-        'CREATE INDEX i_hist_run ON histogram(histogram, run);')
+        'CREATE INDEX i_hist_run_hour ON histogram(histogram, run, hour);')
     cursor.execute(
-        'CREATE INDEX i_comp_run ON histogram(computer, run);')
-    cursor.execute(
-        'CREATE INDEX i_hist_comp_run ON histogram(histogram, computer, run);')
-    cursor.execute(
-        'CREATE INDEX i_hour ON histogram(hour);')
+        'CREATE INDEX i_hist_run_comp ON histogram(histogram, run, computer);')
     cursor.execute('''
         CREATE TRIGGER t_hour AFTER INSERT ON histogram
         FOR EACH ROW BEGIN
