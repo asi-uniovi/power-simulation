@@ -43,12 +43,12 @@ class Histogram(Base):
         self.__write_cache = []
 
     @classmethod
-    def new_run(cls):
+    def new_run(cls) -> None:
         """Increment the run counter."""
         cls.__run += 1
 
     @classmethod
-    def runs(cls):
+    def runs(cls) -> None:
         """Indicates the number of runs."""
         return cls.__run
 
