@@ -48,7 +48,7 @@ MB = lambda x: x << 20
 def config_logging(config: Configuration) -> None:
     """Sets logging basic config"""
     logging.basicConfig(
-        format='%(levelname)s(%(name)s): %(message)s',
+        format='%(levelname)s: %(message)s',
         level=logging.DEBUG if config.get_arg('debug') else logging.INFO)
     logging.captureWarnings(True)
 
