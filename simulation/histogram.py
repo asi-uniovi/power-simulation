@@ -38,8 +38,6 @@ class Histogram(Base):
         self.__cache_size = self.get_config_int('cache_size', section='stats')
         self.__cursor = conn.cursor()
         self.__name = name
-        self.__sum = 0
-        self.__count = 0
         self.__write_cache = []
 
     @classmethod
@@ -54,8 +52,6 @@ class Histogram(Base):
 
     def append(self, timestamp: int, cid: str, value: float) -> None:
         """Inserts into the histogram, just in cache for now."""
-        self.__sum += value
-        self.__count += 1
         self.__write_cache.append((timestamp, cid, float(value)))
         if len(self.__write_cache) >= self.__cache_size:
             self.flush()
@@ -108,11 +104,10 @@ class Histogram(Base):
                 '''SELECT value
                      FROM histogram
                     WHERE histogram = ?
-                          AND computer = ?
-                          AND run = ?;''',
-                (self.__name, cid, run))
-        return numpy.ascontiguousarray(
-            [i['value'] for i in self.__cursor.fetchall()])
+                          AND run = ?
+                          AND computer = ?;''',
+                (self.__name, run, cid))
+        return numpy.asarray([i['value'] for i in self.__cursor.fetchall()])
 
     def get_all_hourly_summaries(
             self, run: int = None) -> typing.List[typing.Dict[str, float]]:
@@ -148,34 +143,46 @@ class Histogram(Base):
 
     def sum_histogram(self, cid: str = None, run: int = None) -> int:
         """Sums up all the elements of this histogram."""
-        if cid is None:
-            return self.__sum
         if run is None:
             run = self.runs()
         self.flush()
-        self.__cursor.execute(
-            '''SELECT SUM(value) AS sum
-                 FROM histogram
-                WHERE histogram = ?
-                      AND computer = ?
-                      AND run = ?;''',
-            (self.__name, cid, run))
+        if cid is None:
+            self.__cursor.execute(
+                '''SELECT SUM(value) AS sum
+                     FROM histogram
+                    WHERE histogram = ?
+                          AND run = ?;''',
+                (self.__name, run))
+        else:
+            self.__cursor.execute(
+                '''SELECT SUM(value) AS sum
+                     FROM histogram
+                    WHERE histogram = ?
+                          AND run = ?
+                          AND computer = ?;''',
+                (self.__name, run, cid))
         return int(self.__cursor.fetchone()['sum'])
 
     def count_histogram(self, cid: str = None, run: int = None) -> int:
         """Counts the number of elements in this histogram."""
-        if cid is None:
-            return self.__count
         if run is None:
             run = self.runs()
         self.flush()
-        self.__cursor.execute(
-            '''SELECT COUNT(*) AS count
-                 FROM histogram
-                WHERE histogram = ?
-                      AND computer = ?
-                      AND run = ?;''',
-            (self.__name, cid, run))
+        if cid is None:
+            self.__cursor.execute(
+                '''SELECT COUNT(*) AS count
+                     FROM histogram
+                    WHERE histogram = ?
+                          AND run = ?;''',
+                (self.__name, run))
+        else:
+            self.__cursor.execute(
+                '''SELECT COUNT(*) AS count
+                     FROM histogram
+                    WHERE histogram = ?
+                          AND run = ?
+                          AND computer = ?;''',
+                (self.__name, run, cid))
         return int(self.__cursor.fetchone()['count'])
 
 
