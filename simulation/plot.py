@@ -81,21 +81,22 @@ class Plot(Base):
     def plot_mean_medians_comparison(self, histogram: str) -> None:
         """Generates a plot to compare means and medians."""
         hists = [(self.__stats.get_all_hourly_summaries(histogram),
-                  'simulation')]
-        if not self.get_arg('fleet_generator'):
+                  'simulation', 3)]
+        if not self.get_arg('fleet_generator') and histogram not in (
+                'AUTO_SHUTDOWN_TIME', 'IDLE_TIME'):
             hists.append(
                 (self.__training_distribution.get_all_hourly_summaries(
-                    histogram), 'data'))
+                    histogram), 'data', 1))
 
         for s in ('mean', 'median'):
             fig, ax = plt.subplots()
             ax.set_title('%s (%s)' % (histogram, s))
             ax.set_xlim(0, 7 * 24 - 1)
 
-            for d, label in hists:
+            for d, label, width in hists:
                 f = [i[s] for i in d]
                 ax.plot(numpy.linspace(1, len(f), len(f)), f, label=label,
-                        linewidth=3)
+                        linewidth=width)
 
             _format_ax_line(ax)
             fig.set_size_inches(6, 5)
@@ -113,7 +114,8 @@ class Plot(Base):
         ax.plot(numpy.linspace(1, len(hist), len(hist)),
                 hist, label='simulation', linewidth=3)
 
-        if not self.get_arg('fleet_generator'):
+        if not self.get_arg('fleet_generator') and histogram not in (
+                'AUTO_SHUTDOWN_TIME', 'IDLE_TIME'):
             data = self.__training_distribution.get_all_hourly_count(histogram)
             ax.plot(numpy.linspace(1, len(data), len(data)), data, label='data')
 
@@ -125,6 +127,9 @@ class Plot(Base):
 
     def plot_ks_test(self, histogram: str) -> None:
         """Generates a plot for the K-S test for a given histogram."""
+        if histogram in ('AUTO_SHUTDOWN_TIME', 'IDLE_TIME'):
+            return
+
         fig, ax1 = plt.subplots()
         ax1.set_title('%s (K-S)' % histogram)
         ax1.set_xlim(0, 7 * 24 - 1)
