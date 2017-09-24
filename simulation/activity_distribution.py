@@ -183,9 +183,13 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
         transposed = self.__transpose_histogram()
         for day in range(7):
             for hour in range(24):
-                hours.append(
-                    sum(len(i.resolve_key(key))
-                        for i in transposed.get(day, {}).get(hour, [])))
+                total = sum(len(i.resolve_key(key))
+                            for i in transposed.get(day, {}).get(hour, []))
+                if not self.get_arg('per_hour'):
+                    total /= 168
+                if not self.get_arg('per_pc'):
+                    total /= len(self.__servers)
+                hours.append(total)
         return hours
 
     def get_all_hourly_distributions(
