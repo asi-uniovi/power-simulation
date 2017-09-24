@@ -42,13 +42,13 @@ def generate_data(args):
             for day in DAYS:
                 for hour in hours:
                     if data_key != 'OffFrequencies':
-                        l = [getattr(args, data_type) * args.event_count]
+                        i = [getattr(args, data_type) * args.event_count]
                     else:
-                        l = [getattr(args, data_type)] * args.event_count
+                        i = [getattr(args, data_type)] * args.event_count
                     intervals.append({
                         'Day': day,
                         'Hour': hour,
-                        'Intervals': l,
+                        'Intervals': i,
                     })
             data['data'] = intervals
             trace.append(data)
