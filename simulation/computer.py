@@ -58,7 +58,7 @@ class Computer(Base):
         """Read only computer ID."""
         return self.__computer_id
 
-    def change_status(self, status: 'Computer',
+    def change_status(self, status: ComputerStatus,
                       interrupt_idle_timer: bool = True) -> None:
         """Changes the state of the computer, and takes any side action."""
         if interrupt_idle_timer and self.__idle_timer.is_alive:
