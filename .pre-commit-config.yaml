@@ -22,7 +22,6 @@ repos:
     -   id: fix-encoding-pragma
         args: [--remove]
     -   id: forbid-new-submodules
-    -   id: pretty-format-json
     -   id: requirements-txt-fixer
     -   id: trailing-whitespace
 -   repo: local
