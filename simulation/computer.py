@@ -105,10 +105,14 @@ class Computer(Base):
                 pass
         try:
             idle_timeout = self.__idle_timeout()
-            self.__stats.append('IDLE_TIME', idle_timeout, self.__computer_id)
+            idle_start = self.env.now
             yield self.env.timeout(idle_timeout)
+            self.__stats.append('IDLE_TIME', idle_timeout, self.__computer_id,
+                                timestamp=idle_start)
             self.change_status(ComputerStatus.off,
                                interrupt_idle_timer=False)
             self.__last_auto_shutdown = self.env.now
         except simpy.Interrupt:
-            pass
+            # When idle is interrupted, record how much it lasted.
+            self.__stats.append('IDLE_TIME', self.env.now - idle_start,
+                                self.__computer_id, timestamp=idle_start)
