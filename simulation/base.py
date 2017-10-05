@@ -17,6 +17,7 @@
 import injector
 import simpy
 from simulation.configuration import Configuration
+from simulation.static import WEEK
 
 
 class Base(object):
@@ -41,6 +42,16 @@ class Base(object):
     def runs(self) -> int:
         """Indicates the number of runs."""
         return self.__config.runs
+
+    @property
+    def simulation_time(self) -> int:
+        """Indicates the simulation duration."""
+        return self.get_config_int('simulation_time')
+
+    @property
+    def simulation_weeks(self) -> float:
+        """Indicates the simulation duration in weeks."""
+        return self.simulation_time / WEEK(1)
 
     def new_run(self) -> None:
         """Start a new simulation run."""

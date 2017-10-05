@@ -28,7 +28,7 @@ from simulation.configuration import Configuration
 from simulation.histogram import create_histogram_tables
 from simulation.module import Module
 from simulation.plot import Plot
-from simulation.static import config_logging, profile
+from simulation.static import config_logging, profile, WEEK
 from simulation.stats import Stats
 from simulation.user import User
 
@@ -49,7 +49,6 @@ class Simulation(Base):
         self.__user_builder = user_builder
         self.__plot = plot
         self.__stats = stats
-        self.simulation_time = self.get_config_int('simulation_time')
         self.target_satisfaction = self.get_config_int('target_satisfaction')
         self.__activity_distribution.intersect(self.__training_distribution)
 
@@ -145,7 +144,7 @@ def runner() -> None:
 
     logger.info('Simulating %d users during %d s (%.1f week(s)).',
                 simulator.servers, simulator.simulation_time,
-                simulator.simulation_time / 604800)
+                simulator.simulation_time / WEEK(1))
     logger.info(
         'User Satisfaction (US) target is %d%%.', simulator.target_satisfaction)
     if simulator.timeout < math.inf:
