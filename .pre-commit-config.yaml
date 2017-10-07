@@ -32,3 +32,8 @@ repos:
         entry: python -m pylint.__main__
         language: system
         files: \.py$
+    -   id: system
+        name: pytest
+        entry: pytest
+        language: system
+        files: \.py$
