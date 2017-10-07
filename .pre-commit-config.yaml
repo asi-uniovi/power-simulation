@@ -22,6 +22,7 @@ repos:
     -   id: fix-encoding-pragma
         args: [--remove]
     -   id: forbid-new-submodules
+    -   id: name-tests-test
     -   id: requirements-txt-fixer
     -   id: trailing-whitespace
 -   repo: local
