@@ -15,6 +15,7 @@
 """User (in)activity distribution parsing, fitting and generation."""
 
 import abc
+import functools
 import itertools
 import json
 import logging
@@ -64,22 +65,23 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
     """
 
     @injector.inject
+    @injector.noninjectable('config_section')
     def __init__(self, model_builder: injector.AssistedBuilder[Model],
-                 do_merge: bool, trace_file: str):
+                 config_section: str):
         """All the data of this object is loaded from the config object."""
         super(ActivityDistributionBase, self).__init__()
         if self.get_arg('fleet_generator'):
             return
-        self.__model_builder = model_builder
-        self.__do_merge = do_merge
-        self.__trace_file = self.get_config(trace_file, section='trace')
         self.__target_satisfaction = self.get_config_int('target_satisfaction')
         self.__satisfaction_threshold = self.get_config_int(
-            'satisfaction_threshold', section='stats')
-        self.__noise_threshold = self.get_config_float(
-            'noise_threshold', section='trace')
-        self.__xmin = self.get_config_float('xmin', section='trace')
-        self.__xmax = self.get_config_float('xmax', section='trace')
+            'satisfaction_threshold')
+        self.__trace_file = self.get_config('file', section=config_section)
+        xmin = self.get_config_float('xmin', section=config_section)
+        xmax = self.get_config_float('xmax', section=config_section)
+        self.__xmin = xmin
+        self.__xmax = xmax
+        self.__model_builder = functools.partial(
+            model_builder.build, xmax=xmax, xmin=xmin)
         self.__servers = []
         self.__empty_servers = []
         self.__models = {}
@@ -141,10 +143,9 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
             cid, *timestamp_to_day(timestamp)).inactivity
         rnd_inactivity = draw_from_distribution(
             distribution, min_value=self.__xmin, max_value=self.__xmax)
-        if self.__noise_threshold is not None:
-            while rnd_inactivity > self.__noise_threshold:
-                rnd_inactivity = draw_from_distribution(
-                    distribution, min_value=self.__xmin, max_value=self.__xmax)
+        while rnd_inactivity > self.__xmax:
+            rnd_inactivity = draw_from_distribution(
+                distribution, min_value=self.__xmin, max_value=self.__xmax)
         return rnd_inactivity
 
     def off_interval_for_timestamp(self, cid: str, timestamp: int) -> float:
@@ -199,7 +200,7 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
         transposed = self.__transpose_histogram()
         for day in range(7):
             for hour in range(24):
-                merged_model = self.__model_builder.build()
+                merged_model = self.__model_builder()
                 for i in transposed.get(day, {}).get(hour, []):
                     merged_model.extend(i)
                 hours.append(merged_model.resolve_key(key))
@@ -207,7 +208,7 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
 
     def __optimal_timeout_all(self, cid: str) -> float:
         """Calculate the optimal timeout for all the simulation."""
-        flat_model = self.__model_builder.build()
+        flat_model = self.__model_builder()
         for day in self.__models[cid].values():
             for model in day.values():
                 flat_model.extend(model)
@@ -284,7 +285,7 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
         models = {}
         for day, hours in histogram.items():
             for hour, dct in hours.items():
-                model = self.__model_builder.build(
+                model = self.__model_builder(
                     inactivity=dct['InactivityIntervals'],
                     activity=dct['ActivityIntervals'],
                     off_duration=dct['OffIntervals'],
@@ -304,18 +305,17 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
 
     def __merge_histograms(self) -> None:
         """Merges histograms to be global or per PC/hour."""
-        if self.__do_merge:
-            if not self.get_arg('per_hour'):
-                self.__merge_per_hour()
-            if not self.get_arg('per_pc'):
-                self.__merge_per_pc()
+        if not self.get_arg('per_hour'):
+            self.__merge_per_hour()
+        if not self.get_arg('per_pc'):
+            self.__merge_per_pc()
 
     def __merge_per_hour(self) -> None:
         """Merge so all hours have the same model."""
         logger.debug('Merging histogram per hour.')
         merged = {}
         for cid, days in self.__models.items():
-            merged_model = self.__model_builder.build()
+            merged_model = self.__model_builder()
             for day, hours in days.items():
                 for hour, model in hours.items():
                     merged_model.extend(model)
@@ -333,7 +333,7 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
             for day, hours in days.items():
                 for hour, model in hours.items():
                     merged.setdefault(day, {}).setdefault(
-                        hour, self.__model_builder.build()).extend(model)
+                        hour, self.__model_builder()).extend(model)
         for cid in self.__models:
             self.__models[cid] = merged
 
@@ -372,9 +372,8 @@ class ActivityDistribution(ActivityDistributionBase):
     """Activity distribution for tracing purposes."""
 
     def __init__(self):
-        """All the data of this object is loaded from the config object."""
         super(ActivityDistribution, self).__init__(
-            do_merge=False, trace_file='trace_file')
+            config_section='activity_distribution')
 
 
 @injector.singleton
@@ -382,9 +381,8 @@ class TrainingDistribution(ActivityDistributionBase):
     """Activity distribution for training purposes."""
 
     def __init__(self):
-        """All the data of this object is loaded from the config object."""
         super(TrainingDistribution, self).__init__(
-            do_merge=True, trace_file='training_file')
+            config_section='training_distribution')
 
 
 @injector.singleton

@@ -30,9 +30,10 @@ class Model(Base):
     functionality like timeout threshold calculation.
     """
 
-    def __init__(self, inactivity: typing.List=None, activity: typing.List=None,
-                 off_duration: typing.List=None,
-                 off_fraction: typing.List=None):
+    # pylint: disable=too-many-arguments
+    def __init__(self, xmax: float, xmin: float, inactivity: typing.List = None,
+                 activity: typing.List = None, off_duration: typing.List = None,
+                 off_fraction: typing.List = None):
         super(Model, self).__init__()
         self.__inactivity = EmpiricalDistribution(inactivity or [])
         self.__activity = EmpiricalDistribution(activity or [])
@@ -40,10 +41,10 @@ class Model(Base):
         self.__off_fraction = off_fraction or []
         self.__optimal_timeout = None
         self.__satisfaction_threshold = self.get_config_int(
-            'satisfaction_threshold', section='stats')
+            'satisfaction_threshold')
         self.__target_satisfaction = self.get_config_int('target_satisfaction')
-        self.__xmax = self.get_config_float('xmax', section='trace')
-        self.__xmin = self.get_config_float('xmin', section='trace')
+        self.__xmax = xmax
+        self.__xmin = xmin
 
     @property
     def inactivity(self) -> EmpiricalDistribution:

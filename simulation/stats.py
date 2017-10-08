@@ -36,10 +36,9 @@ class Stats(Base):
         super(Stats, self).__init__()
         self.__training_distribution = distr_factory(training=True)
         self.__histogram_builder = historgram_builder
-        self.__default_timeout = self.get_config_int('default_timeout')
         self.__target_satisfaction = self.get_config_int('target_satisfaction')
         self.__satisfaction_threshold = self.get_config_int(
-            'satisfaction_threshold', section='stats')
+            'satisfaction_threshold')
         self.__storage = {}
 
     def _idle_timeout(self, cid: str = None) -> float:
@@ -50,10 +49,8 @@ class Stats(Base):
 
     def optimal_idle_timeout(self) -> float:
         """Optimal idle timeout for the simulated data (a posteriori)."""
-        inactivity = self.get_all_histogram('INACTIVITY_TIME')
-        if inactivity.size == 0:
-            return self.__default_timeout
-        return numpy.percentile(inactivity, self.__target_satisfaction)
+        return numpy.percentile(self.get_all_histogram('INACTIVITY_TIME'),
+                                self.__target_satisfaction)
 
     def user_satisfaction(self) -> float:
         """Calculates de user satisfaction."""
