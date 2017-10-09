@@ -27,7 +27,7 @@ from simulation.base import Base
 from simulation.distribution import EmpiricalDistribution
 from simulation.fleet_generator import FleetGenerator
 from simulation.model import Model
-from simulation.static import DAYS
+from simulation.static import DAYS, WEEK
 from simulation.static import timestamp_to_day
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
@@ -76,12 +76,12 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
         self.__satisfaction_threshold = self.get_config_int(
             'satisfaction_threshold')
         self.__trace_file = self.get_config('file', section=config_section)
-        xmin = self.get_config_float('xmin', section=config_section)
-        xmax = self.get_config_float('xmax', section=config_section)
-        self.__xmin = xmin
-        self.__xmax = xmax
+        self.__xmin = self.get_config_float('xmin', section=config_section)
+        self.__xmax = self.get_config_float('xmax', section=config_section)
+        self.__duration = self.get_config_float(
+            'duration', section=config_section)
         self.__model_builder = functools.partial(
-            model_builder.build, xmax=xmax, xmin=xmin)
+            model_builder.build, xmax=self.__xmax, xmin=self.__xmin)
         self.__servers = []
         self.__empty_servers = []
         self.__models = {}
@@ -186,10 +186,8 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
             for hour in range(24):
                 total = sum(len(i.resolve_key(key))
                             for i in transposed.get(day, {}).get(hour, []))
-                if not self.get_arg('per_hour'):
-                    total /= 168
-                if not self.get_arg('per_pc'):
-                    total /= len(self.__servers)
+                total /= len(self.__servers)
+                total /= self.__duration / WEEK(1)
                 hours.append(total)
         return hours
 
