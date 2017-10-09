@@ -1,6 +1,6 @@
 repos:
 -   repo: git://github.com/pre-commit/pre-commit-hooks
-    sha: v0.9.5
+    sha: v1.0.0
     hooks:
     -   id: check-added-large-files
         args: ['--maxkb=51200']
@@ -33,7 +33,8 @@ repos:
         language: system
         files: \.py$
     -   id: system
-        name: pytest
-        entry: pytest
+        name: py.test
+        entry: py.test --color=yes
         language: system
         files: \.py$
+        pass_filenames: false
