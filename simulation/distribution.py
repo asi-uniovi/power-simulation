@@ -86,8 +86,7 @@ class EmpiricalDistribution:
             self.__data, numpy.linspace(0, 1, self.__data.size), k=1)
 
     def __len__(self) -> int:
-        return self.__data.size
+        return len(self.__data)
 
     def __iter__(self) -> float:
-        for i in self.__data:
-            yield i
+        yield from self.__data
