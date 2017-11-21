@@ -5,7 +5,6 @@ repos:
     -   id: check-added-large-files
         args: ['--maxkb=51200']
     -   id: check-ast
-        language_version: python3.6
     -   id: check-byte-order-marker
     -   id: check-case-conflict
     -   id: check-docstring-first
@@ -15,7 +14,6 @@ repos:
     -   id: check-symlinks
     -   id: check-yaml
     -   id: debug-statements
-        language_version: python3.6
     -   id: detect-private-key
     -   id: double-quote-string-fixer
     -   id: end-of-file-fixer
