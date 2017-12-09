@@ -23,6 +23,13 @@ import injector
 import numpy
 from simulation.configuration import Configuration
 
+HISTOGRAMS = sorted((
+    'USER_SHUTDOWN_TIME',
+    'AUTO_SHUTDOWN_TIME',
+    'ACTIVITY_TIME',
+    'INACTIVITY_TIME',
+))
+
 T = typing.TypeVar('T')
 
 DAYS = {
@@ -86,6 +93,13 @@ def timestamp_to_day(timestamp: int) -> typing.Tuple[int, int]:
     """Converts from a simulation timestamp to the pair (day, hour)."""
     day = int((timestamp % WEEK(1)) // DAY(1))
     hour = int((timestamp % DAY(1)) // HOUR(1))
+    return day, hour
+
+
+def hour_to_day(hour: int) -> typing.Tuple[int, int]:
+    """Converts from a simulation hour to the pair (day, hour)."""
+    day = int(hour // 24)
+    hour = int(hour % 24)
     return day, hour
 
 

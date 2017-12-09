@@ -27,7 +27,9 @@ from simulation.base import Base
 from simulation.distribution import EmpiricalDistribution
 from simulation.fleet_generator import FleetGenerator
 from simulation.model import Model
-from simulation.static import DAYS, WEEK
+from simulation.static import DAYS
+from simulation.static import HISTOGRAMS
+from simulation.static import WEEK
 from simulation.static import timestamp_to_day
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
@@ -160,23 +162,20 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
         return numpy.mean(
             self.__distribution_for_hour(cid, day, hour).off_fraction)
 
-    def get_all_hourly_summaries(
-            self, key: str, summaries: dict = ('mean', 'median')
-    ) -> typing.List[typing.Dict[str, float]]:
-        """Returns the summaries per hour."""
-        hours = []
+    def get_all_hourly_percentiles(
+            self, key: str, percentile: float) -> typing.List[float]:
+        """Returns the requested percentile per hour."""
+        percentiles = []
         transposed = self.__transpose_histogram()
         for day in range(7):
             for hour in range(24):
-                data = numpy.array(
-                    [d for i in transposed.get(day, {}).get(hour, [])
-                     for d in i.resolve_key(key)])
-                if data.size > 0:
-                    hours.append(
-                        {s: getattr(numpy, s)(data) for s in summaries})
-                else:
-                    hours.append({s: 0.0 for s in summaries})
-        return hours
+                try:
+                    percentiles.append(numpy.percentile(
+                        [d for i in transposed.get(day, {}).get(hour, [])
+                         for d in i.resolve_key(key)], percentile))
+                except IndexError:
+                    percentiles.append(0.0)
+        return percentiles
 
     def get_all_hourly_count(self, key: str) -> typing.List[int]:
         """Returns the counts per hour."""
@@ -187,22 +186,28 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
                 total = sum(len(i.resolve_key(key))
                             for i in transposed.get(day, {}).get(hour, []))
                 total /= len(self.__servers)
+                if not self.get_arg('per_hour'):
+                    total /= 168
+                if not self.get_arg('per_pc'):
+                    total /= len(self.__servers)
                 total /= self.__duration / WEEK(1)
                 hours.append(total)
         return hours
 
-    def get_all_hourly_distributions(
-            self, key: str) -> typing.List[EmpiricalDistribution]:
-        """Returns the counts per hour."""
-        hours = []
-        transposed = self.__transpose_histogram()
-        for day in range(7):
-            for hour in range(24):
-                merged_model = self.__model_builder()
-                for i in transposed.get(day, {}).get(hour, []):
-                    merged_model.extend(i)
-                hours.append(merged_model.resolve_key(key))
-        return hours
+    def get_all_hourly_distributions(self):
+        """Returns all the intervals per day, hour and key."""
+        transposed = {}
+        for days in self.__models.values():
+            for day, hours in days.items():
+                for hour, model in hours.items():
+                    for key in HISTOGRAMS:
+                        data = model.resolve_key(key).data
+                        if len(data) > 0:  # pylint: disable=len-as-condition
+                            dct = transposed.setdefault(
+                                key, {}).setdefault(day, {})
+                            dct.setdefault(
+                                hour, numpy.append(dct.get(hour, []), data))
+        return transposed
 
     def __optimal_timeout_all(self, cid: str) -> float:
         """Calculate the optimal timeout for all the simulation."""

@@ -174,12 +174,7 @@ def runner() -> None:
 
     if configuration.get_arg('plot'):
         logger.debug('Storing plots.')
-        plot = custom_injector.get(Plot)
-        plot.plot_all('USER_SHUTDOWN_TIME')
-        plot.plot_all('AUTO_SHUTDOWN_TIME')
-        plot.plot_all('ACTIVITY_TIME')
-        plot.plot_all('INACTIVITY_TIME')
-        plot.plot_all('IDLE_TIME')
+        custom_injector.get(Plot).plot_all()
 
     logger.debug(
         'Process memory footprint: %.2f MiB', memory_profiler.memory_usage()[0])

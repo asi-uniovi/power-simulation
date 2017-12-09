@@ -95,11 +95,20 @@ class Stats(Base):
         except KeyError:
             return []
 
-    def get_all_hourly_summaries(
-            self, key: str) -> typing.List[typing.Dict[str, float]]:
-        """Gets all the summaries per hour."""
+    def get_all_hourly_percentiles(
+            self, key: str, percentile: float) -> typing.List[float]:
+        """Gets all the percentiles per hour."""
         try:
-            return self.__storage[key].get_all_hourly_summaries()
+            return self.__storage[key].get_all_hourly_percentiles(percentile)
+        except KeyError:
+            return [0.0] * 7 * 24
+
+    def get_all_events(
+            self, key: str, cid: str = None
+    ) -> typing.List[typing.Tuple[float, float]]:
+        """Gets all events on the histogram with timestamp."""
+        try:
+            return self.__storage[key].get_all_events(cid)
         except KeyError:
             return []
 
@@ -116,6 +125,11 @@ class Stats(Base):
             return self.__storage[key].get_all_hourly_count()
         except KeyError:
             return []
+
+    def get_all_hourly_distributions(self):
+        """Returns all the intervals per day, hour and key."""
+        return {key: hist.get_all_hourly_distributions()
+                for key, hist in self.__storage.items()}
 
     def sum_histogram(self, key: str, cid: str = None) -> float:
         """Sums one histogram elements."""

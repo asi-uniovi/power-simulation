@@ -21,7 +21,9 @@ import typing
 import sqlite3
 import injector
 import numpy
+from simulation.activity_distribution import DistributionFactory
 from simulation.base import Base
+from simulation.static import hour_to_day
 from simulation.static import WEEK
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
@@ -32,12 +34,19 @@ class Histogram(Base):
 
     @injector.inject
     @injector.noninjectable('name')
-    def __init__(self, conn: sqlite3.Connection, name: str):
+    def __init__(self, distr_factory: DistributionFactory,
+                 conn: sqlite3.Connection, name: str):
         super(Histogram, self).__init__()
+        self.__activity_distribution = distr_factory()
         self.__cache_size = self.get_config_int('cache_size', section='stats')
         self.__cursor = conn.cursor()
         self.__name = name
         self.__write_cache = []
+
+    @property
+    def servers(self) -> int:
+        """Number of servers being simulated."""
+        return len(self.__activity_distribution.servers)
 
     def append(self, timestamp: int, cid: str, value: float) -> None:
         """Inserts into the histogram, just in cache for now."""
@@ -75,44 +84,47 @@ class Histogram(Base):
                    self.__cursor.fetchall(), operator.itemgetter(0))}
         return [dct.get(i, numpy.asarray([])) for i in range(168)]
 
-    def get_all_histogram(
-            self, cid: str = None, run: int = None) -> numpy.ndarray:
+    def get_all_events(
+            self, cid: str = None, run: int = None
+    ) -> typing.List[typing.Tuple[float, float]]:
         """Gets all the data from the histogram."""
         if run is None:
             run = self.runs
         self.flush()
         if cid is None:
             self.__cursor.execute(
-                '''SELECT value
+                '''SELECT timestamp, value
                      FROM histogram
                     WHERE histogram = ?
                           AND run = ?;''',
                 (self.__name, run))
         else:
             self.__cursor.execute(
-                '''SELECT value
+                '''SELECT timestamp, value
                      FROM histogram
                     WHERE histogram = ?
                           AND run = ?
                           AND computer = ?;''',
                 (self.__name, run, cid))
-        return numpy.asarray([i['value'] for i in self.__cursor.fetchall()])
+        return [(i['timestamp'], i['value']) for i in self.__cursor.fetchall()]
 
-    def get_all_hourly_summaries(
-            self, run: int = None) -> typing.List[typing.Dict[str, float]]:
+    def get_all_histogram(
+            self, cid: str = None, run: int = None) -> numpy.ndarray:
+        """Returns all the histogram values."""
+        return numpy.asarray([i for _, i in self.get_all_events(cid, run)])
+
+    def get_all_hourly_percentiles(
+            self, percentile: float, run: int = None) -> typing.List[float]:
         """Gets all the summaries per hour."""
         if run is None:
             run = self.runs
-        ret = []
+        percentiles = []
         for hist in self.get_all_hourly_histograms(run):
-            dct = {}
-            for summary in ('mean', 'median'):
-                try:
-                    dct[summary] = getattr(numpy, summary)(hist)
-                except (IndexError, RuntimeWarning):
-                    dct[summary] = 0.0
-            ret.append(dct)
-        return ret
+            try:
+                percentiles.append(numpy.percentile(hist, percentile))
+            except IndexError:
+                percentiles.append(0.0)
+        return percentiles
 
     def get_all_hourly_count(self, run: int = None) -> typing.List[int]:
         """Gets all the count per hour."""
@@ -128,7 +140,33 @@ class Histogram(Base):
              ORDER BY hour ASC;''',
             (self.__name, run))
         dct = dict(self.__cursor.fetchall())
-        return [dct.get(i, 0) for i in range(168)]
+        total = [dct.get(i, 0) / self.simulation_weeks
+                 for i in range(168)]
+        if not self.get_arg('per_hour'):
+            total = [i / 168 for i in total]
+        if not self.get_arg('per_pc'):
+            total = [i / self.servers for i in total]
+        return total
+
+    def get_all_hourly_distributions(self, run: int = None):
+        """Returns all the intervals per hour."""
+        if run is None:
+            run = self.runs
+        self.flush()
+        self.__cursor.execute(
+            '''SELECT hour, value
+                 FROM histogram
+                WHERE histogram = ?
+                      AND run = ?
+             ORDER BY hour ASC;''',
+            (self.__name, run))
+        transposed = {}
+        for timestamp, intervals in itertools.groupby(
+                self.__cursor.fetchall(), operator.itemgetter(0)):
+            day, hour = hour_to_day(int(timestamp))
+            transposed.setdefault(day, {}).setdefault(
+                hour, numpy.asarray([i for _, i in intervals]))
+        return transposed
 
     def sum_histogram(self, cid: str = None, run: int = None) -> int:
         """Sums up all the elements of this histogram."""

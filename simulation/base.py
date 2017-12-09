@@ -53,6 +53,16 @@ class Base(object):
         """Indicates the simulation duration in weeks."""
         return self.simulation_time / WEEK(1)
 
+    @property
+    def training_time(self) -> int:
+        """Indicates the simulation duration."""
+        return self.get_config_int('duration', section='training_distribution')
+
+    @property
+    def training_weeks(self) -> float:
+        """Indicates the simulation duration in weeks."""
+        return self.training_time / WEEK(1)
+
     def new_run(self) -> None:
         """Start a new simulation run."""
         self.__config.new_run()

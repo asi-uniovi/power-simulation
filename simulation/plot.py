@@ -16,159 +16,136 @@
 
 import logging
 import operator
-import typing
 import injector
-import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 import numpy
-import scipy.stats
 from simulation.activity_distribution import DistributionFactory
 from simulation.base import Base
 from simulation.static import DAYS
+from simulation.static import HISTOGRAMS
 from simulation.stats import Stats
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
 
-# pylint: disable=invalid-name
 @injector.singleton
 class Plot(Base):
     """Generates plots from the Stats modules."""
 
     @injector.inject
-    def __init__(self, distr_factory: DistributionFactory, stats: Stats):
+    def __init__(self, distribution_factory: DistributionFactory, stats: Stats):
         super(Plot, self).__init__()
-        self.__training_distribution = distr_factory(training=True)
+        self.__training_distribution = distribution_factory(training=True)
         self.__stats = stats
 
-    def plot_all(self, histogram: str) -> None:
+    def plot_all(self) -> None:
         """Plots all the available plots."""
-        try:
-            self.plot_hourly_histogram_count(histogram)
+        self.plot_hourly_time_percentages()
+        for histogram in HISTOGRAMS:
             self.plot_mean_medians_comparison(histogram)
-            self.plot_hourly_histogram_quantiles(histogram)
-            self.plot_ks_test(histogram)
-        except KeyError:
-            logger.warning('Histogram %s produced no plot.', histogram)
 
-    def plot_hourly_histogram_quantiles(
-            self, histogram: str,
-            quantiles: typing.Tuple[int]=(50, 75, 80, 90, 95, 99)) -> None:
-        """Generates a plot to see the hourly quantiles."""
-        fig, ax = plt.subplots()
-        ax.set_title(histogram + ' (percentiles)')
-        ax.set_xlim(0, 7 * 24 - 1)
+    def plot_hourly_time_percentages(self):
+        """Plots the time percentages as percentual bar charts."""
+        hists = self.__generate_hourly_time_percentages(
+            self.__training_distribution.get_all_hourly_distributions())
+        stats = self.__generate_hourly_time_percentages(
+            self.__stats.get_all_hourly_distributions())
 
-        hists = self.__stats.get_all_hourly_histograms(histogram)
-        for p in quantiles:
-            data = []
-            for h in hists:
-                try:
-                    data.append(numpy.percentile(h, p))
-                except IndexError:
-                    data.append(0)
+        figure, axes = plt.subplots(nrows=7, sharex='col')
+        bar_h = [i * 1.05 for i in range(0, 48, 2)]
+        bar_s = [i + 1 for i in bar_h]
 
-            # pylint: disable=no-member
-            ax.plot(numpy.linspace(1, len(data), len(data)), data,
-                    label='%d%%' % p, color=cm.hot(1.0 - p / 100.0))
+        for day, axis in enumerate(axes):
+            self.plot_bar(axis, bar_h, hists.get(day))
+            self.plot_bar(axis, bar_s, stats.get(day))
+            axis.set_xticks([i + 1/2 for i in bar_h])
+            axis.set_xticklabels(range(24))
+            axis.set_ylim(0, 100)
 
-        _format_ax_line(ax)
-        fig.set_size_inches(6, 5)
-        fig.set_tight_layout(True)
-        fig.savefig('%s_percentiles.png' % histogram.lower())
-        plt.close(fig)
+        figure.set_size_inches(6.5, 10)
+        figure.set_tight_layout(True)
+        figure.savefig('hourly_time_percentages.png')
+        plt.close(figure)
+
+    # pylint: disable=blacklisted-name,invalid-name,no-self-use
+    def plot_bar(self, axis, bar, hist):
+        """Plot a daily bar chart."""
+        bottom = numpy.asarray([0.0] * 24)
+        COLORS = {
+            'ACTIVITY_TIME': 'g',
+            'INACTIVITY_TIME': 'r',
+            'USER_SHUTDOWN_TIME': 'b',
+            'AUTO_SHUTDOWN_TIME': 'y',
+        }
+        for key in HISTOGRAMS:
+            data = [hist[key][h] for h in range(24)]
+            axis.bar(bar, data, width=1.0, bottom=bottom, label=key,
+                     color=COLORS[key])
+            bottom = bottom + data
 
     def plot_mean_medians_comparison(self, histogram: str) -> None:
         """Generates a plot to compare means and medians."""
-        hists = [(self.__stats.get_all_hourly_summaries(histogram),
-                  'simulation', 3)]
-        if not self.get_arg('fleet_generator') and histogram not in (
-                'AUTO_SHUTDOWN_TIME', 'IDLE_TIME'):
-            hists.append(
-                (self.__training_distribution.get_all_hourly_summaries(
-                    histogram), 'data', 1))
+        for percentile in (50, 75, 90, 99):
+            figure, axis = plt.subplots()
+            stats = self.__stats.get_all_hourly_percentiles(
+                histogram, percentile)
+            axis.plot(numpy.linspace(1, len(stats), len(stats)), stats,
+                      label='simulation', linewidth=3)
+            hists = self.__training_distribution.get_all_hourly_percentiles(
+                histogram, percentile)
+            axis.plot(numpy.linspace(1, len(hists), len(hists)), hists,
+                      label='data', linewidth=1)
+            axis.set_title('%s (p%d)' % (histogram, percentile))
+            axis.set_xlim(0, 7 * 24 - 1)
+            axis.legend(loc='upper center', fontsize=8)
+            axis.grid(True)
+            axis.set_xticks(numpy.arange(7) * 24)
+            axis.set_xticklabels(
+                [key for key, _ in sorted(
+                    DAYS.items(), key=operator.itemgetter(1))], rotation=60)
+            figure.set_size_inches(6, 5)
+            figure.set_tight_layout(True)
+            figure.savefig('%s_p%d.png' % (histogram.lower(), percentile))
+            plt.close(figure)
 
-        for s in ('mean', 'median'):
-            fig, ax = plt.subplots()
-            ax.set_title('%s (%s)' % (histogram, s))
-            ax.set_xlim(0, 7 * 24 - 1)
+    # pylint: disable=no-self-use
+    def __generate_carry_over(self, intervals):
+        carry_over, new_intervals = [], []
+        for i in intervals:
+            if i <= 3600:
+                new_intervals.append(i)
+            else:
+                carry_over.append(i - 3600)
+                new_intervals.append(3600)
+        return carry_over, new_intervals
 
-            for d, label, width in hists:
-                f = [i[s] for i in d]
-                ax.plot(numpy.linspace(1, len(f), len(f)), f, label=label,
-                        linewidth=width)
-
-            _format_ax_line(ax)
-            fig.set_size_inches(6, 5)
-            fig.set_tight_layout(True)
-            fig.savefig('%s_%s.png' % (histogram.lower(), s))
-            plt.close(fig)
-
-    def plot_hourly_histogram_count(self, histogram: str) -> None:
-        """Generates a plot to show the hourly counts."""
-        fig, ax = plt.subplots()
-        ax.set_title('%s (count)' % histogram)
-        ax.set_xlim(0, 7 * 24 - 1)
-
-        hist = numpy.asarray(self.__stats.get_all_hourly_count(histogram))
-        ax.plot(numpy.linspace(1, len(hist), len(hist)),
-                hist, label='simulation', linewidth=3)
-
-        if not self.get_arg('fleet_generator') and histogram not in (
-                'AUTO_SHUTDOWN_TIME', 'IDLE_TIME'):
-            data = self.__training_distribution.get_all_hourly_count(histogram)
-            ax.plot(numpy.linspace(1, len(data), len(data)), data, label='data')
-
-        _format_ax_line(ax)
-        fig.set_size_inches(6, 5)
-        fig.set_tight_layout(True)
-        fig.savefig('%s_count.png' % histogram.lower())
-        plt.close(fig)
-
-    def plot_ks_test(self, histogram: str) -> None:
-        """Generates a plot for the K-S test for a given histogram."""
-        if histogram in ('AUTO_SHUTDOWN_TIME', 'IDLE_TIME'):
-            return
-
-        fig, ax1 = plt.subplots()
-        ax1.set_title('%s (K-S)' % histogram)
-        ax1.set_xlim(0, 7 * 24 - 1)
-        ax2 = ax1.twinx()
-
-        hists = self.__stats.get_all_hourly_histograms(histogram)
-        distributions = (
-            self.__training_distribution.get_all_hourly_distributions(
-                histogram))
-        ks, p = [], []
-        for h, d in zip(hists, distributions):
-            if h.size == 0 or not d:
-                ks.append(0.0)
-                p.append(0.0)
-                continue
-            D, pvalue = scipy.stats.kstest(h, d.cdf)
-            ks.append(D)
-            p.append(pvalue)
-
-        # pylint: disable=no-member
-        x = numpy.linspace(1, len(ks), len(ks))
-        ax1.plot(x, ks, label='K-S D statistic')
-        ax2.plot(x, p, label='p-value', color='red')
-
-        _format_ax_line(ax1, legend=False)
-        _format_ax_line(ax2, legend=False)
-        fig.set_size_inches(6, 5)
-        fig.set_tight_layout(True)
-        fig.savefig('%s_ks.png' % histogram.lower())
-        plt.close(fig)
-
-
-# pylint: disable=invalid-name
-def _format_ax_line(ax, legend: bool = True) -> None:
-    """Common format for each of the axes."""
-    if legend:
-        ax.legend(loc='upper center', fontsize=8)
-    ax.grid(True)
-    ax.set_xticks(numpy.arange(7) * 24)
-    ax.set_xticklabels(
-        [key for key, _ in sorted(DAYS.items(),
-                                  key=operator.itemgetter(1))], rotation=60)
+    # pylint: disable=too-many-locals
+    def __generate_hourly_time_percentages(self, hist):
+        """Calculates the percentage with carry over for the time spent."""
+        totals = {}
+        key_totals = {}
+        for key, days in hist.items():
+            previous_carry_over = []
+            for day, hours in days.items():
+                for hour, intervals in hours.items():
+                    carry_over, new_intervals = self.__generate_carry_over(
+                        intervals)
+                    total = numpy.sum(new_intervals + previous_carry_over)
+                    previous_carry_over = carry_over
+                    dct = key_totals.setdefault(day, {}).setdefault(hour, {})
+                    dct[key] = total
+                    dct = totals.setdefault(day, {})
+                    dct[hour] = dct.get(hour, 0.0) + total
+        percentages = {}
+        for day, hours in key_totals.items():
+            for hour, keys in hours.items():
+                for key, total in keys.items():
+                    percentages.setdefault(day, {}).setdefault(
+                        key, {}).setdefault(
+                            hour, total / totals[day][hour] * 100)
+        for day in range(7):
+            for key in HISTOGRAMS:
+                for hour in range(24):
+                    percentages.setdefault(day, {}).setdefault(
+                        key, {}).setdefault(hour, 0.0)
+        return percentages
