@@ -1,3 +1,4 @@
+flamegraph
 injector
 matplotlib
 memory_profiler

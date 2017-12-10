@@ -19,6 +19,7 @@
 import logging
 import sys
 import warnings
+import flamegraph
 import matplotlib
 matplotlib.use('Agg')
 # pylint: disable=wrong-import-position
@@ -36,5 +37,6 @@ def main(_):
 
 
 if __name__ == '__main__':
+    flamegraph.start_profile_thread(fd=open("./perf.log", "w"))
     warnings.simplefilter('error')
     sys.exit(main(Configuration()))
