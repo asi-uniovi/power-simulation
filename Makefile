@@ -15,7 +15,7 @@
 .PHONY: cleanall clean cleanlogs cleanpyc
 
 pylint:
-	-find . -name '*.py' | xargs pylint --jobs=2 --rcfile=.pylintrc --reports=n | tee pylint.log
+	find . -name '*.py' | xargs pylint --jobs=2 --reports=n | tee pylint.log
 
 cleanall: clean cleanlogs cleanpyc
 
@@ -24,7 +24,8 @@ clean:
 	rm -f *.png
 
 cleanlogs:
-	rm -f pylint.log
+	rm -f *.log
 
 cleanpyc:
-	find . -name '*.pyc' -delete
+	find . -type f -name '*.pyc' -delete
+	find . -type d -name '__pycache__' -delete
