@@ -44,45 +44,6 @@ class Plot(Base):
         for histogram in HISTOGRAMS:
             self.plot_mean_medians_comparison(histogram)
 
-    def plot_hourly_time_percentages(self):
-        """Plots the time percentages as percentual bar charts."""
-        hists = self.__generate_hourly_time_percentages(
-            self.__training_distribution.get_all_hourly_distributions())
-        stats = self.__generate_hourly_time_percentages(
-            self.__stats.get_all_hourly_distributions())
-
-        figure, axes = plt.subplots(nrows=7, sharex='col')
-        bar_h = [i * 1.05 for i in range(0, 48, 2)]
-        bar_s = [i + 1 for i in bar_h]
-
-        for day, axis in enumerate(axes):
-            self.plot_bar(axis, bar_h, hists.get(day))
-            self.plot_bar(axis, bar_s, stats.get(day))
-            axis.set_xticks([i + 1/2 for i in bar_h])
-            axis.set_xticklabels(range(24))
-            axis.set_ylim(0, 100)
-
-        figure.set_size_inches(6.5, 10)
-        figure.set_tight_layout(True)
-        figure.savefig('hourly_time_percentages.png')
-        plt.close(figure)
-
-    # pylint: disable=blacklisted-name,invalid-name,no-self-use
-    def plot_bar(self, axis, bar, hist):
-        """Plot a daily bar chart."""
-        bottom = numpy.asarray([0.0] * 24)
-        COLORS = {
-            'ACTIVITY_TIME': 'g',
-            'INACTIVITY_TIME': 'r',
-            'USER_SHUTDOWN_TIME': 'b',
-            'AUTO_SHUTDOWN_TIME': 'y',
-        }
-        for key in HISTOGRAMS:
-            data = [hist[key][h] for h in range(24)]
-            axis.bar(bar, data, width=1.0, bottom=bottom, label=key,
-                     color=COLORS[key])
-            bottom = bottom + data
-
     def plot_mean_medians_comparison(self, histogram: str) -> None:
         """Generates a plot to compare means and medians."""
         for percentile in (50, 75, 90, 99):
@@ -108,8 +69,48 @@ class Plot(Base):
             figure.savefig('%s_p%d.png' % (histogram.lower(), percentile))
             plt.close(figure)
 
+    def plot_hourly_time_percentages(self):
+        """Plots the time percentages as percentual bar charts."""
+        hists = self.__generate_hourly_time_percentages(
+            self.__training_distribution.get_all_hourly_distributions())
+        stats = self.__generate_hourly_time_percentages(
+            self.__stats.get_all_hourly_distributions())
+
+        figure, axes = plt.subplots(nrows=7, sharex='col')
+        bar_h = [i * 1.05 for i in range(0, 48, 2)]
+        bar_s = [i + 1 for i in bar_h]
+
+        for day, axis in enumerate(axes):
+            self.__plot_bar(axis, bar_h, hists.get(day))
+            self.__plot_bar(axis, bar_s, stats.get(day))
+            axis.set_xticks([i + 1/2 for i in bar_h])
+            axis.set_xticklabels(range(24))
+            axis.set_ylim(0, 100)
+
+        figure.set_size_inches(6.5, 10)
+        figure.set_tight_layout(True)
+        figure.savefig('hourly_time_percentages.png')
+        plt.close(figure)
+
+    # pylint: disable=blacklisted-name,invalid-name,no-self-use
+    def __plot_bar(self, axis, bar, hist):
+        """Plot a daily bar chart."""
+        bottom = numpy.asarray([0.0] * 24)
+        COLORS = {
+            'ACTIVITY_TIME': 'g',
+            'INACTIVITY_TIME': 'r',
+            'USER_SHUTDOWN_TIME': 'b',
+            'AUTO_SHUTDOWN_TIME': 'y',
+        }
+        for key in HISTOGRAMS:
+            data = [hist[key][h] for h in range(24)]
+            axis.bar(bar, data, width=1.0, bottom=bottom, label=key,
+                     color=COLORS[key])
+            bottom = bottom + data
+
     # pylint: disable=no-self-use
     def __generate_carry_over(self, intervals):
+        """Generates the carry over intervals from the current ones."""
         carry_over, new_intervals = [], []
         for i in intervals:
             if i <= 3600:
