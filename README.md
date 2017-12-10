@@ -16,10 +16,6 @@ After cloning the repository, install the packages needed with pip:
 
 `$ pip install -Ur requirements.txt`
 
-Install the pre-commit hook:
-
-`$ pre-commit install`
-
 ### Run the simulation
 
 `$ ./main.py --config=config/2015.ini`
@@ -50,7 +46,5 @@ See `./main.py --help` for details of the flags and options.
     https://docs.python.org/3/library/profile.html)
 1. [Python Performance Tips](
     https://wiki.python.org/moin/PythonSpeed/PerformanceTips)
-1. [pre-commit by Yelp](
-    http://pre-commit.com)
 
 **This is not an official Google product**.
