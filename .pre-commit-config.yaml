@@ -1,6 +1,6 @@
 repos:
 -   repo: git://github.com/pre-commit/pre-commit-hooks
-    sha: v1.0.0
+    sha: v1.1.1
     hooks:
     -   id: check-added-large-files
         args: ['--maxkb=51200']
