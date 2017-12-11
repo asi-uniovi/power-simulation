@@ -125,13 +125,14 @@ class Plot(Base):
         """Calculates the percentage with carry over for the time spent."""
         totals = {}
         key_totals = {}
-        for key, days in hist.items():
+        for key in HISTOGRAMS:
             previous_carry_over = []
-            for day, hours in days.items():
-                for hour, intervals in hours.items():
+            for day in range(7):
+                for hour in range(24):
                     carry_over, new_intervals = self.__generate_carry_over(
-                        intervals)
-                    total = numpy.sum(new_intervals + previous_carry_over)
+                        numpy.append(hist.get(key, {}).get(day, {}).get(
+                            hour, []), previous_carry_over))
+                    total = numpy.sum(new_intervals)
                     previous_carry_over = carry_over
                     dct = key_totals.setdefault(day, {}).setdefault(hour, {})
                     dct[key] = total
@@ -144,9 +145,4 @@ class Plot(Base):
                     percentages.setdefault(day, {}).setdefault(
                         key, {}).setdefault(
                             hour, total / totals[day][hour] * 100)
-        for day in range(7):
-            for key in HISTOGRAMS:
-                for hour in range(24):
-                    percentages.setdefault(day, {}).setdefault(
-                        key, {}).setdefault(hour, 0.0)
         return percentages
