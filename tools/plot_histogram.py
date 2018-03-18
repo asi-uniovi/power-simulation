@@ -50,7 +50,7 @@ def plot_histogram(trace, key, nbins, distribution_name, xmax):
     matplotlib.pyplot.style.use('bmh')
     _, axis = matplotlib.pyplot.subplots(1, 1)
 
-    data, bins, _ = axis.hist(all_items, nbins, normed=True,
+    data, bins, _ = axis.hist(all_items, nbins, density=True,
                               label='Histogram for key "%s"' % key)
     axis.plot(bins, fit.pdf(bins), 'r--', linewidth=1,
               label='Best %s fit for key "%s"' % (distribution_name, key))
