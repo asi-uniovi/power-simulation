@@ -27,7 +27,7 @@ import matplotlib.mlab
 import matplotlib.pyplot
 import numpy
 import scipy.stats
-from tools.parse_trace import parse_trace
+from parse_trace import parse_trace
 
 
 def plot_histogram(trace, key, nbins, distribution_name, xmax):
