@@ -2,6 +2,7 @@ injector
 matplotlib
 memory_profiler
 numpy
+powerlaw
 psutil
 pylint
 pytest
