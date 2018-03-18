@@ -68,10 +68,10 @@ def plot_histogram(trace, key, nbins, distribution_name, xmax):
 def main():
     """Just parses arguments and moves forward."""
     parser = argparse.ArgumentParser()
-    parser.add_argument('--trace',
+    parser.add_argument('--trace', required=True,
                         dest='trace_file',
                         help='path to the trace file to analyse')
-    parser.add_argument('--key',
+    parser.add_argument('--key', required=True,
                         dest='key',
                         help='key in the trace to process')
     parser.add_argument('--bins',
