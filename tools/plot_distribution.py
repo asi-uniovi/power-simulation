@@ -35,16 +35,20 @@ def plot_distribution(trace, key, day, hour):
         i for pc in trace.values() for i in pc[key]])
 
     matplotlib.pyplot.style.use('bmh')
-    _, axis = matplotlib.pyplot.subplots(1, 1)
+    figure, axis = matplotlib.pyplot.subplots(1, 1)
 
     powerlaw.plot_pdf(all_items, ax=axis,
                       label='%s (%s, %d:00)' % (key, REVERSE_DAYS[day], hour))
 
-    matplotlib.pyplot.xlabel('Interval duration (s)')
-    matplotlib.pyplot.ylabel('Probability')
+    axis.set_xlim(10, 10**6)
     axis.grid(True, which='both')
     axis.legend(loc='best', frameon=False)
-    matplotlib.pyplot.savefig('distribution.png')
+    figure.set_size_inches(6, 3)
+    figure.set_tight_layout(True)
+    matplotlib.pyplot.xlabel('Interval duration (s)')
+    matplotlib.pyplot.ylabel('Probability')
+    matplotlib.pyplot.savefig('powerlaw-%s-%s-%d.png' % (
+        key, REVERSE_DAYS[day], hour))
 
 
 def main():
