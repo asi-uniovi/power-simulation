@@ -43,9 +43,13 @@ def plot_distribution(trace_file, key, day, hours):
                 trace_file, day, hour).values() for i in pc[key]])
 
         fit = powerlaw.Fit(all_items, discrete=True, xmax=None)
-        fit.plot_cdf(ax=axis, color='r', label='Empirical')
-        fit.power_law.plot_cdf(ax=axis, color='g', linestyle='--', label='powerlaw fit')
-        fit.lognormal.plot_cdf(ax=axis, color='b', linestyle='--', label='lognormal fit')
+        fit.plot_pdf(ax=axis, color='r', linewidth=3, label='Empirical')
+        fit.power_law.plot_pdf(
+            ax=axis, color='g', linestyle='--', linewidth=1,
+            label='powerlaw fit')
+        fit.lognormal.plot_pdf(
+            ax=axis, color='b', linestyle='--', linewidth=1,
+            label='lognormal fit')
 
         axis.set_xlim(50, 10**5)
         axis.grid(True, which='major')
