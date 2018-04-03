@@ -29,26 +29,33 @@ from simulation.static import REVERSE_DAYS
 from tools.parse_trace import parse_trace
 
 
-def plot_distribution(trace, key, day, hour):
+def plot_distribution(trace_file, key, day, hours):
     """Plots a trace."""
-    all_items = numpy.asarray([
-        i for pc in trace.values() for i in pc[key]])
-
     matplotlib.pyplot.style.use('bmh')
-    figure, axis = matplotlib.pyplot.subplots(1, 1)
+    figure, axes = matplotlib.pyplot.subplots(nrows=len(hours))
+    if len(hours) == 1:
+        axes = [axes]
 
-    powerlaw.plot_pdf(all_items, ax=axis,
-                      label='%s (%s, %d:00)' % (key, REVERSE_DAYS[day], hour))
+    for i, hour in enumerate(hours):
+        axis = axes[i]
+        all_items = numpy.asarray([
+            i for pc in parse_trace(
+                trace_file, day, hour).values() for i in pc[key]])
 
-    axis.set_xlim(10, 10**6)
-    axis.grid(True, which='both')
-    axis.legend(loc='best', frameon=False)
-    figure.set_size_inches(6, 3)
+        fit = powerlaw.Fit(all_items, discrete=True, xmax=None)
+        fit.plot_cdf(ax=axis, color='r', label='Empirical')
+        fit.power_law.plot_cdf(ax=axis, color='g', linestyle='--', label='powerlaw fit')
+        fit.lognormal.plot_cdf(ax=axis, color='b', linestyle='--', label='lognormal fit')
+
+        axis.set_xlim(50, 10**5)
+        axis.grid(True, which='major')
+        axis.legend(loc='best', frameon=True, facecolor='white')
+        axis.set_ylabel('%s, %d:00' % (REVERSE_DAYS[day], hour))
+
+    figure.set_size_inches(6, 2 * len(hours))
     figure.set_tight_layout(True)
     matplotlib.pyplot.xlabel('Interval duration (s)')
-    matplotlib.pyplot.ylabel('Probability')
-    matplotlib.pyplot.savefig('powerlaw-%s-%s-%d.png' % (
-        key, REVERSE_DAYS[day], hour))
+    matplotlib.pyplot.savefig('powerlaw.png')
 
 
 def main():
@@ -63,17 +70,14 @@ def main():
     parser.add_argument('--day', required=True,
                         dest='day', type=int,
                         help='day of the week to analyse (0=Sun)')
-    parser.add_argument('--hour', required=True,
-                        dest='hour', type=int,
-                        help='hour of the week to analyse (0-23)')
+    parser.add_argument('--hours', required=True, nargs='+',
+                        dest='hours', type=int,
+                        help='hours of the week to analyse (0-23)')
     args = parser.parse_args()
     try:
-        trace = parse_trace(args.trace_file, args.day, args.hour)
-        plot_distribution(trace, args.key, args.day, args.hour)
+        plot_distribution(args.trace_file, args.key, args.day, args.hours)
     except KeyError:
-
         print('Invalid key: %s' % args.key)
-        return 1
 
 
 if __name__ == '__main__':
