@@ -53,12 +53,13 @@ def plot_distribution(trace_file, key, day, hours):
 
         axis.set_xlim(50, 10**5)
         axis.grid(True, which='major')
-        axis.legend(loc='best', frameon=True, facecolor='white')
-        axis.set_ylabel('%s, %d:00' % (REVERSE_DAYS[day], hour))
+        axis.set_title('%s, %d:00' % (REVERSE_DAYS[day], hour))
 
+    figure.legend(handles=axis.lines, ncol=len(axis.lines), loc='lower center')
+    figure.text(0.5, 0.04, 'Interval duration (s)', ha='center')
+    figure.text(0.04, 0.5, 'Probability', va='center', rotation='vertical')
     figure.set_size_inches(6, 2 * len(hours))
-    figure.set_tight_layout(True)
-    matplotlib.pyplot.xlabel('Interval duration (s)')
+    figure.tight_layout(rect=[0.05, 0.05, 1.0, 1.0])
     matplotlib.pyplot.savefig('powerlaw.png')
 
 
