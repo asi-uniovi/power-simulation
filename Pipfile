@@ -9,12 +9,12 @@ matplotlib = "*"
 numpy = "*"
 powerlaw = "*"
 psutil = "*"
-pytest = "*"
 scipy = "*"
 simpy = "*"
 memory_profiler = "*"
 
 [dev-packages]
+pytest = "*"
 
 [requires]
 python_version = "3"
