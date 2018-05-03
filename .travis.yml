@@ -7,7 +7,6 @@ python:
 install:
   - pip install pipenv --upgrade
   - pipenv install --dev --skip-lock
-  - pipenv shell
 
 script:
   - pipenv run ./main.py --config=config/test.ini
