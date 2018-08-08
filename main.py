@@ -36,5 +36,5 @@ def main(_):
 
 
 if __name__ == '__main__':
-    warnings.simplefilter('error')
+    warnings.simplefilter('ignore')
     sys.exit(main(Configuration()))
