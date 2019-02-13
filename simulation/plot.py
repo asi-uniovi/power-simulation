@@ -14,15 +14,16 @@
 
 """Summarizes the stats collected during the simulation in plots."""
 
-import logging
-import operator
 import injector
+import logging
 import matplotlib.pyplot as plt
 import numpy
+import operator
 from simulation.activity_distribution import DistributionFactory
 from simulation.base import Base
 from simulation.static import DAYS
 from simulation.static import HISTOGRAMS
+from simulation.static import timed
 from simulation.stats import Stats
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
@@ -33,17 +34,20 @@ class Plot(Base):
     """Generates plots from the Stats modules."""
 
     @injector.inject
-    def __init__(self, distribution_factory: DistributionFactory, stats: Stats):
+    def __init__(
+            self, distribution_factory: DistributionFactory, stats: Stats):
         super(Plot, self).__init__()
         self.__training_distribution = distribution_factory(training=True)
         self.__stats = stats
 
+    @timed
     def plot_all(self) -> None:
         """Plots all the available plots."""
         self.plot_hourly_time_percentages()
         for histogram in HISTOGRAMS:
             self.plot_mean_medians_comparison(histogram)
 
+    @timed
     def plot_mean_medians_comparison(self, histogram: str) -> None:
         """Generates a plot to compare means and medians."""
         for percentile in (50, 75, 90, 99):
@@ -69,6 +73,7 @@ class Plot(Base):
             figure.savefig('%s_p%d.png' % (histogram.lower(), percentile))
             plt.close(figure)
 
+    @timed
     def plot_hourly_time_percentages(self):
         """Plots the time percentages as percentual bar charts."""
         hists = self.__generate_hourly_time_percentages(

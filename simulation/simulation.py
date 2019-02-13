@@ -14,21 +14,21 @@
 
 """A very simple simuation of several 1/M/c queuing systems."""
 
+import injector
 import logging
 import math
-import sqlite3
-import typing
-import injector
 import memory_profiler
 import numpy
 import scipy.stats
+import sqlite3
+import typing
 from simulation.activity_distribution import DistributionFactory
 from simulation.base import Base
 from simulation.configuration import Configuration
 from simulation.histogram import create_histogram_tables
 from simulation.module import Module
 from simulation.plot import Plot
-from simulation.static import config_logging, profile, WEEK
+from simulation.static import config_logging, profile, timed, WEEK
 from simulation.stats import Stats
 from simulation.user import User
 
@@ -62,6 +62,7 @@ class Simulation(Base):
         """Average global timeout."""
         return self.__training_distribution.global_idle_timeout()
 
+    @timed
     def run(self) -> typing.Tuple[float, float]:
         """Sets up and starts a new simulation."""
         self.new_run()
@@ -130,6 +131,7 @@ def confidence_interval(m: float, alpha: float = 0.05):
 
 
 # pylint: disable=invalid-name,too-many-locals
+@timed
 def runner() -> None:
     """Bind all and launch the simulation!"""
     custom_injector = injector.Injector([Module])

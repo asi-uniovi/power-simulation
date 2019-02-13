@@ -30,6 +30,7 @@ from simulation.model import Model
 from simulation.static import DAYS
 from simulation.static import HISTOGRAMS
 from simulation.static import WEEK
+from simulation.static import timed
 from simulation.static import timestamp_to_day
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
@@ -256,6 +257,7 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
                             hour, []).append(value.get(day, {}).get(hour))
         return transposed
 
+    @timed
     def __parse_trace(self) -> None:
         """Parses the json trace to generate all the histograms."""
         logger.debug('Parsing models.')
@@ -264,7 +266,8 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
             trace = [i for i in trace if i['PC'] != '_Total']
             key = operator.itemgetter('PC')
             self.__models = {}
-            for pc, trace in itertools.groupby(sorted(trace, key=key), key=key):
+            for pc, trace in itertools.groupby(
+                    sorted(trace, key=key), key=key):
                 self.__servers.append(pc)
                 self.__models[pc] = self.__parse_model(
                     {t['Type']: t['data'] for t in trace})

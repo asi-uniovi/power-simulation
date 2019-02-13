@@ -18,6 +18,7 @@ import cProfile
 import functools
 import logging
 import math
+import time
 import typing
 import injector
 import numpy
@@ -89,6 +90,22 @@ class profile:
             return ret
 
         return wrapper
+
+
+def timed(func):
+    """Decorator to measure and print the time of this function."""
+    logger = logging.getLogger(func.__module__)
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        """Wraps the function to time."""
+        t = time.process_time()
+        result = func(*args, **kwargs)
+        logger.debug('Execution time of %s.%s(): %.4f s',
+                     func.__module__, func.__name__, time.process_time() - t)
+        return result
+
+    return wrapper
 
 
 def timestamp_to_day(timestamp: int) -> typing.Tuple[int, int]:
