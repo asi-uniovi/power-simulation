@@ -58,16 +58,14 @@ class User(Base):
                 shutdown_time = self.__shutdown_interval()
                 self.__computer.change_status(ComputerStatus.off)
                 self.__stats.append(
-                    'USER_SHUTDOWN_TIME', shutdown_time,
-                    self.__computer.cid, timestamp=self.env.now)
+                    'USER_SHUTDOWN_TIME', shutdown_time, self.__computer.cid)
                 yield self.env.timeout(shutdown_time)
             yield self.env.process(self.__computer.serve())
             inactivity_time = (self.__activity_distribution
                                .random_inactivity_for_timestamp(
                                    self.__computer.cid, self.env.now))
             self.__stats.append(
-                'INACTIVITY_TIME', inactivity_time,
-                self.__computer.cid, timestamp=self.env.now)
+                'INACTIVITY_TIME', inactivity_time, self.__computer.cid)
             yield self.env.timeout(inactivity_time)
 
     def __indicate_shutdown(self) -> bool:

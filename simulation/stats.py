@@ -69,6 +69,19 @@ class Stats(Base):
             return numpy.mean(lst)
         return 0.0
 
+    def apdex(self) -> float:
+        """Calculates the Apdex satisfaction index."""
+        satisfied, tolerating, total = 0, 0, 0
+        for cid in self.__training_distribution.servers:
+            timeout = self._idle_timeout(cid)
+            for i in self.get_all_histogram('INACTIVITY_TIME', cid):
+                if i <= timeout:
+                    satisfied += 1
+                elif i >= self.__satisfaction_threshold:
+                    tolerating += 1
+                total += 1
+        return (satisfied + (tolerating / 2.0)) / total * 100
+
     def removed_inactivity(self) -> float:
         """Calculates how much inactive has been removed."""
         try:

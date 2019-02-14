@@ -1,0 +1,21 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+injector = "*"
+matplotlib = "*"
+numpy = "*"
+powerlaw = "*"
+psutil = "*"
+scipy = "*"
+simpy = "*"
+memory_profiler = "*"
+flake8 = "*"
+
+[dev-packages]
+pytest = "*"
+
+[requires]
+python_version = "3.7"

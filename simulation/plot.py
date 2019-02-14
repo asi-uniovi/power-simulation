@@ -14,15 +14,16 @@
 
 """Summarizes the stats collected during the simulation in plots."""
 
-import logging
-import operator
 import injector
+import logging
 import matplotlib.pyplot as plt
 import numpy
+import operator
 from simulation.activity_distribution import DistributionFactory
 from simulation.base import Base
 from simulation.static import DAYS
 from simulation.static import HISTOGRAMS
+from simulation.static import timed
 from simulation.stats import Stats
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
@@ -33,17 +34,20 @@ class Plot(Base):
     """Generates plots from the Stats modules."""
 
     @injector.inject
-    def __init__(self, distribution_factory: DistributionFactory, stats: Stats):
+    def __init__(
+            self, distribution_factory: DistributionFactory, stats: Stats):
         super(Plot, self).__init__()
         self.__training_distribution = distribution_factory(training=True)
         self.__stats = stats
 
+    @timed
     def plot_all(self) -> None:
         """Plots all the available plots."""
         self.plot_hourly_time_percentages()
         for histogram in HISTOGRAMS:
             self.plot_mean_medians_comparison(histogram)
 
+    @timed
     def plot_mean_medians_comparison(self, histogram: str) -> None:
         """Generates a plot to compare means and medians."""
         for percentile in (50, 75, 90, 99):
@@ -69,6 +73,7 @@ class Plot(Base):
             figure.savefig('%s_p%d.png' % (histogram.lower(), percentile))
             plt.close(figure)
 
+    @timed
     def plot_hourly_time_percentages(self):
         """Plots the time percentages as percentual bar charts."""
         hists = self.__generate_hourly_time_percentages(
@@ -125,13 +130,14 @@ class Plot(Base):
         """Calculates the percentage with carry over for the time spent."""
         totals = {}
         key_totals = {}
-        for key, days in hist.items():
+        for key in HISTOGRAMS:
             previous_carry_over = []
-            for day, hours in days.items():
-                for hour, intervals in hours.items():
+            for day in range(7):
+                for hour in range(24):
                     carry_over, new_intervals = self.__generate_carry_over(
-                        intervals)
-                    total = numpy.sum(new_intervals + previous_carry_over)
+                        numpy.append(hist.get(key, {}).get(day, {}).get(
+                            hour, []), previous_carry_over))
+                    total = numpy.sum(new_intervals)
                     previous_carry_over = carry_over
                     dct = key_totals.setdefault(day, {}).setdefault(hour, {})
                     dct[key] = total
@@ -144,9 +150,4 @@ class Plot(Base):
                     percentages.setdefault(day, {}).setdefault(
                         key, {}).setdefault(
                             hour, total / totals[day][hour] * 100)
-        for day in range(7):
-            for key in HISTOGRAMS:
-                for hour in range(24):
-                    percentages.setdefault(day, {}).setdefault(
-                        key, {}).setdefault(hour, 0.0)
         return percentages

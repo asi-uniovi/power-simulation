@@ -18,6 +18,9 @@
 
 import argparse
 import sys
+import matplotlib
+matplotlib.use('Agg')
+# pylint: disable=wrong-import-position
 import matplotlib.pyplot
 import matplotlib.ticker
 import numpy
@@ -53,22 +56,23 @@ def plot_trace(trace):
         x += STEP
 
     matplotlib.pyplot.style.use('bmh')
-    _, ax = matplotlib.pyplot.subplots(1, 1)
+    figure, ax = matplotlib.pyplot.subplots(1, 1)
     vit = numpy.asarray(vit) / 60
-    ax.plot(vit, us, label='User Satisfaction (%)',
+    ax.plot(vit, us, label='Satisfaction, $S$ (%)',
             linewidth=2, color='green', marker='s', markersize=3)
-    ax.plot(vit, wus, label='Weighted User Satisfaction (%)',
+    ax.plot(vit, wus, label='Weighted Satisfaction, $S_w$ (%)',
             linewidth=2, color='blue', marker='h', markersize=4)
-    ax.plot(vit, ri, label='Removed Inactivity (%)',
+    ax.plot(vit, ri, label='Removed Inactivity, $R$ (%)',
             linewidth=2, color='red', marker='o', markersize=4)
     ax.set_xlim([1.0, MAX_TIMEOUT / 60])
     ax.xaxis.set_major_locator(matplotlib.ticker.MultipleLocator(1))
     ax.set_ylim([0.0, 100.0])
     ax.yaxis.set_major_locator(matplotlib.ticker.MultipleLocator(10))
     ax.yaxis.set_minor_locator(matplotlib.ticker.AutoMinorLocator(2))
-    matplotlib.pyplot.xlabel(r'Timeout value, $V_{IT}$ (minutes)')
+    matplotlib.pyplot.xlabel(r'Timeout value, $T$ (minutes)')
     ax.legend(loc='best', frameon=False)
     ax.grid(True, which='both')
+    figure.set_size_inches(8, 6)
     matplotlib.pyplot.savefig('figure.png')
 
 

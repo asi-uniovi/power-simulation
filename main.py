@@ -22,21 +22,19 @@ import warnings
 import flamegraph
 import matplotlib
 matplotlib.use('Agg')
-# pylint: disable=wrong-import-position
-from simulation.configuration import Configuration
 from simulation.simulation import runner
 
 
-def main(_):
+def main():
     """Just starts the simulation."""
     try:
         runner()
-    except:  # pylint: disable=bare-except
+    except:
         logging.exception('Unexpected exception')
         return 1
 
 
 if __name__ == '__main__':
     flamegraph.start_profile_thread(fd=open("./perf.log", "w"))
-    warnings.simplefilter('error')
-    sys.exit(main(Configuration()))
+    warnings.simplefilter('ignore')
+    sys.exit(main())

@@ -20,11 +20,14 @@ import argparse
 import logging
 import math
 import sys
+import matplotlib
+matplotlib.use('Agg')
+# pylint: disable=wrong-import-position
 import matplotlib.mlab
 import matplotlib.pyplot
 import numpy
 import scipy.stats
-from tools.parse_trace import parse_trace
+from parse_trace import parse_trace
 
 
 def plot_histogram(trace, key, nbins, distribution_name, xmax):
@@ -47,7 +50,7 @@ def plot_histogram(trace, key, nbins, distribution_name, xmax):
     matplotlib.pyplot.style.use('bmh')
     _, axis = matplotlib.pyplot.subplots(1, 1)
 
-    data, bins, _ = axis.hist(all_items, nbins, normed=True,
+    data, bins, _ = axis.hist(all_items, nbins, density=True,
                               label='Histogram for key "%s"' % key)
     axis.plot(bins, fit.pdf(bins), 'r--', linewidth=1,
               label='Best %s fit for key "%s"' % (distribution_name, key))
@@ -65,10 +68,10 @@ def plot_histogram(trace, key, nbins, distribution_name, xmax):
 def main():
     """Just parses arguments and moves forward."""
     parser = argparse.ArgumentParser()
-    parser.add_argument('--trace',
+    parser.add_argument('--trace', required=True,
                         dest='trace_file',
                         help='path to the trace file to analyse')
-    parser.add_argument('--key',
+    parser.add_argument('--key', required=True,
                         dest='key',
                         help='key in the trace to process')
     parser.add_argument('--bins',

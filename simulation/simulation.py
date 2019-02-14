@@ -14,21 +14,21 @@
 
 """A very simple simuation of several 1/M/c queuing systems."""
 
+import injector
 import logging
 import math
-import sqlite3
-import typing
-import injector
 import memory_profiler
 import numpy
 import scipy.stats
+import sqlite3
+import typing
 from simulation.activity_distribution import DistributionFactory
 from simulation.base import Base
 from simulation.configuration import Configuration
 from simulation.histogram import create_histogram_tables
 from simulation.module import Module
 from simulation.plot import Plot
-from simulation.static import config_logging, profile, WEEK
+from simulation.static import config_logging, profile, timed, WEEK
 from simulation.stats import Stats
 from simulation.user import User
 
@@ -62,6 +62,7 @@ class Simulation(Base):
         """Average global timeout."""
         return self.__training_distribution.global_idle_timeout()
 
+    @timed
     def run(self) -> typing.Tuple[float, float]:
         """Sets up and starts a new simulation."""
         self.new_run()
@@ -81,13 +82,14 @@ class Simulation(Base):
                    self.__stats.removed_inactivity(),
                    self.__stats.optimal_idle_timeout())
         logger.debug('RESULT: User Satisfaction (US) = %.2f%%', results[0])
+        logger.debug('RESULT: Modified Apdex = %.2f%%', self.__stats.apdex())
         logger.debug('RESULT: Removed Inactivity (RI) = %.2f%%', results[1])
         logger.debug('RESULT: Optimal idle timeout = %.2f%%', results[2])
         logger.debug('Run complete.')
         return results
 
     def __validate_results(self) -> None:
-        """Performs vaidations on the simulation results and warns on errors."""
+        """Performs vaidations on the run results and warns on errors."""
         # pylint: disable=invalid-name,no-member
         at = self.__stats.sum_histogram('ACTIVITY_TIME') / self.servers
         ust = self.__stats.sum_histogram('USER_SHUTDOWN_TIME') / self.servers
@@ -99,14 +101,14 @@ class Simulation(Base):
         val3 = abs((ast + idt) / it - 1)
 
         if val1 > 0.1:
-            logger.warning('Validation of total time failed: val1 = %.2f', val1)
+            logger.warning('Validation of total time failed: %.2f', val1)
 
         if val2 > 0.1:
-            logger.warning('Validation of total time failed: val2 = %.2f', val2)
+            logger.warning('Validation of total time failed: %.2f', val2)
 
         if val3 > 0.01:
             logger.warning(
-                'Validation of total inactivity failed: val2 = %.2f', val3)
+                'Validation of total inactivity failed: %.2f', val3)
 
     def __monitor_time(self) -> float:
         """Indicates how te simulation is progressing."""
@@ -129,6 +131,7 @@ def confidence_interval(m: float, alpha: float = 0.05):
 
 
 # pylint: disable=invalid-name,too-many-locals
+@timed
 def runner() -> None:
     """Bind all and launch the simulation!"""
     custom_injector = injector.Injector([Module])
@@ -145,8 +148,8 @@ def runner() -> None:
     logger.info('Simulating %d users during %d s (%.1f week(s)).',
                 simulator.servers, simulator.simulation_time,
                 simulator.simulation_time / WEEK(1))
-    logger.info(
-        'User Satisfaction (US) target is %d%%.', simulator.target_satisfaction)
+    logger.info('User Satisfaction (US) target is %d%%.',
+                simulator.target_satisfaction)
     if simulator.timeout < math.inf:
         logger.info('Average global timeout will be %.2f s (%.2f min).',
                     simulator.timeout, simulator.timeout / 60)
@@ -176,5 +179,5 @@ def runner() -> None:
         logger.debug('Storing plots.')
         custom_injector.get(Plot).plot_all()
 
-    logger.debug(
-        'Process memory footprint: %.2f MiB', memory_profiler.memory_usage()[0])
+    logger.debug('Process memory footprint: %.2f MiB',
+                 memory_profiler.memory_usage()[0])
