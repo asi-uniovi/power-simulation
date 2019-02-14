@@ -13,6 +13,7 @@ scipy = "*"
 simpy = "*"
 memory_profiler = "*"
 flake8 = "*"
+flamegraph = {git = "https://github.com/evanhempel/python-flamegraph.git"}
 
 [dev-packages]
 pytest = "*"
