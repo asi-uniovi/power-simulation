@@ -12,9 +12,9 @@ psutil = "*"
 scipy = "*"
 simpy = "*"
 memory_profiler = "*"
-flake8 = "*"
 
 [dev-packages]
+flake8 = "*"
 pytest = "*"
 
 [requires]
