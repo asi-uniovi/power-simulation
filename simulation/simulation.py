@@ -94,21 +94,10 @@ class Simulation(Base):
         at = self.__stats.sum_histogram('ACTIVITY_TIME') / self.servers
         ust = self.__stats.sum_histogram('USER_SHUTDOWN_TIME') / self.servers
         it = self.__stats.sum_histogram('INACTIVITY_TIME') / self.servers
-        ast = self.__stats.sum_histogram('AUTO_SHUTDOWN_TIME') / self.servers
-        idt = self.__stats.sum_histogram('IDLE_TIME') / self.servers
         val1 = abs((ust + at + it) / self.simulation_time - 1)
-        val2 = abs((ust + at + idt + ast) / self.simulation_time - 1)
-        val3 = abs((ast + idt) / it - 1)
 
         if val1 > 0.1:
             logger.warning('Validation of total time failed: %.2f', val1)
-
-        if val2 > 0.1:
-            logger.warning('Validation of total time failed: %.2f', val2)
-
-        if val3 > 0.01:
-            logger.warning(
-                'Validation of total inactivity failed: %.2f', val3)
 
     def __monitor_time(self) -> float:
         """Indicates how te simulation is progressing."""

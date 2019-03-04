@@ -82,8 +82,6 @@ class Model(Base):
             return self.off_duration
         elif key == 'AUTO_SHUTDOWN_TIME':
             return EmpiricalDistribution([])
-        elif key == 'IDLE_TIME':
-            return EmpiricalDistribution([])
         raise KeyError('Invalid key for histogram.')
 
     def extend(self, other: 'Model') -> None:

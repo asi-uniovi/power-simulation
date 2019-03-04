@@ -16,12 +16,15 @@
 
 import functools
 import math
+import numpy
 import typing
 import scipy.stats
 from simulation.base import Base
 from simulation.static import generate_servers
+from simulation.static import HISTOGRAMS
 from simulation.static import timestamp_to_day
 
+N = 1000
 USERS = 100
 IN_TIME = 8
 OUT_TIME = 17
@@ -140,35 +143,59 @@ class FleetGenerator(Base):
         return norm(m=fraction * len(self.servers),
                     s=math.sqrt(len(self.servers))).rvs()
 
-    def get_all_hourly_summaries(
-            self, _, summaries: dict = ('mean', 'median')
-    ) -> typing.List[typing.Dict[str, float]]:
-        """There are just no events per hour, therefore return 0s."""
-        s = {s: 0.0 for s in summaries}
-        return [s] * 168
+    def get_all_hourly_percentiles(
+            self, key: str, percentile: float) -> typing.List[float]:
+        """Returns the requested percentile per hour."""
+        percentiles = []
+        transposed = self.get_all_hourly_distributions()[key]
+        for day in range(7):
+            for hour in range(24):
+                try:
+                    percentiles.append(numpy.percentile(
+                        [i for i in transposed.get(day, {}).get(hour, [])],
+                        percentile))
+                except IndexError:
+                    percentiles.append(0.0)
+        return percentiles
 
     def get_all_hourly_count(self, key: str) -> typing.List[int]:
-        """There are just no events per hour, therefore return 0s."""
-        return [0] * 168
+        """There is a fixed amount of events, N."""
+        return [N] * 168
 
     @functools.lru_cache()
-    def _get_distribution(self, key, timestamp: int = None):
+    def get_all_hourly_distributions(self):
+        """Returns all the intervals per day, hour and key.
+
+        This method is memoized to make it "deterministic"."""
+        transposed = {}
+        for key in HISTOGRAMS:
+            keys = transposed.setdefault(key, {})
+            for day in range(7):
+                days = keys.setdefault(day, {})
+                for hour in range(24):
+                    distr = self._get_distribution(key, day=day, hour=hour)
+                    days.setdefault(hour, [
+                        distr.rvs() for _ in range(N) if distr])
+        return transposed
+
+    def _get_distribution(self, key, timestamp: int = None,
+                          day: int = None, hour: int = None):
         """Resolve a key to a distribution."""
         if key == 'USER_SHUTDOWN_TIME':
-            return self._user_shutdown_time(timestamp)
+            return self._user_shutdown_time(timestamp, day, hour)
         elif key == 'AUTO_SHUTDOWN_TIME':
-            raise NotImplementedError
+            return None
         elif key == 'ACTIVITY_TIME':
             return lognorm(m=600)
         elif key == 'INACTIVITY_TIME':
             return lognorm(m=3600)
-        elif key == 'IDLE_TIME':
-            raise NotImplementedError
         raise ValueError('Invalid key for _get_distribution(): %s', key)
 
-    def _user_shutdown_time(self, timestamp: int):
-        """Generates the distribution for the shutdown triggered by the user."""
-        day, hour = timestamp_to_day(timestamp)
+    def _user_shutdown_time(self, timestamp: int = None,
+                            day: int = None, hour: int = None):
+        """Distribution for the shutdown triggered by the user."""
+        if timestamp:
+            day, hour = timestamp_to_day(timestamp)
         if day in (0, 6):
             return self._user_shutdown_time_weekend(day, hour)
         return self._user_shutdown_time_week(day, hour)
