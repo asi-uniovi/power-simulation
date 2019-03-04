@@ -39,8 +39,9 @@ def norm(m: float, s: float = None) -> scipy.stats.norm:
 def lognorm(m: float, s: float = None) -> scipy.stats.lognorm:
     """log-Normal distribution with expected mean and std of m and s.
 
-    This is a little wrapper for SciPy's lognorm that creates it in the way that
-    its mean will be m and its standard deviation s."""
+    This is a little wrapper for SciPy's lognorm that creates it in the way
+    that its mean will be m and its standard deviation s.
+    """
     if s is None:
         s = m / 4
     m2 = m**2
@@ -106,7 +107,7 @@ class FleetGenerator(Base):
     # pylint: disable=unused-argument
     def random_activity_for_timestamp(self, cid: str, timestamp: int) -> float:
         """Activity is always a log-normal."""
-        distribution = self._get_distribution('ACTIVITY_TIME')
+        distribution = self._get_distribution('ACTIVITY_TIME', timestamp)
         act = distribution.rvs()
         while act <= 0:
             act = distribution.rvs()
@@ -115,7 +116,7 @@ class FleetGenerator(Base):
     def random_inactivity_for_timestamp(
             self, cid: str, timestamp: int) -> float:
         """Inactivity is always a log-normal."""
-        distribution = self._get_distribution('INACTIVITY_TIME')
+        distribution = self._get_distribution('INACTIVITY_TIME', timestamp)
         act = distribution.rvs()
         while act <= 0:
             act = distribution.rvs()
