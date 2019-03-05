@@ -22,7 +22,6 @@ from simulation.distribution import EmpiricalDistribution
 from simulation.static import weighted_user_satisfaction
 
 
-# pylint: disable=too-many-instance-attributes
 class Model(Base):
     """Represents the model for a given hour.
 
@@ -30,7 +29,6 @@ class Model(Base):
     functionality like timeout threshold calculation.
     """
 
-    # pylint: disable=too-many-arguments
     def __init__(self, xmax: float, xmin: float, inactivity: typing.List = None,
                  activity: typing.List = None, off_duration: typing.List = None,
                  off_fraction: typing.List = None):
@@ -100,7 +98,7 @@ class Model(Base):
     def __optimal_timeout_search(self) -> float:
         """Uses the bisection method to find the timeout for the target."""
 
-        def f(x):  # pylint: disable=invalid-name
+        def f(x):
             """Trasposed function to optimize via root finding."""
             return (numpy.mean(weighted_user_satisfaction(
                 self.inactivity.data, x, self.__satisfaction_threshold))

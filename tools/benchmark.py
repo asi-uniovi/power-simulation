@@ -21,7 +21,6 @@ import sys
 import timeit
 import memory_profiler
 import scipy.stats
-# pylint: disable=import-error,unused-import
 from simulation.distribution import EmpiricalDistribution
 
 

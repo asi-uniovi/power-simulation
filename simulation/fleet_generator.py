@@ -30,7 +30,6 @@ IN_TIME = 8
 OUT_TIME = 17
 
 
-# pylint: disable=invalid-name,no-member
 def norm(m: float, s: float = None) -> scipy.stats.norm:
     """Normal distribution with expected mean and std of m and s."""
     if s is None:
@@ -38,7 +37,6 @@ def norm(m: float, s: float = None) -> scipy.stats.norm:
     return scipy.stats.norm(loc=m, scale=s)
 
 
-# pylint: disable=invalid-name,no-member
 def lognorm(m: float, s: float = None) -> scipy.stats.lognorm:
     """log-Normal distribution with expected mean and std of m and s.
 
@@ -96,18 +94,15 @@ class FleetGenerator(Base):
         self.__servers = sorted(set(self.__servers) - self.__empty_servers)
         self.__empty_servers = sorted(self.__empty_servers)
 
-    # pylint: disable=no-self-use
     def global_idle_timeout(self) -> float:
         """Timeout is infinite, since it is calculated a posteriori."""
         return math.inf
 
-    # pylint: disable=unused-argument
     def optimal_idle_timeout(
             self, cid: str, all_timespan: bool = False) -> float:
         """The timeout is unique in this setup."""
         return self.global_idle_timeout()
 
-    # pylint: disable=unused-argument
     def random_activity_for_timestamp(self, cid: str, timestamp: int) -> float:
         """Activity is always a log-normal."""
         distribution = self._get_distribution('ACTIVITY_TIME', timestamp)
@@ -143,6 +138,7 @@ class FleetGenerator(Base):
         return norm(m=fraction * len(self.servers),
                     s=math.sqrt(len(self.servers))).rvs()
 
+    @functools.lru_cache()
     def get_all_hourly_percentiles(
             self, key: str, percentile: float) -> typing.List[float]:
         """Returns the requested percentile per hour."""
@@ -214,7 +210,6 @@ class FleetGenerator(Base):
         return self._user_shutdown_time_week_prob(
             day, hour, 0.05, 0.05, 0.95)
 
-    # pylint: disable=too-many-arguments
     def _user_shutdown_time_week_prob(
             self, day: int, hour: int, short: float, midday: float,
             next_in_time: float):

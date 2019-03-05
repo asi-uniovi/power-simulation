@@ -32,14 +32,13 @@ from simulation.static import config_logging, profile, timed, WEEK
 from simulation.stats import Stats
 from simulation.user import User
 
-logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
+logger = logging.getLogger(__name__)
 
 
 class Simulation(Base):
     """Constructs the system and runs the simulation."""
 
     @injector.inject
-    # pylint: disable=too-many-arguments
     def __init__(self, distr_factory: DistributionFactory,
                  user_builder: injector.AssistedBuilder[User],
                  plot: Plot, stats: Stats):
@@ -90,7 +89,6 @@ class Simulation(Base):
 
     def __validate_results(self) -> None:
         """Performs vaidations on the run results and warns on errors."""
-        # pylint: disable=invalid-name,no-member
         at = self.__stats.sum_histogram('ACTIVITY_TIME') / self.servers
         ust = self.__stats.sum_histogram('USER_SHUTDOWN_TIME') / self.servers
         it = self.__stats.sum_histogram('INACTIVITY_TIME') / self.servers
@@ -107,7 +105,6 @@ class Simulation(Base):
             yield self.env.timeout(self.simulation_time / 10.0)
 
 
-# pylint: disable=invalid-name
 def confidence_interval(m: float, alpha: float = 0.05):
     """Generator to calculate confidence intervals in a more nicely fashion."""
     x, s, d, i = m, 0, 0, 1
@@ -119,7 +116,6 @@ def confidence_interval(m: float, alpha: float = 0.05):
         d = scipy.stats.t.interval(1 - alpha, i - 1)[1] * math.sqrt(s / i)
 
 
-# pylint: disable=invalid-name,too-many-locals
 @timed
 def runner() -> None:
     """Bind all and launch the simulation!"""
@@ -128,7 +124,7 @@ def runner() -> None:
     config_logging(configuration)
     create_histogram_tables(custom_injector.get(sqlite3.Connection))
     if configuration.get_arg('debug'):
-        numpy.random.seed(0)  # pylint: disable=no-member
+        numpy.random.seed(0)
     simulator = custom_injector.get(Simulation)
     max_runs = configuration.get_arg('max_runs')
     confidence_width = configuration.get_arg('max_confidence_interval_width')

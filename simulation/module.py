@@ -27,7 +27,6 @@ class Module(injector.Module):
     @injector.singleton
     @injector.provider
     @injector.inject
-    # pylint: disable=no-self-use
     def provide_connection(self, config: Configuration) -> sqlite3.Connection:
         """Sets the database up for the module to work."""
         db_name = config.get_config('database_name', 'stats')

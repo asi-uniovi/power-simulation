@@ -63,7 +63,6 @@ def config_logging(config: Configuration) -> None:
     logging.captureWarnings(True)
 
 
-# pylint: disable=invalid-name,too-few-public-methods
 class profile:
     """Decorator to run a function and generate a trace."""
 
@@ -122,13 +121,11 @@ def hour_to_day(hour: int) -> typing.Tuple[int, int]:
     return day, hour
 
 
-# pylint: disable=invalid-name,no-member
 def weight(x: float, ip: float, fp: float) -> float:
     """Linear increment between ip and fp function."""
     return numpy.maximum(0.0, numpy.minimum(1.0, (ip - x) / (ip - fp)))
 
 
-# pylint: disable=invalid-name
 def weighted_user_satisfaction(
         t: float, timeout: float, threshold: float) -> float:
     """Calculates the weighted satisfaction with a sigmoid."""

@@ -23,7 +23,7 @@ from simulation.base import Base
 from simulation.histogram import Histogram
 from simulation.static import weighted_user_satisfaction
 
-logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
+logger = logging.getLogger(__name__)
 
 
 @injector.singleton

@@ -26,7 +26,7 @@ from simulation.base import Base
 from simulation.static import hour_to_day
 from simulation.static import WEEK
 
-logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
+logger = logging.getLogger(__name__)
 
 
 class Histogram(Base):

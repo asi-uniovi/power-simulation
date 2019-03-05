@@ -50,7 +50,6 @@ class EmpiricalDistribution:
     def rvs(self, size: int = None) -> float:
         """Sample the spline that has the inverse CDF."""
         if self.__data.size < 2:
-            # pylint: disable=no-member
             return numpy.random.choice(self.__data, size=size)
         if self.__tck is None:
             self.__fit_tck()
@@ -63,7 +62,6 @@ class EmpiricalDistribution:
             return numpy.zeros(len(vals))
         if self.__cdf is None:
             self.__fit_cdf()
-        # pylint: disable=no-member
         return numpy.maximum(0, numpy.minimum(
             1, scipy.interpolate.splev(vals, self.__cdf, der=0)))
 

@@ -26,7 +26,7 @@ from simulation.static import HISTOGRAMS
 from simulation.static import timed
 from simulation.stats import Stats
 
-logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
+logger = logging.getLogger(__name__)
 
 
 @injector.singleton
@@ -97,7 +97,6 @@ class Plot(Base):
         figure.savefig('hourly_time_percentages.png')
         plt.close(figure)
 
-    # pylint: disable=blacklisted-name,invalid-name,no-self-use
     def __plot_bar(self, axis, bar, hist):
         """Plot a daily bar chart."""
         bottom = numpy.asarray([0.0] * 24)
@@ -113,7 +112,6 @@ class Plot(Base):
                      color=COLORS[key])
             bottom = bottom + data
 
-    # pylint: disable=no-self-use
     def __generate_carry_over(self, intervals):
         """Generates the carry over intervals from the current ones."""
         carry_over, new_intervals = [], []
@@ -125,7 +123,6 @@ class Plot(Base):
                 new_intervals.append(3600)
         return carry_over, new_intervals
 
-    # pylint: disable=too-many-locals
     def __generate_hourly_time_percentages(self, hist):
         """Calculates the percentage with carry over for the time spent."""
         totals = {}

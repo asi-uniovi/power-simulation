@@ -20,11 +20,9 @@ import argparse
 import sys
 import matplotlib
 matplotlib.use('Agg')
-# pylint: disable=wrong-import-position
 import matplotlib.pyplot
 import matplotlib.ticker
 import numpy
-# pylint: disable=import-error
 from simulation.static import user_satisfaction
 from simulation.static import weighted_user_satisfaction
 from tools.parse_trace import parse_trace
@@ -33,7 +31,6 @@ MAX_TIMEOUT = 1200
 STEP = 10
 
 
-# pylint: disable=invalid-name
 def plot_trace(trace):
     """Plots a trace."""
     all_inactivity = numpy.asarray([

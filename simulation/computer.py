@@ -22,17 +22,16 @@ from simulation.activity_distribution import DistributionFactory
 from simulation.base import Base
 from simulation.stats import Stats
 
-logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
+logger = logging.getLogger(__name__)
 
 
 @enum.unique
 class ComputerStatus(enum.Enum):
     """States of a computer along the simulation."""
     off = 0
-    on = 1  # pylint: disable=invalid-name
+    on = 1
 
 
-# pylint: disable=too-many-instance-attributes
 class Computer(Base):
     """A simple server.
 
