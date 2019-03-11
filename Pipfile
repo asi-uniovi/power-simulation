@@ -6,16 +6,16 @@ name = "pypi"
 [packages]
 injector = "*"
 matplotlib = "*"
+memory_profiler = "*"
 numpy = "*"
 powerlaw = "*"
 psutil = "*"
 scipy = "*"
 simpy = "*"
-memory_profiler = "*"
 
 [dev-packages]
-pytest = "*"
 flake8 = "*"
+pytest = "*"
 
 [requires]
 python_version = "3.7"
