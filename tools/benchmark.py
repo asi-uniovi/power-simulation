@@ -24,20 +24,34 @@ import scipy.stats
 from simulation.distribution import EmpiricalDistribution
 
 
-def setup(size):
-    """Generates a random dataset from a normal distribution."""
-    gc.enable()
-    return list(scipy.stats.norm.rvs(size=size)), []
-
-
 @memory_profiler.profile
 def main():
     """Repeat some fitting and print timings."""
-    for size in (10, 100, 1000, 10000):
-        print('size = %d, timeit = %.3f ms' % (size, min(timeit.repeat(
-            stmt='res.append(EmpiricalDistribution(dataset))',
-            setup='dataset, res = setup(%d)' % size,
-            repeat=3, number=100, globals=globals())) * 10.0))
+
+    def gen_dataset(size):
+        """Generates a random dataset from a normal distribution."""
+        return scipy.stats.norm.rvs(size=size)
+
+    def fit_dataset(dataset):
+        """Fits the dataset for sampling."""
+        return EmpiricalDistribution(dataset)
+
+    for size in (1000, 10000, 100000, 1000000, 10000000):
+        dataset = gen_dataset(size)
+
+        gc.collect()
+        fit_time = timeit.timeit(
+            stmt='fit_dataset(dataset).rvs()',
+            number=1000, globals=locals())
+
+        gc.collect()
+        rvs_time = timeit.timeit(
+            stmt='fitted.rvs()',
+            setup='fitted = fit_dataset(dataset) ; fitted.rvs()',
+            number=1000, globals=locals())
+
+        print('size = %d, fit_time = %.3f ms, rvs_time = %.3f ms' % (
+            size, fit_time, rvs_time))
 
 
 if __name__ == '__main__':
