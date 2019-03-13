@@ -21,7 +21,6 @@ import injector
 import simpy
 
 
-# pylint: disable=invalid-name
 def positive_int(x: str) -> int:
     """Parse ints that are positive numbers."""
     x = int(x)
@@ -30,7 +29,6 @@ def positive_int(x: str) -> int:
     return x
 
 
-# pylint: disable=invalid-name
 def positive_float(x: str) -> float:
     """Parse floats that are positive numbers."""
     x = float(x)

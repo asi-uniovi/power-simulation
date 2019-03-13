@@ -20,7 +20,6 @@ import operator
 from simulation.static import DAYS
 
 
-# pylint: disable=invalid-name
 def parse_model(traces, day=None, hour=None):
     """Parses the model for a given trace."""
     models = {}
@@ -32,7 +31,6 @@ def parse_model(traces, day=None, hour=None):
     return models
 
 
-# pylint: disable=invalid-name
 def parse_trace(trace_file, day=None, hour=None):
     """Parses the trace file to get a list of inactivity intervals."""
     with open(trace_file) as trace:

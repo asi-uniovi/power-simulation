@@ -24,7 +24,7 @@ from simulation.computer import Computer
 from simulation.computer import ComputerStatus
 from simulation.stats import Stats
 
-logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
+logger = logging.getLogger(__name__)
 
 
 class User(Base):

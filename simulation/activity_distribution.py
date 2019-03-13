@@ -33,7 +33,7 @@ from simulation.static import WEEK
 from simulation.static import timed
 from simulation.static import timestamp_to_day
 
-logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
+logger = logging.getLogger(__name__)
 
 
 def previous_hour(day: int, hour: int) -> typing.Tuple[int, int]:
@@ -59,7 +59,6 @@ def draw_from_distribution(distribution: EmpiricalDistribution,
     return rnd
 
 
-# pylint: disable=too-many-instance-attributes
 class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
     """Stores the hourly activity distribution over a week.
 
@@ -203,7 +202,7 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
                 for hour, model in hours.items():
                     for key in HISTOGRAMS:
                         data = model.resolve_key(key).data
-                        if len(data) > 0:  # pylint: disable=len-as-condition
+                        if len(data) > 0:
                             dct = transposed.setdefault(
                                 key, {}).setdefault(day, {})
                             dct.setdefault(
@@ -226,7 +225,6 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
             return self.__optimal_timeout_all(cid)
         return hist.optimal_idle_timeout()
 
-    # pylint: disable=invalid-name
     def __distribution_for_hour(self, cid: str, day: int, hour: int) -> Model:
         """Queries the activity distribution to the get average inactivity."""
         previous_count = 0

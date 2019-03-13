@@ -20,14 +20,14 @@ import scipy.stats
 
 from simulation.distribution import EmpiricalDistribution
 
-ALPHA = 0.05
-SIZE = 1000
+ALPHA = 0.01
+SIZE = 10000
 
 
 @pytest.fixture(scope='session', autouse=True)
 def setup_numpy():
     """Set the random seed to the same value."""
-    numpy.random.seed(13)  # pylint: disable=no-member
+    numpy.random.seed(13)
 
 
 @pytest.mark.parametrize('original_dist', [

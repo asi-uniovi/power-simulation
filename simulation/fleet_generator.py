@@ -16,18 +16,20 @@
 
 import functools
 import math
+import numpy
 import typing
 import scipy.stats
 from simulation.base import Base
 from simulation.static import generate_servers
+from simulation.static import HISTOGRAMS
 from simulation.static import timestamp_to_day
 
+N = 1000
 USERS = 100
 IN_TIME = 8
 OUT_TIME = 17
 
 
-# pylint: disable=invalid-name,no-member
 def norm(m: float, s: float = None) -> scipy.stats.norm:
     """Normal distribution with expected mean and std of m and s."""
     if s is None:
@@ -35,12 +37,12 @@ def norm(m: float, s: float = None) -> scipy.stats.norm:
     return scipy.stats.norm(loc=m, scale=s)
 
 
-# pylint: disable=invalid-name,no-member
 def lognorm(m: float, s: float = None) -> scipy.stats.lognorm:
     """log-Normal distribution with expected mean and std of m and s.
 
-    This is a little wrapper for SciPy's lognorm that creates it in the way that
-    its mean will be m and its standard deviation s."""
+    This is a little wrapper for SciPy's lognorm that creates it in the way
+    that its mean will be m and its standard deviation s.
+    """
     if s is None:
         s = m / 4
     m2 = m**2
@@ -92,21 +94,18 @@ class FleetGenerator(Base):
         self.__servers = sorted(set(self.__servers) - self.__empty_servers)
         self.__empty_servers = sorted(self.__empty_servers)
 
-    # pylint: disable=no-self-use
     def global_idle_timeout(self) -> float:
         """Timeout is infinite, since it is calculated a posteriori."""
         return math.inf
 
-    # pylint: disable=unused-argument
     def optimal_idle_timeout(
             self, cid: str, all_timespan: bool = False) -> float:
         """The timeout is unique in this setup."""
         return self.global_idle_timeout()
 
-    # pylint: disable=unused-argument
     def random_activity_for_timestamp(self, cid: str, timestamp: int) -> float:
         """Activity is always a log-normal."""
-        distribution = self._get_distribution('ACTIVITY_TIME')
+        distribution = self._get_distribution('ACTIVITY_TIME', timestamp)
         act = distribution.rvs()
         while act <= 0:
             act = distribution.rvs()
@@ -115,7 +114,7 @@ class FleetGenerator(Base):
     def random_inactivity_for_timestamp(
             self, cid: str, timestamp: int) -> float:
         """Inactivity is always a log-normal."""
-        distribution = self._get_distribution('INACTIVITY_TIME')
+        distribution = self._get_distribution('INACTIVITY_TIME', timestamp)
         act = distribution.rvs()
         while act <= 0:
             act = distribution.rvs()
@@ -139,35 +138,60 @@ class FleetGenerator(Base):
         return norm(m=fraction * len(self.servers),
                     s=math.sqrt(len(self.servers))).rvs()
 
-    def get_all_hourly_summaries(
-            self, _, summaries: dict = ('mean', 'median')
-    ) -> typing.List[typing.Dict[str, float]]:
-        """There are just no events per hour, therefore return 0s."""
-        s = {s: 0.0 for s in summaries}
-        return [s] * 168
+    @functools.lru_cache()
+    def get_all_hourly_percentiles(
+            self, key: str, percentile: float) -> typing.List[float]:
+        """Returns the requested percentile per hour."""
+        percentiles = []
+        transposed = self.get_all_hourly_distributions()[key]
+        for day in range(7):
+            for hour in range(24):
+                try:
+                    percentiles.append(numpy.percentile(
+                        [i for i in transposed.get(day, {}).get(hour, [])],
+                        percentile))
+                except IndexError:
+                    percentiles.append(0.0)
+        return percentiles
 
     def get_all_hourly_count(self, key: str) -> typing.List[int]:
-        """There are just no events per hour, therefore return 0s."""
-        return [0] * 168
+        """There is a fixed amount of events, N."""
+        return [N] * 168
 
     @functools.lru_cache()
-    def _get_distribution(self, key, timestamp: int = None):
+    def get_all_hourly_distributions(self):
+        """Returns all the intervals per day, hour and key.
+
+        This method is memoized to make it "deterministic"."""
+        transposed = {}
+        for key in HISTOGRAMS:
+            keys = transposed.setdefault(key, {})
+            for day in range(7):
+                days = keys.setdefault(day, {})
+                for hour in range(24):
+                    distr = self._get_distribution(key, day=day, hour=hour)
+                    days.setdefault(hour, [
+                        distr.rvs() for _ in range(N) if distr])
+        return transposed
+
+    def _get_distribution(self, key, timestamp: int = None,
+                          day: int = None, hour: int = None):
         """Resolve a key to a distribution."""
         if key == 'USER_SHUTDOWN_TIME':
-            return self._user_shutdown_time(timestamp)
+            return self._user_shutdown_time(timestamp, day, hour)
         elif key == 'AUTO_SHUTDOWN_TIME':
-            raise NotImplementedError
+            return None
         elif key == 'ACTIVITY_TIME':
             return lognorm(m=600)
         elif key == 'INACTIVITY_TIME':
             return lognorm(m=3600)
-        elif key == 'IDLE_TIME':
-            raise NotImplementedError
         raise ValueError('Invalid key for _get_distribution(): %s', key)
 
-    def _user_shutdown_time(self, timestamp: int):
-        """Generates the distribution for the shutdown triggered by the user."""
-        day, hour = timestamp_to_day(timestamp)
+    def _user_shutdown_time(self, timestamp: int = None,
+                            day: int = None, hour: int = None):
+        """Distribution for the shutdown triggered by the user."""
+        if timestamp:
+            day, hour = timestamp_to_day(timestamp)
         if day in (0, 6):
             return self._user_shutdown_time_weekend(day, hour)
         return self._user_shutdown_time_week(day, hour)
@@ -186,7 +210,6 @@ class FleetGenerator(Base):
         return self._user_shutdown_time_week_prob(
             day, hour, 0.05, 0.05, 0.95)
 
-    # pylint: disable=too-many-arguments
     def _user_shutdown_time_week_prob(
             self, day: int, hour: int, short: float, midday: float,
             next_in_time: float):

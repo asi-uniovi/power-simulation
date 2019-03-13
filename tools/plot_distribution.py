@@ -20,7 +20,6 @@ import argparse
 import sys
 import matplotlib
 matplotlib.use('Agg')
-# pylint: disable=wrong-import-position
 import matplotlib.mlab
 import matplotlib.pyplot
 import numpy

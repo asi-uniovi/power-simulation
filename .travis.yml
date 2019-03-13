@@ -12,26 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-.PHONY: init test lint cleanall clean cleanlogs cleanpyc
+language: python
 
-init:
-	pipenv install --dev
+sudo: required
 
-test:
-	pipenv run pytest
+dist: xenial
 
-lint:
-	pipenv run flake8
+python:
+  - 3.4
+  - 3.5
+  - 3.6
+  - 3.7
 
-cleanall: clean cleanlogs cleanpyc
+install:
+  - pip install -U pip pipenv
+  - make init
 
-clean:
-	rm -f *.db
-	rm -f *.png
-
-cleanlogs:
-	rm -f *.log
-
-cleanpyc:
-	find . -type f -name '*.pyc' -delete
-	find . -type d -name '__pycache__' -delete
+script:
+  - make test
