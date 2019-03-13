@@ -4,6 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
+flamegraph = {git = "https://github.com/evanhempel/python-flamegraph.git"}
 injector = "*"
 matplotlib = "*"
 memory_profiler = "*"
@@ -15,6 +16,7 @@ simpy = "*"
 
 [dev-packages]
 flake8 = "*"
+mypy = "*"
 pytest = "*"
 
 [requires]
