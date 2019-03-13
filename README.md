@@ -1,5 +1,7 @@
 # Power management simulaton for computer fleets
 
+[![Build Status](https://travis-ci.org/asi-uniovi/power-simulation.svg?branch=master)](https://travis-ci.org/asi-uniovi/power-simulation)
+
 ## How to run this
 
 ### Pre-requisites
