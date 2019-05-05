@@ -8,7 +8,7 @@
 
 Install the Python dependencies:
 
-`$ make install`
+`$ make init`
 
 ### Run the simulation
 
