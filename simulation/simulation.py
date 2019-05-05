@@ -102,10 +102,11 @@ class Simulation(Base):
 
     def __validate_results(self) -> None:
         """Performs vaidations on the run results and warns on errors."""
-        at = self.__stats.sum_histogram('ACTIVITY_TIME') / self.servers
-        ust = self.__stats.sum_histogram('USER_SHUTDOWN_TIME') / self.servers
-        it = self.__stats.sum_histogram('INACTIVITY_TIME') / self.servers
-        val1 = abs((ust + at + it) / self.simulation_time - 1)
+        at = self.__stats.sum_histogram('ACTIVITY_TIME') / self.users_num
+        ust = self.__stats.sum_histogram('USER_SHUTDOWN_TIME') / self.users_num
+        ast = self.__stats.sum_histogram('AUTO_SHUTDOWN_TIME') / self.users_num
+        it = self.__stats.sum_histogram('INACTIVITY_TIME') / self.users_num
+        val1 = abs((ast + ust + at + it) / self.simulation_time - 1)
 
         if val1 > 0.1:
             logger.warning('Validation of total time failed: %.2f', val1)
