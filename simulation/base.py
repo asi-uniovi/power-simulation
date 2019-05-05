@@ -46,7 +46,8 @@ class Base(object):
     @property
     def simulation_time(self) -> int:
         """Indicates the simulation duration."""
-        return self.get_config_int('duration', section='activity_distribution')
+        return self.get_arg('simulation_time') or self.get_config_int(
+            'duration', section='activity_distribution')
 
     @property
     def simulation_weeks(self) -> float:

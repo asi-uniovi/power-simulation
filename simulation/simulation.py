@@ -54,7 +54,7 @@ class Simulation(Base):
     @property
     def servers(self) -> int:
         """Number of servers being simulated."""
-        return len(self.__training_distribution.servers)
+        return self.get_arg('servers') or len(self.__training_distribution.servers)
 
     @property
     def timeout(self) -> float:

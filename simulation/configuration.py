@@ -115,4 +115,10 @@ class Configuration(object):
                             action='store_true',
                             help=('Disable the control that turns computers '
                                   'off automatically.'))
+        parser.add_argument('--simulation_time',
+                            type=positive_int,
+                            help='Override simulation time from the config.')
+        parser.add_argument('--servers',
+                            type=positive_int,
+                            help='Override number of servers from the config.')
         self.__args = parser.parse_args()
