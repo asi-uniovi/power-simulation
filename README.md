@@ -8,7 +8,7 @@
 
 Install the Python dependencies:
 
-`$ pipenv install`
+`$ make install`
 
 ### Run the simulation
 
