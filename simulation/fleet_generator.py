@@ -25,7 +25,6 @@ from simulation.static import HISTOGRAMS
 from simulation.static import timestamp_to_day
 
 N = 1000
-USERS = 100
 IN_TIME = 8
 OUT_TIME = 17
 
@@ -69,7 +68,7 @@ class FleetGenerator(Base):
         super(FleetGenerator, self).__init__()
         self.__target_satisfaction = self.get_config_int('target_satisfaction')
         self.__empty_servers = []
-        self.__servers = generate_servers(USERS)
+        self.__servers = generate_servers(self.users_num)
 
     @property
     def servers(self) -> typing.List[str]:

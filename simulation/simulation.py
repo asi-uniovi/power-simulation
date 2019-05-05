@@ -19,6 +19,7 @@ import logging
 import math
 import memory_profiler
 import numpy
+import random
 import scipy.stats
 import sqlite3
 import typing
@@ -52,11 +53,6 @@ class Simulation(Base):
         self.__activity_distribution.intersect(self.__training_distribution)
 
     @property
-    def servers(self) -> int:
-        """Number of servers being simulated."""
-        return self.get_arg('servers') or len(self.__training_distribution.servers)
-
-    @property
     def timeout(self) -> float:
         """Average global timeout."""
         return self.__training_distribution.global_idle_timeout()
@@ -67,10 +63,8 @@ class Simulation(Base):
         self.new_run()
         if self.debug:
             self.env.process(self.__monitor_time())
-        for cid in self.__training_distribution.servers:
-            if cid in self.__activity_distribution.servers:
-                self.env.process(
-                    self.__user_builder.build(cid=cid).run())
+        for cid in self.__generate_cids():
+            self.env.process(self.__user_builder.build(cid=cid).run())
         logger.debug('Simulation starting')
         self.env.run(until=self.simulation_time)
         logger.debug('Simulation ended at %d s', self.env.now)
@@ -86,6 +80,25 @@ class Simulation(Base):
         logger.debug('RESULT: Optimal idle timeout = %.2f%%', results[2])
         logger.debug('Run complete.')
         return results
+
+    def __generate_cids(self) -> typing.List[str]:
+        """Generate the computer IDs, so at least all are chosen once."""
+        existing_servers = len(self.__activity_distribution.servers)
+        sample_size = self.users_num - existing_servers
+
+        cids = random.sample(
+            self.__activity_distribution.servers,
+            min(self.users_num, existing_servers))
+
+        if sample_size > 0:
+            if sample_size <= existing_servers:
+                cids.extend(random.sample(
+                    self.__activity_distribution.servers, sample_size))
+            else:
+                cids.extend(random.choices(
+                    self.__activity_distribution.servers, k=sample_size))
+
+        return sorted(cids)
 
     def __validate_results(self) -> None:
         """Performs vaidations on the run results and warns on errors."""
@@ -131,7 +144,7 @@ def runner() -> None:
     run = custom_injector.get(profile)(simulator.run)
 
     logger.info('Simulating %d users during %d s (%.1f week(s)).',
-                simulator.servers, simulator.simulation_time,
+                simulator.users_num, simulator.simulation_time,
                 simulator.simulation_time / WEEK(1))
     logger.info('User Satisfaction (US) target is %d%%.',
                 simulator.target_satisfaction)

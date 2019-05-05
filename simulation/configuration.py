@@ -71,6 +71,14 @@ class Configuration(object):
         """Forwards the get action to the config container."""
         return self.__config.get(section, key)
 
+    def get_config_int(self, key: str, section: str = 'simulation') -> int:
+        """Forwards the get action to the config container."""
+        return self.__config.getint(section, key)
+
+    def get_config_float(self, key: str, section: str = 'simulation') -> float:
+        """Forwards the get action to the config container."""
+        return self.__config.getfloat(section, key)
+
     def __parse_config(self) -> None:
         """Get the config file as a dict of dicts."""
         if not os.path.isfile(self.__args.config_file):
@@ -118,7 +126,7 @@ class Configuration(object):
         parser.add_argument('--simulation_time',
                             type=positive_int,
                             help='Override simulation time from the config.')
-        parser.add_argument('--servers',
+        parser.add_argument('--users',
                             type=positive_int,
-                            help='Override number of servers from the config.')
+                            help='Override number of users from the config.')
         self.__args = parser.parse_args()

@@ -44,6 +44,11 @@ class Base(object):
         return self.__config.runs
 
     @property
+    def users_num(self) -> int:
+        """Number of users being simulated."""
+        return self.get_arg('users') or self.get_config_int('users')
+
+    @property
     def simulation_time(self) -> int:
         """Indicates the simulation duration."""
         return self.get_arg('simulation_time') or self.get_config_int(
@@ -74,11 +79,11 @@ class Base(object):
 
     def get_config_int(self, key: str, section: str = 'simulation') -> int:
         """Retrieves a key from the configuration (converts to int)."""
-        return int(self.get_config(key, section))
+        return self.__config.get_config_int(key, section)
 
     def get_config_float(self, key: str, section: str = 'simulation') -> float:
         """Retrieves a key from the configuration (converts to float)."""
-        return float(self.get_config(key, section))
+        return self.__config.get_config_float(key, section)
 
     def get_arg(self, key: str) -> str:
         """Gets the value of a command line argument."""
