@@ -144,10 +144,11 @@ class Stats(Base):
         return {key: hist.get_all_hourly_distributions()
                 for key, hist in self.__storage.items()}
 
-    def sum_histogram(self, key: str, cid: str = None) -> float:
+    def sum_histogram(
+            self, key: str, cid: str = None, trim: bool = False) -> float:
         """Sums one histogram elements."""
         try:
-            return self.__storage[key].sum_histogram(cid)
+            return self.__storage[key].sum_histogram(cid, trim)
         except KeyError:
             return 0.0
 

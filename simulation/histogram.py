@@ -168,26 +168,59 @@ class Histogram(Base):
                 hour, numpy.asarray([i for _, i in intervals]))
         return transposed
 
-    def sum_histogram(self, cid: str = None, run: int = None) -> int:
+    def sum_histogram(
+            self, cid: str = None, trim: bool = False, run: int = None) -> int:
         """Sums up all the elements of this histogram."""
         if run is None:
             run = self.runs
         self.flush()
-        if cid is None:
-            self.__cursor.execute(
-                '''SELECT SUM(value) AS sum
-                     FROM histogram
-                    WHERE histogram = ?
-                          AND run = ?;''',
-                (self.__name, run))
+        if trim:
+            if cid is None:
+                self.__cursor.execute(
+                    '''SELECT SUM(v) AS sum
+                         FROM (SELECT CASE
+                                          WHEN timestamp + value > %d
+                                          THEN %d - timestamp
+                                          ELSE value
+                                      END AS v
+                                 FROM histogram
+                                WHERE histogram = ?
+                                      AND run = ?);''' % (
+                                          self.simulation_time,
+                                          self.simulation_time),
+                    (self.__name, run))
+            else:
+                self.__cursor.execute(
+                    '''SELECT SUM(v) AS sum
+                         FROM (SELECT CASE
+                                          WHEN timestamp + value > %d
+                                          THEN %d - timestamp
+                                          ELSE value
+                                      END AS v
+                                 FROM histogram
+                                WHERE histogram = ?
+                                      AND run = ?
+                                      AND computer = ?);''' % (
+                                          self.simulation_time,
+                                          self.simulation_time),
+                    (self.__name, run, cid))
         else:
-            self.__cursor.execute(
-                '''SELECT SUM(value) AS sum
-                     FROM histogram
-                    WHERE histogram = ?
-                          AND run = ?
-                          AND computer = ?;''',
-                (self.__name, run, cid))
+            if cid is None:
+                self.__cursor.execute(
+                    '''SELECT SUM(value) AS sum
+                         FROM histogram
+                        WHERE histogram = ?
+                              AND run = ?;''',
+                    (self.__name, run))
+            else:
+                self.__cursor.execute(
+                    '''SELECT SUM(value) AS sum
+                         FROM histogram
+                        WHERE histogram = ?
+                              AND run = ?
+                              AND computer = ?;''',
+                    (self.__name, run, cid))
+
         return int(self.__cursor.fetchone()['sum'])
 
     def count_histogram(self, cid: str = None, run: int = None) -> int:

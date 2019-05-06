@@ -69,8 +69,7 @@ class Simulation(Base):
         self.env.run(until=self.simulation_time)
         logger.debug('Simulation ended at %d s', self.env.now)
         self.__stats.flush()
-        if self.debug:
-            self.__validate_results()
+        self.__validate_results()
         results = (self.__stats.user_satisfaction(),
                    self.__stats.removed_inactivity(),
                    self.__stats.optimal_idle_timeout())
@@ -102,13 +101,17 @@ class Simulation(Base):
 
     def __validate_results(self) -> None:
         """Performs vaidations on the run results and warns on errors."""
-        at = self.__stats.sum_histogram('ACTIVITY_TIME') / self.users_num
-        ust = self.__stats.sum_histogram('USER_SHUTDOWN_TIME') / self.users_num
-        ast = self.__stats.sum_histogram('AUTO_SHUTDOWN_TIME') / self.users_num
-        it = self.__stats.sum_histogram('INACTIVITY_TIME') / self.users_num
-        val1 = abs((ast + ust + at + it) / self.simulation_time - 1)
+        at = self.__stats.sum_histogram(
+            'ACTIVITY_TIME', trim=True) / self.users_num
+        ust = self.__stats.sum_histogram(
+            'USER_SHUTDOWN_TIME', trim=True) / self.users_num
+        ast = self.__stats.sum_histogram(
+            'AUTO_SHUTDOWN_TIME', trim=True) / self.users_num
+        it = self.__stats.sum_histogram(
+            'INACTIVITY_TIME', trim=True) / self.users_num
+        val1 = (ast + ust + at + it) / self.simulation_time
 
-        if val1 > 0.1:
+        if val1 > 1.25:
             logger.warning('Validation of total time failed: %.2f', val1)
 
     def __monitor_time(self) -> float:
