@@ -32,7 +32,7 @@ class Stats(Base):
 
     @injector.inject
     def __init__(self, distr_factory: DistributionFactory,
-                 historgram_builder: injector.AssistedBuilder[Histogram]):
+                 historgram_builder: injector.ClassAssistedBuilder[Histogram]):
         super(Stats, self).__init__()
         self.__training_distribution = distr_factory(training=True)
         self.__histogram_builder = historgram_builder

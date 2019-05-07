@@ -37,7 +37,7 @@ class User(Base):
 
     @injector.inject
     @injector.noninjectable('cid')
-    def __init__(self, computer_builder: injector.AssistedBuilder[Computer],
+    def __init__(self, computer_builder: injector.ClassAssistedBuilder[Computer],
                  distr_factory: DistributionFactory, stats: Stats,
                  cid: str):
         super(User, self).__init__()

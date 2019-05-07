@@ -41,7 +41,7 @@ class Simulation(Base):
 
     @injector.inject
     def __init__(self, distr_factory: DistributionFactory,
-                 user_builder: injector.AssistedBuilder[User],
+                 user_builder: injector.ClassAssistedBuilder[User],
                  plot: Plot, stats: Stats):
         super(Simulation, self).__init__()
         self.__activity_distribution = distr_factory()

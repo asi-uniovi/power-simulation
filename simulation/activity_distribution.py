@@ -68,7 +68,7 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
 
     @injector.inject
     @injector.noninjectable('config_section')
-    def __init__(self, model_builder: injector.AssistedBuilder[Model],
+    def __init__(self, model_builder: injector.ClassAssistedBuilder[Model],
                  config_section: str):
         """All the data of this object is loaded from the config object."""
         super(ActivityDistributionBase, self).__init__()
