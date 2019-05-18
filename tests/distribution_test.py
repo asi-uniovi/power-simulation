@@ -20,8 +20,8 @@ import scipy.stats
 
 from simulation.distribution import EmpiricalDistribution
 
-ALPHA = 0.01
-SIZE = 10000
+ALPHA = 0.001
+SIZE = 50000
 
 
 @pytest.fixture(scope='session', autouse=True)
