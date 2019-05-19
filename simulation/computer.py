@@ -57,6 +57,11 @@ class Computer(Base):
         """Read only computer ID."""
         return self.__computer_id
 
+    @property
+    def is_on(self) -> bool:
+        """Indicate if the computer is on."""
+        return self.__status == ComputerStatus.on
+
     def change_status(self, status: ComputerStatus,
                       interrupt_idle_timer: bool = True) -> None:
         """Changes the state of the computer, and takes any side action."""

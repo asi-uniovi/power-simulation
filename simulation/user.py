@@ -70,6 +70,8 @@ class User(Base):
 
     def __indicate_shutdown(self) -> bool:
         """Indicates whether we need to shutdown or not."""
+        if not self.__computer.is_on:
+            return False
         hour = timestamp_to_day(self.env.now)
         if self.__current_hour != hour:
             self.__current_hour = hour
