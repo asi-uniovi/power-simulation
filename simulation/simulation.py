@@ -103,11 +103,15 @@ class Simulation(Base):
         """Performs vaidations on the run results and warns on errors."""
         at = self.__stats.sum_histogram('ACTIVITY_TIME', trim=True)
         ust = self.__stats.sum_histogram('USER_SHUTDOWN_TIME', trim=True)
+        ast = self.__stats.sum_histogram('AUTO_SHUTDOWN_TIME', trim=True)
         it = self.__stats.sum_histogram('INACTIVITY_TIME', trim=True)
         val1 = (ust + at + it) / self.simulation_time / self.users_num
 
         if 0.99 > val1 > 1.01:
             logger.warning('Validation of total time failed: %.2f', val1)
+
+        if ast > it:
+            logger.warning('Validation of auto shut down failed: %.2f > %.2f', ast, it)
 
     def __monitor_time(self) -> float:
         """Indicates how te simulation is progressing."""
