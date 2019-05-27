@@ -19,6 +19,7 @@ import numpy
 import scipy.optimize
 from simulation.base import Base
 from simulation.distribution import EmpiricalDistribution
+from simulation.static import user_satisfaction
 from simulation.static import weighted_user_satisfaction
 
 
@@ -69,6 +70,18 @@ class Model(Base):
         """Indicates if the model has all distributions."""
         return (self.inactivity and self.activity and self.off_duration
                 and self.off_fraction)
+
+    def test_timeout(
+            self, timeout: float) -> typing.Tuple[float, float, float]:
+        """Calculate analytically the US and RI for a given timeout."""
+        wus = (sum(weighted_user_satisfaction(
+            self.inactivity.data, timeout, self.__satisfaction_threshold))
+               / len(self.inactivity.data)) * 100
+        us = (sum(user_satisfaction(self.inactivity.data, timeout))
+              / len(self.inactivity.data)) * 100
+        ri = (sum(i - timeout for i in self.inactivity.data if i > timeout)
+              / numpy.sum(self.inactivity.data)) * 100
+        return (wus, us, ri)
 
     def resolve_key(self, key: str) -> EmpiricalDistribution:
         """Matches histograms and keys."""

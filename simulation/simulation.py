@@ -57,6 +57,11 @@ class Simulation(Base):
         """Average global timeout."""
         return self.__training_distribution.global_idle_timeout()
 
+    @property
+    def test_timeout(self) -> typing.Tuple[float, float, float]:
+        """Average global timeout."""
+        return self.__activity_distribution.test_timeout(self.timeout)
+
     @timed
     def run(self) -> typing.Tuple[float, float]:
         """Sets up and starts a new simulation."""
@@ -154,6 +159,8 @@ def runner() -> None:
     if simulator.timeout < math.inf:
         logger.info('Average global timeout will be %.2f s (%.2f min).',
                     simulator.timeout, simulator.timeout / 60)
+        logger.info('A priori WUS = %.2f%%, US = %.2f%%, RI = %.2f%%.',
+                    *simulator.test_timeout)
     (s, i, t), c = run(), 1
     logger.info('Run 1: US = %.2f%%, RI = %.2f%%, timeout = %.2f', s, i, t)
 

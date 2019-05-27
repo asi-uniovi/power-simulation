@@ -116,6 +116,10 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
         self.__servers = sorted(set(self.__servers) - self.__empty_servers)
         self.__empty_servers = sorted(self.__empty_servers)
 
+    def test_timeout(self, timeout: float) -> typing.Tuple[float, float, float]:
+        """Calculate analytically the US and RI for a given timeout."""
+        return self.__get_flat_model().test_timeout(timeout)
+
     def global_idle_timeout(self) -> float:
         """Calculates the value of the idle timer for a given satisfaction."""
         if self.__optimal_timeout is None:
@@ -209,13 +213,19 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
                                 hour, numpy.append(dct.get(hour, []), data))
         return transposed
 
+    def __get_flat_model(self, cid: str = None) -> Model:
+        """Create a model with all of the data of a given computer (or all)."""
+        flat_model = self.__model_builder()
+        models = [self.__models[cid]] if cid else self.__models.values()
+        for model in models:
+            for day in model.values():
+                for model in day.values():
+                    flat_model.extend(model)
+        return flat_model
+
     def __optimal_timeout_all(self, cid: str) -> float:
         """Calculate the optimal timeout for all the simulation."""
-        flat_model = self.__model_builder()
-        for day in self.__models[cid].values():
-            for model in day.values():
-                flat_model.extend(model)
-        return flat_model.optimal_idle_timeout()
+        return self.__get_flat_model(cid).optimal_idle_timeout()
 
     def __optimal_timeout_timestamp(
             self, cid: str, day: int, hour: int) -> float:
