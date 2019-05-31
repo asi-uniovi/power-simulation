@@ -215,13 +215,17 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
 
     def __get_flat_model(self, cid: str = None) -> Model:
         """Create a model with all of the data of a given computer (or all)."""
-        flat_model = self.__model_builder()
+        flat_models = []
         models = [self.__models[cid]] if cid else self.__models.values()
-        for model in models:
-            for day in model.values():
-                for model in day.values():
-                    flat_model.extend(model)
-        return flat_model
+
+        for m in models:
+            for day in m.values():
+                for h in day.values():
+                    flat_models.append(h)
+
+        flat = self.__model_builder()
+        flat.multi_extend(flat_models)
+        return flat
 
     def __optimal_timeout_all(self, cid: str) -> float:
         """Calculate the optimal timeout for all the simulation."""

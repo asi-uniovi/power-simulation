@@ -74,12 +74,13 @@ class Model(Base):
     def test_timeout(
             self, timeout: float) -> typing.Tuple[float, float, float]:
         """Calculate analytically the US and RI for a given timeout."""
-        wus = (sum(weighted_user_satisfaction(
+        wus = (numpy.sum(weighted_user_satisfaction(
             self.inactivity.data, timeout, self.__satisfaction_threshold))
                / len(self.inactivity.data)) * 100
-        us = (sum(user_satisfaction(self.inactivity.data, timeout))
+        us = (numpy.sum(user_satisfaction(self.inactivity.data, timeout))
               / len(self.inactivity.data)) * 100
-        ri = (sum(i - timeout for i in self.inactivity.data if i > timeout)
+        ri = (numpy.sum(numpy.where(self.inactivity.data > timeout,
+                                    self.inactivity.data - timeout, 0.0))
               / numpy.sum(self.inactivity.data)) * 100
         return (wus, us, ri)
 
@@ -100,7 +101,14 @@ class Model(Base):
         self.__inactivity.extend(other.inactivity)
         self.__activity.extend(other.activity)
         self.__off_duration.extend(other.off_duration)
-        self.__off_fraction += other.off_fraction
+        self.__off_fraction.extend(other.off_fraction)
+
+    def multi_extend(self, others: typing.List['Model']) -> None:
+        """Appends the data from another model to this one."""
+        self.__inactivity.multi_extend([i.inactivity for i in others])
+        self.__activity.multi_extend([i.activity for i in others])
+        self.__off_duration.multi_extend([i.off_duration for i in others])
+        self.__off_fraction.extend(i.off_fraction for i in others)
 
     def optimal_idle_timeout(self) -> float:
         """Does the search for the optimal timeout for this model."""

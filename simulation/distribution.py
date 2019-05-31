@@ -59,6 +59,16 @@ class EmpiricalDistribution:
         self.__data = numpy.append(self.__data, other.data)
         self.__spline = None
 
+    def multi_extend(self, others: typing.List['EmpiricalDistribution']) -> None:
+        """This extends this distribution with data from many others."""
+        self.__data = numpy.empty(sum(len(i) for i in others))
+        j = 0
+        for other in others:
+            for i in other:
+                self.__data[j] = i
+                j += 1
+        self.__spline = None
+
     def __fit_spline(self) -> None:
         """Fits the distribution for generating random values."""
         self.__data.sort()
