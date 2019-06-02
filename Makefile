@@ -19,6 +19,7 @@ init:
 
 test:
 	pipenv run pytest
+	pipenv run ./main.py --config config/test.ini
 
 lint:
 	pipenv run flake8
