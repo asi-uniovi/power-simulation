@@ -78,10 +78,10 @@ class Simulation(Base):
         results = (self.__stats.user_satisfaction(),
                    self.__stats.removed_inactivity(),
                    self.__stats.optimal_idle_timeout())
-        logger.debug('RESULT: User Satisfaction (US) = %.2f%%', results[0])
-        logger.debug('RESULT: Modified Apdex = %.2f%%', self.__stats.apdex())
-        logger.debug('RESULT: Removed Inactivity (RI) = %.2f%%', results[1])
-        logger.debug('RESULT: Optimal idle timeout = %.2f%%', results[2])
+        logger.debug('RESULT: Simulated User Satisfaction (US) = %.2f%%', results[0])
+        logger.debug('RESULT: Simualted Modified Apdex = %.2f%%', self.__stats.apdex())
+        logger.debug('RESULT: Simulated Removed Inactivity (RI) = %.2f', results[1])
+        logger.debug('RESULT: Perfect Optimal idle timeout = %.2f%%', results[2])
         logger.debug('Run complete.')
         return results
 
