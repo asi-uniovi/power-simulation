@@ -326,7 +326,7 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
 
     def __merge_per_hour(self) -> None:
         """Merge so all hours have the same model."""
-        logger.debug('Merging histogram per hour.')
+        logger.info('Merging histogram per hour.')
         merged = {}
         for cid, days in self.__models.items():
             merged_model = self.__model_builder()
@@ -341,7 +341,7 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
 
     def __merge_per_pc(self) -> None:
         """Merge so all PCs have the same model."""
-        logger.debug('Merging histogram per PC.')
+        logger.info('Merging histogram per PC.')
         merged = {}
         for cid, days in self.__models.items():
             for day, hours in days.items():
