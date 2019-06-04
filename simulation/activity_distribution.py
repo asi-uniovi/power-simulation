@@ -145,14 +145,10 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
     def random_inactivity_for_timestamp(
             self, cid: str, timestamp: int) -> float:
         """Queries the activity distribution and generates a random sample."""
-        distribution = self.__distribution_for_hour(
-            cid, *timestamp_to_day(timestamp)).inactivity
-        rnd_inactivity = draw_from_distribution(
-            distribution, min_value=self.__xmin, max_value=self.__xmax)
-        while rnd_inactivity > self.__xmax:
-            rnd_inactivity = draw_from_distribution(
-                distribution, min_value=self.__xmin, max_value=self.__xmax)
-        return rnd_inactivity
+        return draw_from_distribution(
+            self.__distribution_for_hour(
+                cid, *timestamp_to_day(timestamp)).inactivity,
+            min_value=self.__xmin, max_value=self.__xmax)
 
     def off_interval_for_timestamp(self, cid: str, timestamp: int) -> float:
         """Samples an off interval for the day and hour provided"""
