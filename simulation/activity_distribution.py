@@ -299,14 +299,12 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
         models = {}
         for day, hours in histogram.items():
             for hour, dct in hours.items():
-                model = self.__model_builder(
-                    inactivity=dct['InactivityIntervals'],
-                    activity=dct['ActivityIntervals'],
-                    off_duration=dct['OffIntervals'],
-                    off_fraction=dct['OffFrequencies'])
-                if model.is_complete:
-                    models.setdefault(day, {}).setdefault(
-                        hour, model)
+                models.setdefault(day, {}).setdefault(
+                    hour, self.__model_builder(
+                        inactivity=dct['InactivityIntervals'],
+                        activity=dct['ActivityIntervals'],
+                        off_duration=dct['OffIntervals'],
+                        off_fraction=dct['OffFrequencies']))
         return models
 
     def __filter(self, t: str, data: typing.List[float]) -> typing.List[float]:
