@@ -209,6 +209,7 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
                                 hour, numpy.append(dct.get(hour, []), data))
         return transposed
 
+    @functools.lru_cache(maxsize=None)
     def __get_flat_model(self, cid: str = None) -> Model:
         """Create a model with all of the data of a given computer (or all)."""
         flat_models = []
