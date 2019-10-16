@@ -342,11 +342,18 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
         """Merge so all PCs have the same model."""
         logger.info('Merging histogram per PC.')
         merged = {}
-        for cid, days in self.__models.items():
+        for days in self.__models.values():
             for day, hours in days.items():
                 for hour, model in hours.items():
                     merged.setdefault(day, {}).setdefault(
-                        hour, self.__model_builder()).extend(model)
+                        hour, []).append(model)
+
+        for day, hours in merged.items():
+            for hour, models in hours.items():
+                model = self.__model_builder()
+                model.multi_extend(models)
+                merged[day][hour] = model
+
         for cid in self.__models:
             self.__models[cid] = merged
 
