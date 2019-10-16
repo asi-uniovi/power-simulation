@@ -65,12 +65,6 @@ class Model(Base):
         """Off proportions."""
         return self.__off_fraction
 
-    @property
-    def is_complete(self) -> bool:
-        """Indicates if the model has all distributions."""
-        return (self.inactivity and self.activity and self.off_duration
-                and self.off_fraction)
-
     def test_timeout(
             self, timeout: float) -> typing.Tuple[float, float, float]:
         """Calculate analytically the US and RI for a given timeout."""

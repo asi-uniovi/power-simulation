@@ -375,7 +375,7 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
         for day in range(7):
             for hour in range(24):
                 model = self.__get(cid, day, hour)
-                if model is not None and model.is_complete:
+                if model is not None:
                     return False
         return True
 
