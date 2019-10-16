@@ -102,6 +102,7 @@ class Model(Base):
         self.__activity.extend(other.activity)
         self.__off_duration.extend(other.off_duration)
         self.__off_fraction.extend(other.off_fraction)
+        self.__optimal_timeout = None
 
     def multi_extend(self, others: typing.List['Model']) -> None:
         """Appends the data from another model to this one."""
@@ -109,6 +110,7 @@ class Model(Base):
         self.__activity.multi_extend([i.activity for i in others])
         self.__off_duration.multi_extend([i.off_duration for i in others])
         self.__off_fraction.extend(i.off_fraction for i in others)
+        self.__optimal_timeout = None
 
     def optimal_idle_timeout(self) -> float:
         """Does the search for the optimal timeout for this model."""
