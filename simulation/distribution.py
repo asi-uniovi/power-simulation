@@ -44,13 +44,7 @@ class EmpiricalDistribution:
             self.__fit_spline()
         return self.__spline(numpy.random.random(size=size), nu=0)
 
-    def extend(self, other: 'EmpiricalDistribution') -> None:
-        """This extends this distribution with data from another."""
-        self.__data = numpy.concatenate((self.__data, other.data))
-        self.__spline = None
-
-    def multi_extend(
-            self, others: typing.Iterable['EmpiricalDistribution']) -> None:
+    def extend(self, others: typing.Iterable['EmpiricalDistribution']) -> None:
         """This extends this distribution with data from many others."""
         self.__data = numpy.concatenate(
             [self.__data] + [i.data for i in others])

@@ -221,7 +221,7 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
                     flat_models.append(h)
 
         flat = self.__model_builder()
-        flat.multi_extend(flat_models)
+        flat.extend(flat_models)
         return flat
 
     def __optimal_timeout_all(self, cid: str) -> float:
@@ -331,7 +331,7 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
             merged_model = self.__model_builder()
             for day, hours in days.items():
                 for hour, model in hours.items():
-                    merged_model.extend(model)
+                    merged_model.extend([model])
             for day, hours in days.items():
                 for hour in hours:
                     merged.setdefault(cid, {}).setdefault(
@@ -351,7 +351,7 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
         for day, hours in merged.items():
             for hour, models in hours.items():
                 model = self.__model_builder()
-                model.multi_extend(models)
+                model.extend(models)
                 merged[day][hour] = model
 
         for cid in self.__models:
