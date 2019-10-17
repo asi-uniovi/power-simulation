@@ -34,9 +34,9 @@ class Model(Base):
                  activity: typing.List = None, off_duration: typing.List = None,
                  off_fraction: typing.List = None):
         super(Model, self).__init__()
-        self.__inactivity = EmpiricalDistribution(inactivity or [])
-        self.__activity = EmpiricalDistribution(activity or [])
-        self.__off_duration = EmpiricalDistribution(off_duration or [])
+        self.__inactivity = EmpiricalDistribution(inactivity)
+        self.__activity = EmpiricalDistribution(activity)
+        self.__off_duration = EmpiricalDistribution(off_duration)
         self.__off_fraction = off_fraction or []
         self.__optimal_timeout = None
         self.__satisfaction_threshold = self.get_config_int(
@@ -87,7 +87,7 @@ class Model(Base):
         elif key == 'USER_SHUTDOWN_TIME':
             return self.off_duration
         elif key == 'AUTO_SHUTDOWN_TIME':
-            return EmpiricalDistribution([])
+            return EmpiricalDistribution()
         raise KeyError('Invalid key for histogram.')
 
     def extend(self, other: 'Model') -> None:

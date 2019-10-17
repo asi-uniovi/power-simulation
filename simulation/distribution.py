@@ -27,8 +27,8 @@ class EmpiricalDistribution:
     http://www.astroml.org/book_figures/chapter3/fig_clone_distribution.html
     """
 
-    def __init__(self, data: numpy.ndarray):
-        self.__data = data
+    def __init__(self, data: typing.Iterable[float] = None):
+        self.__data = numpy.asanyarray(data or [])
         self.__spline = None
         self.__mean = None
         self.__median = None
