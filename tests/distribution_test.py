@@ -47,8 +47,8 @@ def test_merge():
     """Test the merging of distributions."""
     merged = EmpiricalDistribution(
         data=scipy.stats.norm(loc=10, scale=4).rvs(size=SIZE))
-    merged.extend(EmpiricalDistribution(
-        data=scipy.stats.norm(loc=20, scale=7).rvs(size=SIZE)))
+    merged.extend([EmpiricalDistribution(
+        data=scipy.stats.norm(loc=20, scale=7).rvs(size=SIZE))])
     one = EmpiricalDistribution(data=numpy.concatenate((
         scipy.stats.norm(loc=10, scale=4).rvs(size=SIZE),
         scipy.stats.norm(loc=20, scale=7).rvs(size=SIZE))))

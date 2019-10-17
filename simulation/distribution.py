@@ -28,7 +28,7 @@ class EmpiricalDistribution:
     """
 
     def __init__(self, data: typing.Iterable[float] = None):
-        self.__data = numpy.asanyarray(data or [])
+        self.__data = numpy.asanyarray([] if data is None else data)
         self.__spline = None
 
     @property
