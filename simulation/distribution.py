@@ -30,27 +30,11 @@ class EmpiricalDistribution:
     def __init__(self, data: typing.Iterable[float] = None):
         self.__data = numpy.asanyarray(data or [])
         self.__spline = None
-        self.__mean = None
-        self.__median = None
 
     @property
     def data(self) -> numpy.ndarray:
         """Returns the sample data used for the fitting."""
         return self.__data
-
-    @property
-    def mean(self) -> float:
-        """Expected value of the distribution."""
-        if self.__mean is None:
-            self.__mean = numpy.mean(self.__data)
-        return self.__mean
-
-    @property
-    def median(self) -> float:
-        """Median of the distribution."""
-        if self.__median is None:
-            self.__median = numpy.median(self.__data)
-        return self.__median
 
     def rvs(self, size: int = None) -> float:
         """Sample the spline that has the inverse CDF."""
@@ -64,8 +48,6 @@ class EmpiricalDistribution:
         """This extends this distribution with data from another."""
         self.__data = numpy.concatenate((self.__data, other.data))
         self.__spline = None
-        self.__mean = None
-        self.__median = None
 
     def multi_extend(
             self, others: typing.Iterable['EmpiricalDistribution']) -> None:
@@ -73,8 +55,6 @@ class EmpiricalDistribution:
         self.__data = numpy.concatenate(
             [self.__data] + [i.data for i in others])
         self.__spline = None
-        self.__mean = None
-        self.__median = None
 
     def __fit_spline(self) -> None:
         """Fits the distribution for generating random values."""
