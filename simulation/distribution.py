@@ -27,9 +27,11 @@ class EmpiricalDistribution:
     http://www.astroml.org/book_figures/chapter3/fig_clone_distribution.html
     """
 
-    def __init__(self, data: typing.Any):
-        self.__data = numpy.asarray(data)
+    def __init__(self, data: numpy.ndarray):
+        self.__data = data
         self.__spline = None
+        self.__mean = None
+        self.__median = None
 
     @property
     def data(self) -> numpy.ndarray:
@@ -39,12 +41,16 @@ class EmpiricalDistribution:
     @property
     def mean(self) -> float:
         """Expected value of the distribution."""
-        return numpy.mean(self.__data)
+        if self.__mean is None:
+            self.__mean = numpy.mean(self.__data)
+        return self.__mean
 
     @property
     def median(self) -> float:
         """Median of the distribution."""
-        return numpy.median(self.__data)
+        if self.__median is None:
+            self.__median = numpy.median(self.__data)
+        return self.__median
 
     def rvs(self, size: int = None) -> float:
         """Sample the spline that has the inverse CDF."""
@@ -56,13 +62,19 @@ class EmpiricalDistribution:
 
     def extend(self, other: 'EmpiricalDistribution') -> None:
         """This extends this distribution with data from another."""
-        self.__data = numpy.concatenate((self.data, other.data))
+        self.__data = numpy.concatenate((self.__data, other.data))
         self.__spline = None
+        self.__mean = None
+        self.__median = None
 
-    def multi_extend(self, others: typing.List['EmpiricalDistribution']) -> None:
+    def multi_extend(
+            self, others: typing.Iterable['EmpiricalDistribution']) -> None:
         """This extends this distribution with data from many others."""
-        self.__data = numpy.concatenate([self.data] + [i.data for i in others])
+        self.__data = numpy.concatenate(
+            [self.__data] + [i.data for i in others])
         self.__spline = None
+        self.__mean = None
+        self.__median = None
 
     def __fit_spline(self) -> None:
         """Fits the distribution for generating random values."""
@@ -72,7 +84,7 @@ class EmpiricalDistribution:
         self.__spline = scipy.interpolate.BSpline(t, c, k, extrapolate=False)
 
     def __len__(self) -> int:
-        return len(self.__data)
+        return self.__data.size
 
     def __iter__(self) -> float:
         yield from self.__data
