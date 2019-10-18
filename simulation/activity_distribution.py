@@ -318,44 +318,60 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
 
     def __merge_histograms(self) -> None:
         """Merges histograms to be global or per PC/hour."""
-        if not self.get_arg('per_hour'):
+        if not self.get_arg('per_hour') and not self.get_arg('per_pc'):
+            logger.info('Merging histogram both per hour and PC.')
+            self.__merge_per_hour_and_pc()
+        elif not self.get_arg('per_hour'):
+            logger.info('Merging histogram per hour.')
             self.__merge_per_hour()
-        if not self.get_arg('per_pc'):
+        elif not self.get_arg('per_pc'):
+            logger.info('Merging histogram per PC.')
             self.__merge_per_pc()
+        else:
+            logger.info('Will not merge any dataset.')
 
     def __merge_per_hour(self) -> None:
         """Merge so all hours have the same model."""
-        logger.info('Merging histogram per hour.')
-        merged = {}
-        for cid, days in self.__models.items():
-            merged_model = self.__model_builder()
-            for day, hours in days.items():
-                for hour, model in hours.items():
-                    merged_model.extend([model])
-            for day, hours in days.items():
-                for hour in hours:
-                    merged.setdefault(cid, {}).setdefault(
-                        day, {}).setdefault(hour, merged_model)
-        self.__models = merged
-
-    def __merge_per_pc(self) -> None:
-        """Merge so all PCs have the same model."""
-        logger.info('Merging histogram per PC.')
         merged = {}
         for days in self.__models.values():
             for day, hours in days.items():
                 for hour, model in hours.items():
                     merged.setdefault(day, {}).setdefault(
                         hour, []).append(model)
-
         for day, hours in merged.items():
             for hour, models in hours.items():
                 merged_model = self.__model_builder()
                 merged_model.extend(models)
                 merged[day][hour] = merged_model
-
         for cid in self.__models:
             self.__models[cid] = merged
+
+    def __merge_per_pc(self) -> None:
+        """Merge so all PCs have the same model."""
+        merged = {}
+        for cid, days in self.__models.items():
+            models = []
+            for day, hours in days.items():
+                for hour, model in hours.items():
+                    models.append(model)
+            merged_model = self.__model_builder()
+            merged_model.extend(models)
+            merged[cid] = {d: {h: merged_model for h in range(24)}
+                           for d in range(7)}
+        self.__models = merged
+
+    def __merge_per_hour_and_pc(self) -> None:
+        """Merge so all PCs and hours have the same model."""
+        models = []
+        for cid, days in self.__models.items():
+            for day, hours in days.items():
+                for hour, model in hours.items():
+                    models.append(model)
+        merged_model = self.__model_builder()
+        merged_model.extend(models)
+        self.__models = {cid: {d: {h: merged_model for h in range(24)}
+                               for d in range(7)}
+                         for cid in self.__models.keys()}
 
     def __filter_out_empty_servers(self) -> None:
         """Removes the servers that have no data in any of the histograms."""
