@@ -350,9 +350,9 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
 
         for day, hours in merged.items():
             for hour, models in hours.items():
-                model = self.__model_builder()
-                model.extend(models)
-                merged[day][hour] = model
+                merged_model = self.__model_builder()
+                merged_model.extend(models)
+                merged[day][hour] = merged_model
 
         for cid in self.__models:
             self.__models[cid] = merged
