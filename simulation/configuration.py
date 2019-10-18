@@ -104,10 +104,10 @@ class Configuration(object):
                             help='generate a profiling trace')
         parser.add_argument('--per_pc',
                             action='store_true',
-                            help='generate distributions grouped by PC')
+                            help='do not merge by PC')
         parser.add_argument('--per_hour',
                             action='store_true',
-                            help='generate distributions grouped by hour')
+                            help='do not merge by hour')
         parser.add_argument('--max_runs',
                             type=positive_int, default=100,
                             help='do not run the simulation more than this')
