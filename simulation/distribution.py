@@ -14,9 +14,12 @@
 
 """Some useful statistical distributions."""
 
+import logging
 import typing
 import numpy
 import scipy.interpolate
+
+logger = logging.getLogger(__name__)
 
 
 class EmpiricalDistribution:
@@ -52,6 +55,7 @@ class EmpiricalDistribution:
 
     def __fit_spline(self) -> None:
         """Fits the distribution for generating random values."""
+        logger.debug('Fitting a spline with %d elements', len(self))
         self.__data.sort()
         t, c, k = scipy.interpolate.splrep(
             numpy.linspace(0, 1, self.__data.size), self.__data, k=1)
