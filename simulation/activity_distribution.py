@@ -212,17 +212,21 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
     @functools.lru_cache(maxsize=None)
     def __get_flat_model(self, cid: str = None) -> Model:
         """Create a model with all of the data of a given computer (or all)."""
-        flat_models = []
-        models = [self.__models[cid]] if cid else self.__models.values()
+        flat_models = self.__get_unique_models(cid)
+        if len(flat_models) > 1:
+            flat = self.__model_builder()
+            flat.extend(flat_models)
+            return flat
+        return flat_models[0]
 
-        for m in models:
-            for day in m.values():
-                for h in day.values():
-                    flat_models.append(h)
-
-        flat = self.__model_builder()
-        flat.extend(flat_models)
-        return flat
+    def __get_unique_models(self, cid: str = None) -> typing.List[Model]:
+        """Fetches and filters the models for a given cid (or all)."""
+        models = set()
+        for days in [self.__models[cid]] if cid else self.__models.values():
+            for day, hours in days.items():
+                for hour, model in hours.items():
+                    models.add(model)
+        return list(models)
 
     def __optimal_timeout_all(self, cid: str) -> float:
         """Calculate the optimal timeout for all the simulation."""
