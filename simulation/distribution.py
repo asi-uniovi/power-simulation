@@ -15,7 +15,6 @@
 """Some useful statistical distributions."""
 
 import logging
-import typing
 import numpy
 import scipy.interpolate
 
@@ -30,16 +29,16 @@ class EmpiricalDistribution:
     http://www.astroml.org/book_figures/chapter3/fig_clone_distribution.html
     """
 
-    def __init__(self, data: typing.Iterable[float] = None):
+    def __init__(self, data=None):
         self.__data = numpy.asanyarray([] if data is None else data)
         self.__spline = None
 
     @property
-    def data(self) -> numpy.ndarray:
+    def data(self):
         """Returns the sample data used for the fitting."""
         return self.__data
 
-    def rvs(self, size: int = None) -> float:
+    def rvs(self, size=None):
         """Sample the spline that has the inverse CDF."""
         if self.__data.size < 2:
             return numpy.random.choice(self.__data, size=size)
@@ -47,13 +46,13 @@ class EmpiricalDistribution:
             self.__fit_spline()
         return self.__spline(numpy.random.random(size=size), nu=0)
 
-    def extend(self, others: typing.Iterable['EmpiricalDistribution']) -> None:
+    def extend(self, others):
         """This extends this distribution with data from many others."""
         self.__spline = None
         self.__data = numpy.concatenate(
             [self.__data] + [i.data for i in others])
 
-    def __fit_spline(self) -> None:
+    def __fit_spline(self):
         """Fits the distribution for generating random values."""
         logger.debug('Fitting a spline with %d elements', len(self))
         self.__data.sort()
@@ -61,8 +60,8 @@ class EmpiricalDistribution:
             numpy.linspace(0, 1, self.__data.size), self.__data, k=1)
         self.__spline = scipy.interpolate.BSpline(t, c, k, extrapolate=False)
 
-    def __len__(self) -> int:
+    def __len__(self):
         return self.__data.size
 
-    def __iter__(self) -> float:
+    def __iter__(self):
         yield from self.__data
