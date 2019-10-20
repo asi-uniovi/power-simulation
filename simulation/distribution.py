@@ -49,9 +49,9 @@ class EmpiricalDistribution:
 
     def extend(self, others: typing.Iterable['EmpiricalDistribution']) -> None:
         """This extends this distribution with data from many others."""
+        self.__spline = None
         self.__data = numpy.concatenate(
             [self.__data] + [i.data for i in others])
-        self.__spline = None
 
     def __fit_spline(self) -> None:
         """Fits the distribution for generating random values."""
