@@ -7,7 +7,7 @@ name = "pypi"
 flamegraph = {git = "https://github.com/evanhempel/python-flamegraph.git"}
 injector = "<0.16"
 matplotlib = "*"
-memory_profiler = "*"
+memory_profiler = {git = "https://github.com/pythonprofilers/memory_profiler.git"}
 numpy = "*"
 powerlaw = "*"
 psutil = "*"
