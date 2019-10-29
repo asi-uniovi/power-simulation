@@ -50,7 +50,6 @@ class Simulation(Base):
         self.__plot = plot
         self.__stats = stats
         self.target_satisfaction = self.get_config_int('target_satisfaction')
-        self.__activity_distribution.intersect(self.__training_distribution)
 
     @property
     def timeout(self) -> float:

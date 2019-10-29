@@ -85,7 +85,6 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
         self.__model_builder = functools.partial(
             model_builder.build, xmax=self.__xmax, xmin=self.__xmin)
         self.__servers = []
-        self.__empty_servers = []
         self.__models = {}
         self.__optimal_timeout = None
         self.__parse_trace()
@@ -94,27 +93,6 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
     def servers(self) -> typing.List[str]:
         """Read only servers list."""
         return self.__servers
-
-    @property
-    def empty_servers(self) -> typing.List[str]:
-        """Read only empty servers list."""
-        return self.__empty_servers
-
-    def intersect(self, other: 'ActivityDistributionBase') -> None:
-        """Make this activity distribution intersect with other."""
-        to_remove = set(self.empty_servers) | set(other.empty_servers)
-        to_remove |= set(self.servers) ^ set(other.servers)
-        self.remove_servers(to_remove)
-        other.remove_servers(to_remove)
-
-    def remove_servers(self, empty_servers: typing.List[str]) -> None:
-        """Blacklist some of the servers."""
-        self.__empty_servers = set(self.__empty_servers) | set(empty_servers)
-        for cid in self.__empty_servers:
-            if cid in self.__models:
-                del self.__models[cid]
-        self.__servers = sorted(set(self.__servers) - self.__empty_servers)
-        self.__empty_servers = sorted(self.__empty_servers)
 
     def test_timeout(self, timeout: float) -> typing.Tuple[float, float, float]:
         """Calculate analytically the US and RI for a given timeout."""
@@ -287,7 +265,6 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
             if len(self.__servers) != len(set(self.__servers)):
                 raise ValueError('There are duplicate PCs')
         self.__merge_histograms()
-        self.__filter_out_empty_servers()
 
     def __parse_model(
             self,
@@ -376,28 +353,6 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
         self.__models = {cid: {d: {h: merged_model for h in range(24)}
                                for d in range(7)}
                          for cid in self.__models.keys()}
-
-    def __filter_out_empty_servers(self) -> None:
-        """Removes the servers that have no data in any of the histograms."""
-        logger.debug('Filtering servers with no data.')
-        empty_servers = set()
-        for cid in self.__servers:
-            if self.__is_empty_histogram(cid):
-                empty_servers.add(cid)
-                if cid in self.__models:
-                    del self.__models[cid]
-        self.__servers = sorted(set(self.__servers) - empty_servers)
-        self.__empty_servers = sorted(empty_servers)
-        logger.debug('%d servers have been filtered out.', len(empty_servers))
-
-    def __is_empty_histogram(self, cid: str) -> bool:
-        """Indicates if a histogram is empty."""
-        for day in range(7):
-            for hour in range(24):
-                model = self.__get(cid, day, hour)
-                if model is not None:
-                    return False
-        return True
 
     def __get(self, cid: int, day: int, hour: int) -> Model:
         """Generic getter for a model."""
