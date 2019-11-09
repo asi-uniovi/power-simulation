@@ -14,7 +14,6 @@
 
 """Module to generate fleets based on very high level parameters."""
 
-import functools
 import math
 import numpy
 import typing
@@ -137,7 +136,6 @@ class FleetGenerator(Base):
         return norm(m=fraction * len(self.servers),
                     s=math.sqrt(len(self.servers))).rvs()
 
-    @functools.lru_cache()
     def get_all_hourly_percentiles(
             self, key: str, percentile: float) -> typing.List[float]:
         """Returns the requested percentile per hour."""
@@ -157,7 +155,6 @@ class FleetGenerator(Base):
         """There is a fixed amount of events, N."""
         return [N] * 168
 
-    @functools.lru_cache()
     def get_all_hourly_distributions(self):
         """Returns all the intervals per day, hour and key.
 

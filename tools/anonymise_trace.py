@@ -3,7 +3,6 @@
 """Replaces the name of the workstations with some that is anonymous."""
 
 import argparse
-import functools
 import json
 import math
 import re
@@ -27,7 +26,6 @@ def print_substitutions(pcs):
     # print('Made %d changes.' % len(pcs))
 
 
-@functools.lru_cache(maxsize=None)
 def should_substitute(pc_name):
     """Indicates if a PC name should be substituted."""
     return pc_name != '_Total' and not NAME_PATTERN.match(pc_name)
