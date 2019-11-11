@@ -37,9 +37,9 @@ class User(Base):
 
     @injector.inject
     @injector.noninjectable('cid')
-    def __init__(self, computer_builder: injector.ClassAssistedBuilder[Computer],
-                 distr_factory: DistributionFactory, stats: Stats,
-                 cid: str):
+    def __init__(
+            self, computer_builder: injector.ClassAssistedBuilder[Computer],
+            distr_factory: DistributionFactory, stats: Stats, cid: str):
         super(User, self).__init__()
         self.__computer = computer_builder.build(cid=cid)
         self.__activity_distribution = distr_factory()
@@ -51,10 +51,12 @@ class User(Base):
         """Generates requests af the defined frequency."""
         if self.get_arg('fleet_generator'):
             # If generating a random fleet, we start inactive until Monday.
+            self.__stats.append(
+                'USER_SHUTDOWN_TIME', (24 + 8) * 3600, self.__computer.cid)
             yield self.env.timeout((24 + 8) * 3600)
         while True:
             if self.__indicate_shutdown():
-                logger.debug('User is shutting down PC %s', self.__computer.cid)
+                logger.debug('User shutting down PC %s', self.__computer.cid)
                 shutdown_time = self.__shutdown_interval()
                 self.__computer.change_status(ComputerStatus.off)
                 self.__stats.append(
