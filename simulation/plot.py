@@ -14,6 +14,7 @@
 
 """Summarizes the stats collected during the simulation in plots."""
 
+import collections
 import injector
 import logging
 import matplotlib.pyplot as plt
@@ -23,6 +24,7 @@ from simulation.activity_distribution import DistributionFactory
 from simulation.base import Base
 from simulation.static import DAYS
 from simulation.static import HISTOGRAMS
+from simulation.static import REVERSE_DAYS
 from simulation.static import timed
 from simulation.stats import Stats
 
@@ -82,22 +84,26 @@ class Plot(Base):
             self.__stats.get_all_hourly_distributions())
 
         figure, axes = plt.subplots(nrows=7, sharex='col')
-        bar_h = [i * 1.05 for i in range(0, 48, 2)]
-        bar_s = [i + 1 for i in bar_h]
+        bar_s = [i * 1.05 for i in range(0, 48, 2)]
+        bar_h = [i + 1 for i in bar_s]
 
-        for day, axis in enumerate(axes):
-            self.__plot_bar(axis, bar_h, hists.get(day))
+        axesd = collections.deque(axes)
+        axesd.rotate(1)
+        for day, axis in enumerate(axesd):
             self.__plot_bar(axis, bar_s, stats.get(day))
+            self.__plot_bar(axis, bar_h, hists.get(day), orig=True)
             axis.set_xticks([i + 1/2 for i in bar_h])
             axis.set_xticklabels(range(24))
             axis.set_ylim(0, 100)
+            axis.set_title(REVERSE_DAYS[day])
 
-        figure.set_size_inches(6.5, 10)
+        axesd[0].legend(loc='center', bbox_to_anchor=(0.5, -1), ncol=2)
+        figure.set_size_inches(6.5, 11)
         figure.set_tight_layout(True)
         figure.savefig('hourly_time_percentages.png')
         plt.close(figure)
 
-    def __plot_bar(self, axis, bar, hist):
+    def __plot_bar(self, axis, bar, hist, orig=False):
         """Plot a daily bar chart."""
         bottom = numpy.asarray([0.0] * 24)
         COLORS = {
@@ -108,8 +114,9 @@ class Plot(Base):
         }
         for key in HISTOGRAMS:
             data = [hist[key][h] for h in range(24)]
-            axis.bar(bar, data, width=1.0, bottom=bottom, label=key,
-                     color=COLORS[key])
+            suffix = ' (model)' if orig else ' (simulated)'
+            axis.bar(bar, data, width=1.0, bottom=bottom, label=key + suffix,
+                     color=COLORS[key], hatch='////' if orig else None)
             bottom = bottom + data
 
     def __generate_carry_over(self, intervals):
