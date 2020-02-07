@@ -12,15 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-dist: xenial
-
 language: python
 
 cache: pip
 
 python:
-  - 3.6
-  - 3.7
+  - "3.6"
+  - "3.7"
+  - "3.8"
 
 install:
   - make init
