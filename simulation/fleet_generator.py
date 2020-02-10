@@ -66,31 +66,12 @@ class FleetGenerator(Base):
         """
         super(FleetGenerator, self).__init__()
         self.__target_satisfaction = self.get_config_int('target_satisfaction')
-        self.__empty_servers = []
         self.__servers = generate_servers(self.users_num)
 
     @property
     def servers(self) -> typing.List[str]:
         """Just return the generated servers."""
         return self.__servers
-
-    @property
-    def empty_servers(self) -> typing.List[str]:
-        """There are not generated servers in this fleet."""
-        return self.__empty_servers
-
-    def intersect(self, other: 'FleetGenerator') -> None:
-        """Make this activity distribution intersect with other."""
-        to_remove = set(self.empty_servers) | set(other.empty_servers)
-        to_remove |= set(self.servers) ^ set(other.servers)
-        self.remove_servers(to_remove)
-        other.remove_servers(to_remove)
-
-    def remove_servers(self, empty_servers: typing.List[str]) -> None:
-        """Remove servers and mark them as empty."""
-        self.__empty_servers = set(self.__empty_servers) | set(empty_servers)
-        self.__servers = sorted(set(self.__servers) - self.__empty_servers)
-        self.__empty_servers = sorted(self.__empty_servers)
 
     def global_idle_timeout(self) -> float:
         """Timeout is infinite, since it is calculated a posteriori."""
