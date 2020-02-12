@@ -51,8 +51,6 @@ def draw_from_distribution(distribution: EmpiricalDistribution,
                            min_value: float = 0,
                            max_value: float = float('inf')) -> float:
     """Gets a value from a distribution bounding the limit."""
-    if distribution is None:
-        return min_value
     rnd = distribution.rvs()
     while min_value >= rnd >= max_value:
         rnd = distribution.rvs()
