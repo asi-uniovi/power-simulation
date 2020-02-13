@@ -39,6 +39,7 @@ class Plot(Base):
     def __init__(
             self, distribution_factory: DistributionFactory, stats: Stats):
         super(Plot, self).__init__()
+        self.__activity_distribution = distribution_factory()
         self.__training_distribution = distribution_factory(training=True)
         self.__stats = stats
 
@@ -78,21 +79,26 @@ class Plot(Base):
     @timed
     def plot_hourly_time_percentages(self):
         """Plots the time percentages as percentual bar charts."""
-        hists = self.__generate_hourly_time_percentages(
-            self.__training_distribution.get_all_hourly_distributions())
         stats = self.__generate_hourly_time_percentages(
             self.__stats.get_all_hourly_distributions())
+        bar_s = [i * 1.05 for i in range(0, 48, 2)]
+        if not self.get_arg('fleet_generator'):
+            hists = self.__generate_hourly_time_percentages(
+                self.__training_distribution.get_all_hourly_distributions())
+            bar_s = [i * 1.05 for i in range(0, 48, 2)]
+            bar_h = [i + 1 for i in bar_s]
 
         figure, axes = plt.subplots(nrows=7, sharex='col')
-        bar_s = [i * 1.05 for i in range(0, 48, 2)]
-        bar_h = [i + 1 for i in bar_s]
 
         axesd = collections.deque(axes)
         axesd.rotate(1)
         for day, axis in enumerate(axesd):
             self.__plot_bar(axis, bar_s, stats.get(day))
-            self.__plot_bar(axis, bar_h, hists.get(day), orig=True)
-            axis.set_xticks([i + 1/2 for i in bar_h])
+            if not self.get_arg('fleet_generator'):
+                self.__plot_bar(axis, bar_h, hists.get(day), orig=True)
+                axis.set_xticks([i + 1/2 for i in bar_h])
+            else:
+                axis.set_xticks(bar_s)
             axis.set_xticklabels(range(24))
             axis.set_ylim(0, 100)
             axis.set_title(REVERSE_DAYS[day])
@@ -112,10 +118,14 @@ class Plot(Base):
             'USER_SHUTDOWN_TIME': 'b',
             'AUTO_SHUTDOWN_TIME': 'y',
         }
+        suffix = ''
+        width = 2
+        if not self.get_arg('fleet_generator'):
+            suffix = ' (model)' if orig else ' (simulated)'
+            width = 1
         for key in HISTOGRAMS:
             data = [hist[key][h] for h in range(24)]
-            suffix = ' (model)' if orig else ' (simulated)'
-            axis.bar(bar, data, width=1.0, bottom=bottom, label=key + suffix,
+            axis.bar(bar, data, width=width, bottom=bottom, label=key + suffix,
                      color=COLORS[key], hatch='////' if orig else None)
             bottom = bottom + data
 
