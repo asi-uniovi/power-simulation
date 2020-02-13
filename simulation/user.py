@@ -14,7 +14,6 @@
 
 """User simulation process."""
 
-import logging
 import injector
 import numpy
 from simulation.activity_distribution import DistributionFactory
@@ -23,8 +22,6 @@ from simulation.base import Base
 from simulation.computer import Computer
 from simulation.computer import ComputerStatus
 from simulation.stats import Stats
-
-logger = logging.getLogger(__name__)
 
 
 class User(Base):
@@ -56,7 +53,6 @@ class User(Base):
             yield self.env.timeout((24 + 8) * 3600)
         while True:
             if self.__indicate_shutdown():
-                logger.debug('User shutting down PC %s', self.__computer.cid)
                 shutdown_time = self.__shutdown_interval()
                 self.__computer.change_status(ComputerStatus.off)
                 self.__stats.append(

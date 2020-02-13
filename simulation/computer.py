@@ -15,14 +15,11 @@
 """A simulation process of the computer."""
 
 import enum
-import logging
 import injector
 import simpy
 from simulation.activity_distribution import DistributionFactory
 from simulation.base import Base
 from simulation.stats import Stats
-
-logger = logging.getLogger(__name__)
 
 
 @enum.unique

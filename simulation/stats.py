@@ -100,6 +100,8 @@ class Stats(Base):
         if timestamp is None:
             timestamp = self.env.now
         self.__storage[key].append(timestamp, cid, value)
+        logger.debug('%s in PC %s = %f s (timestamp = %d s)',
+                     key, cid, value, timestamp)
 
     def get_all_hourly_histograms(self, key: str) -> typing.List[numpy.ndarray]:
         """Gets all the subhistograms per hour."""
