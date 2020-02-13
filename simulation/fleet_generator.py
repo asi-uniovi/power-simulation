@@ -23,10 +23,6 @@ from simulation.static import generate_servers
 from simulation.static import HISTOGRAMS
 from simulation.static import timestamp_to_day
 
-N = 1000
-IN_TIME = 8
-OUT_TIME = 17
-
 
 def norm(m: float, s: float = None) -> scipy.stats.norm:
     """Normal distribution with expected mean and std of m and s."""
@@ -47,6 +43,18 @@ def lognorm(m: float, s: float = None) -> scipy.stats.lognorm:
     phi = math.sqrt(s**2 + m2)
     sigma = math.sqrt(math.log(phi**2 / m2))
     return scipy.stats.lognorm(s=sigma, loc=0, scale=(m2 / phi))
+
+
+N = 1000
+IN_TIME = 9
+LUNCH_TIME = 13
+OUT_TIME = 18
+SMALL_SHUTDOWN = 3600
+OFF_FRACTION = 0.01
+OFF_FRACTION_NIGHT = 0.2
+DISTRIBUTION = norm
+ACTIVITY = 600
+INACTIVITY = 1200
 
 
 class FleetGenerator(Base):
@@ -109,13 +117,11 @@ class FleetGenerator(Base):
 
     def off_frequency_for_hour(self, cid: str, day: int, hour: int) -> float:
         """Shutdown frequency for a given simulation hour."""
-        fraction = 0.01
-        if 1 <= day <= 5 and IN_TIME <= hour < OUT_TIME:
-            fraction = 0.05
+        if day == 0 and not self.__initialised[cid]:
+            return 1
         if 1 <= day <= 5 and hour == OUT_TIME:
-            fraction = 0.95
-        return norm(m=fraction * len(self.servers),
-                    s=math.sqrt(len(self.servers))).rvs()
+            return OFF_FRACTION_NIGHT
+        return OFF_FRACTION
 
     def get_all_hourly_percentiles(
             self, key: str, percentile: float) -> typing.List[float]:
