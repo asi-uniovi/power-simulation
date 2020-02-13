@@ -22,6 +22,7 @@ import numpy
 import random
 import scipy.stats
 import sqlite3
+import time
 import typing
 from simulation.activity_distribution import DistributionFactory
 from simulation.base import Base
@@ -139,6 +140,7 @@ def confidence_interval(m: float, alpha: float = 0.05):
 @timed
 def runner() -> None:
     """Bind all and launch the simulation!"""
+    ini = time.process_time()
     custom_injector = injector.Injector([Module])
     configuration = custom_injector.get(Configuration)
     config_logging(configuration)
@@ -150,6 +152,8 @@ def runner() -> None:
     confidence_width = configuration.get_arg('max_confidence_interval_width')
     run = custom_injector.get(profile)(simulator.run)
 
+    logger.info('Parsing done at second %.2f', time.process_time() - ini)
+
     logger.info('Simulating %d users during %d s (%.1f week(s)).',
                 simulator.users_num, simulator.simulation_time,
                 simulator.simulation_time / WEEK(1))
@@ -160,10 +164,11 @@ def runner() -> None:
                     simulator.timeout, simulator.timeout / 60)
         logger.info('A priori WUS = %.2f%%, US = %.2f%%, RI = %.2f%%.',
                     *simulator.test_timeout)
+        logger.info('A priori analysis at second %.2f', time.process_time() - ini)
     (s, i, t), c = run(), 1
     logger.info('Run 1: US = %.2f%%, RI = %.2f%%, timeout = %.2f', s, i, t)
 
-    if max_runs == 1:
+    if max_runs == 1 or configuration.get_arg('fleet_generator'):
         logger.warning('Only one run, cannot calculate confidence intervals')
     else:
         satisfaction = confidence_interval(s)
@@ -182,9 +187,15 @@ def runner() -> None:
                 break
         logger.info('All runs done (%d).', c)
 
+    logger.info('Runs done at second %.2f', time.process_time() - ini)
+
     if configuration.get_arg('plot'):
         logger.debug('Storing plots.')
         custom_injector.get(Plot).plot_all()
 
+    logger.info('Plotting done at second %.2f', time.process_time() - ini)
+
     logger.debug('Process memory footprint: %.2f MiB',
                  memory_profiler.memory_usage()[0])
+
+    logger.info('All done at second %.2f', time.process_time() - ini)
