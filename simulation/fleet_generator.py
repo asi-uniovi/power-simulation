@@ -27,7 +27,7 @@ from simulation.static import timestamp_to_day
 def norm(m: float, s: float = None) -> scipy.stats.norm:
     """Normal distribution with expected mean and std of m and s."""
     if s is None:
-        s = m / 4
+        s = m / 10
     return scipy.stats.norm(loc=m, scale=s)
 
 
@@ -38,7 +38,7 @@ def lognorm(m: float, s: float = None) -> scipy.stats.lognorm:
     that its mean will be m and its standard deviation s.
     """
     if s is None:
-        s = m / 4
+        s = m / 10
     m2 = m**2
     phi = math.sqrt(s**2 + m2)
     sigma = math.sqrt(math.log(phi**2 / m2))
