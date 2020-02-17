@@ -57,6 +57,16 @@ ACTIVITY = 600
 INACTIVITY = 1200
 
 
+def draw_from_distribution(distribution: scipy.stats.rv_continuous,
+                           min_value: float = 0,
+                           max_value: float = float('inf')) -> float:
+    """Gets a value from a distribution bounding the limit."""
+    rnd = distribution.rvs()
+    while min_value >= rnd >= max_value:
+        rnd = distribution.rvs()
+    return rnd
+
+
 class FleetGenerator(Base):
     """Geenerates a fleet based on high level parameters.
 
@@ -92,28 +102,19 @@ class FleetGenerator(Base):
 
     def random_activity_for_timestamp(self, cid: str, timestamp: int) -> float:
         """Activity is always a log-normal."""
-        distribution = self._get_distribution('ACTIVITY_TIME', timestamp)
-        act = distribution.rvs()
-        while act <= 0:
-            act = distribution.rvs()
-        return act
+        return draw_from_distribution(
+            self._get_distribution(cid, 'ACTIVITY_TIME', timestamp))
 
     def random_inactivity_for_timestamp(
             self, cid: str, timestamp: int) -> float:
         """Inactivity is always a log-normal."""
-        distribution = self._get_distribution('INACTIVITY_TIME', timestamp)
-        act = distribution.rvs()
-        while act <= 0:
-            act = distribution.rvs()
-        return act
+        return draw_from_distribution(
+            self._get_distribution(cid, 'INACTIVITY_TIME', timestamp))
 
     def off_interval_for_timestamp(self, cid: str, timestamp: int) -> float:
         """Off interval for a given simulation timestamp."""
-        distribution = self._get_distribution('USER_SHUTDOWN_TIME', timestamp)
-        act = distribution.rvs()
-        while act <= 0:
-            act = distribution.rvs()
-        return act
+        return draw_from_distribution(
+            self._get_distribution(cid, 'USER_SHUTDOWN_TIME', timestamp))
 
     def off_frequency_for_hour(self, cid: str, day: int, hour: int) -> float:
         """Shutdown frequency for a given simulation hour."""
