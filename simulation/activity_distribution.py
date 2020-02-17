@@ -70,8 +70,6 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
                  config_section: str):
         """All the data of this object is loaded from the config object."""
         super(ActivityDistributionBase, self).__init__()
-        if self.get_arg('fleet_generator'):
-            return
         self.__target_satisfaction = self.get_config_int('target_satisfaction')
         self.__satisfaction_threshold = self.get_config_int(
             'satisfaction_threshold')
