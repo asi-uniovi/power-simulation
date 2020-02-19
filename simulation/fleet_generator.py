@@ -28,7 +28,7 @@ from simulation.static import timestamp_to_day
 def norm(m: float, s: float = None) -> scipy.stats.norm:
     """Normal distribution with expected mean and std of m and s."""
     if s is None:
-        s = m / 10
+        s = m / 100
     return scipy.stats.norm(loc=m, scale=s)
 
 
@@ -39,7 +39,7 @@ def lognorm(m: float, s: float = None) -> scipy.stats.lognorm:
     that its mean will be m and its standard deviation s.
     """
     if s is None:
-        s = m / 10
+        s = m / 100
     m2 = m**2
     phi = math.sqrt(s**2 + m2)
     sigma = math.sqrt(math.log(phi**2 / m2))
@@ -47,15 +47,15 @@ def lognorm(m: float, s: float = None) -> scipy.stats.lognorm:
 
 
 N = 1000
-IN_TIME = 9
+IN_TIME = 8
 LUNCH_TIME = 13
 OUT_TIME = 18
 SMALL_SHUTDOWN = 3600
 OFF_FRACTION = 0.01
-OFF_FRACTION_NIGHT = 0.2
+OFF_FRACTION_NIGHT = 0.8
 DISTRIBUTION = norm
-ACTIVITY = 600
-INACTIVITY = 1200
+ACTIVITY = 900
+INACTIVITY = 1800
 
 
 class FleetGenerator(Base):
@@ -109,9 +109,7 @@ class FleetGenerator(Base):
 
     def off_frequency_for_hour(self, cid: str, day: int, hour: int) -> float:
         """Shutdown frequency for a given simulation hour."""
-        if day == 0 and not self.__initialised[cid]:
-            return 1
-        if 1 <= day <= 5 and hour == OUT_TIME:
+        if 1 <= day <= 5 and hour >= OUT_TIME:
             return OFF_FRACTION_NIGHT
         return OFF_FRACTION
 
@@ -135,89 +133,77 @@ class FleetGenerator(Base):
         return [N] * 168
 
     def get_all_hourly_distributions(self):
-        """Returns all the intervals per day, hour and key.
-
-        This method is memoized to make it "deterministic"."""
+        """Returns all the intervals per day, hour and key."""
         transposed = {}
         for key in HISTOGRAMS:
             keys = transposed.setdefault(key, {})
             for day in range(7):
                 days = keys.setdefault(day, {})
                 for hour in range(24):
-                    distr = self._get_distribution(key, day=day, hour=hour)
+                    distr = self._get_distribution(
+                        None, key, day=day, hour=hour)
                     days.setdefault(hour, [
-                        distr.rvs() for _ in range(N) if distr])
+                        abs(distr.rvs()) for _ in range(N) if distr])
         return transposed
 
-    def _get_distribution(self, key, timestamp: int = None,
+    def _get_distribution(self, cid: str, key: str, timestamp: int = None,
                           day: int = None, hour: int = None):
         """Resolve a key to a distribution."""
         if key == 'USER_SHUTDOWN_TIME':
-            return self._user_shutdown_time(timestamp, day, hour)
+            return self._user_shutdown_time(cid, timestamp, day, hour)
         elif key == 'AUTO_SHUTDOWN_TIME':
             return None
         elif key == 'ACTIVITY_TIME':
-            return lognorm(m=600)
+            return self._activity_time(timestamp, day, hour)
         elif key == 'INACTIVITY_TIME':
-            return lognorm(m=3600)
+            return self._inactivity_time(cid, timestamp, day, hour)
         raise ValueError('Invalid key for _get_distribution(): %s', key)
 
-    def _user_shutdown_time(self, timestamp: int = None,
+    def _activity_time(self, timestamp: int = None, day: int = None,
+                       hour: int = None):
+        """Distribution for the activity by the user."""
+        if timestamp is not None:
+            day, hour = timestamp_to_day(timestamp)
+        return DISTRIBUTION(ACTIVITY, 600)
+
+    def _inactivity_time(self, cid: str, timestamp: int = None,
+                         day: int = None, hour: int = None):
+        """Distribution for the inactivity by the user."""
+        if timestamp is not None:
+            day, hour = timestamp_to_day(timestamp)
+        return DISTRIBUTION(INACTIVITY, 600)
+
+    def _user_shutdown_time(self, cid: str, timestamp: int = None,
                             day: int = None, hour: int = None):
         """Distribution for the shutdown triggered by the user."""
-        if timestamp:
+        if timestamp is not None:
             day, hour = timestamp_to_day(timestamp)
-        if day in (0, 6):
-            return self._user_shutdown_time_weekend(day, hour)
-        return self._user_shutdown_time_week(day, hour)
+        if day not in (0, 6):
+            if hour <= IN_TIME:
+                return self._user_shutdown_time_prob(cid, day, hour, 0.7, 1.0)
+            if hour <= LUNCH_TIME:
+                return self._user_shutdown_time_prob(cid, day, hour, 0.1, 1.0)
+            if hour >= OUT_TIME:
+                return self._user_shutdown_time_prob(cid, day, hour, 0.1, 0.1)
+        return self._user_shutdown_time_prob(cid, day, hour, 0.05, 0.05)
 
-    def _user_shutdown_time_week(self, day: int, hour: int):
-        """Week shutdown time."""
-        if hour < 10:
-            return self._user_shutdown_time_week_prob(
-                day, hour, 0.8, 0.9, 1.0)
-        if hour < 12:
-            return self._user_shutdown_time_week_prob(
-                day, hour, 0.05, 0.95, 1.0)
-        if hour < 16:
-            return self._user_shutdown_time_week_prob(
-                day, hour, 0.9, 0.9, 0.95)
-        return self._user_shutdown_time_week_prob(
-            day, hour, 0.05, 0.05, 0.95)
-
-    def _user_shutdown_time_week_prob(
-            self, day: int, hour: int, short: float, midday: float,
-            next_in_time: float):
+    def _user_shutdown_time_prob(
+            self, cid: str, day: int, hour: int, short: float, midday: float):
         """Resolves the shutdown profile based on the probability per event."""
         rnd = scipy.rand()
         if rnd <= short:
-            return lognorm(300, 60)
+            return DISTRIBUTION(SMALL_SHUTDOWN, 900)
         if rnd <= midday:
             return self._user_shutdown_time_midday(day, hour)
-        if rnd <= next_in_time:
-            return self._user_shutdown_time_next_in_time(day, hour)
-        return self._user_shutdown_time_next_midday(day, hour)
+        return self._user_shutdown_time_next_in_time(cid, day, hour)
 
     def _user_shutdown_time_midday(self, _, hour: int):
         """Shutdown time for today's mid day."""
-        assert hour < 12
-        return norm((12 - hour) * 3600)
+        return DISTRIBUTION((LUNCH_TIME + 2 - hour) * 3600, 1800)
 
-    def _user_shutdown_time_next_in_time(self, day: int, hour: int):
+    def _user_shutdown_time_next_in_time(self, cid: str, day: int, hour: int):
         """Shutdown time for next IN_TIME."""
         time_left = int(24 - hour + IN_TIME) * 3600
         if day == 5:
-            return norm(time_left + 48 * 3600, 3600)
-        return norm(time_left)
-
-    def _user_shutdown_time_next_midday(self, day: int, hour: int):
-        """Shutdown time for next midday."""
-        time_left = int(24 - hour + 12) * 3600
-        if day == 5:
-            return norm(time_left + 48 * 3600, 3600)
-        return norm(time_left)
-
-    def _user_shutdown_time_weekend(self, day: int, hour: int):
-        """Weekend shutdown time."""
-        time_left = int((day / 6) * 24 + (24 - hour + IN_TIME)) * 3600
-        return norm(time_left)
+            return DISTRIBUTION(time_left + 48 * 3600, 1800)
+        return DISTRIBUTION(time_left, 1800)
