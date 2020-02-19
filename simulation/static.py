@@ -22,6 +22,7 @@ import time
 import typing
 import injector
 import numpy
+import scipy.stats
 from simulation.configuration import Configuration
 
 HISTOGRAMS = sorted((
@@ -141,3 +142,13 @@ def generate_servers(size: int) -> typing.List[str]:
     """Generates a list of servers randomly generated."""
     fill = math.ceil(math.log(size, 10))
     return ['workstation' + str(i).zfill(fill) for i in range(size)]
+
+
+def draw_from_distribution(distribution: scipy.stats.rv_continuous,
+                           min_value: float = 0.0,
+                           max_value: float = float('inf')) -> float:
+    """Gets a value from a distribution bounding the limit."""
+    rnd = distribution.rvs()
+    while rnd < min_value or rnd > max_value:
+        rnd = distribution.rvs()
+    return rnd

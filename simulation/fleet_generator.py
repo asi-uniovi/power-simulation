@@ -19,6 +19,7 @@ import numpy
 import typing
 import scipy.stats
 from simulation.base import Base
+from simulation.static import draw_from_distribution
 from simulation.static import generate_servers
 from simulation.static import HISTOGRAMS
 from simulation.static import timestamp_to_day
@@ -55,16 +56,6 @@ OFF_FRACTION_NIGHT = 0.2
 DISTRIBUTION = norm
 ACTIVITY = 600
 INACTIVITY = 1200
-
-
-def draw_from_distribution(distribution: scipy.stats.rv_continuous,
-                           min_value: float = 0,
-                           max_value: float = float('inf')) -> float:
-    """Gets a value from a distribution bounding the limit."""
-    rnd = distribution.rvs()
-    while min_value >= rnd >= max_value:
-        rnd = distribution.rvs()
-    return rnd
 
 
 class FleetGenerator(Base):

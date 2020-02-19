@@ -30,6 +30,7 @@ from simulation.model import Model
 from simulation.static import DAYS
 from simulation.static import HISTOGRAMS
 from simulation.static import WEEK
+from simulation.static import draw_from_distribution
 from simulation.static import timed
 from simulation.static import timestamp_to_day
 
@@ -45,16 +46,6 @@ def previous_hour(day: int, hour: int) -> typing.Tuple[int, int]:
         if day < 0:
             day = 6
     return day, hour
-
-
-def draw_from_distribution(distribution: EmpiricalDistribution,
-                           min_value: float = 0,
-                           max_value: float = float('inf')) -> float:
-    """Gets a value from a distribution bounding the limit."""
-    rnd = distribution.rvs()
-    while min_value >= rnd >= max_value:
-        rnd = distribution.rvs()
-    return rnd
 
 
 class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
