@@ -47,9 +47,9 @@ def lognorm(m: float, s: float = None) -> scipy.stats.lognorm:
 
 
 N = 1000
-IN_TIME = 8
+IN_TIME = 9
 LUNCH_TIME = 13
-OUT_TIME = 18
+OUT_TIME = 17
 SMALL_SHUTDOWN = 3600
 OFF_FRACTION = 0.01
 OFF_FRACTION_NIGHT = 0.8
@@ -109,7 +109,7 @@ class FleetGenerator(Base):
 
     def off_frequency_for_hour(self, cid: str, day: int, hour: int) -> float:
         """Shutdown frequency for a given simulation hour."""
-        if 1 <= day <= 5 and hour >= OUT_TIME:
+        if day in (0, 6) or hour >= OUT_TIME:
             return OFF_FRACTION_NIGHT
         return OFF_FRACTION
 
@@ -179,27 +179,17 @@ class FleetGenerator(Base):
         if timestamp is not None:
             day, hour = timestamp_to_day(timestamp)
         if day not in (0, 6):
-            if hour <= IN_TIME:
-                return self._user_shutdown_time_prob(cid, day, hour, 0.7, 1.0)
-            if hour <= LUNCH_TIME:
-                return self._user_shutdown_time_prob(cid, day, hour, 0.1, 1.0)
-            if hour >= OUT_TIME:
-                return self._user_shutdown_time_prob(cid, day, hour, 0.1, 0.1)
-        return self._user_shutdown_time_prob(cid, day, hour, 0.05, 0.05)
+            if hour <= IN_TIME or hour >= OUT_TIME:
+                return self._user_shutdown_time_prob(cid, day, hour, 0.1)
+            return self._user_shutdown_time_prob(cid, day, hour, 0.7)
+        return self._user_shutdown_time_prob(cid, day, hour, 0.05)
 
     def _user_shutdown_time_prob(
-            self, cid: str, day: int, hour: int, short: float, midday: float):
+            self, cid: str, day: int, hour: int, short: float):
         """Resolves the shutdown profile based on the probability per event."""
-        rnd = scipy.rand()
-        if rnd <= short:
+        if scipy.rand() <= short:
             return DISTRIBUTION(SMALL_SHUTDOWN, 900)
-        if rnd <= midday:
-            return self._user_shutdown_time_midday(day, hour)
         return self._user_shutdown_time_next_in_time(cid, day, hour)
-
-    def _user_shutdown_time_midday(self, _, hour: int):
-        """Shutdown time for today's mid day."""
-        return DISTRIBUTION((LUNCH_TIME + 2 - hour) * 3600, 1800)
 
     def _user_shutdown_time_next_in_time(self, cid: str, day: int, hour: int):
         """Shutdown time for next IN_TIME."""
