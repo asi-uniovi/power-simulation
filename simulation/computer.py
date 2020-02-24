@@ -46,7 +46,6 @@ class Computer(Base):
         self.__computer_id = cid
         self.__status = ComputerStatus.on
         self.__last_auto_shutdown = None
-        self.__started = False
         self.__idle_timer = self.env.process(self.__idle_timer_runner())
 
     @property
@@ -97,13 +96,6 @@ class Computer(Base):
         """Process for the idle timer control."""
         if self.get_arg('disable_auto_shutdown'):
             return
-        if not self.__started and self.get_arg('fleet_generator'):
-            # If generating a random fleet, we start inactive until Monday.
-            try:
-                self.__started = True
-                yield self.env.timeout((24 + 8) * 3600)
-            except simpy.Interrupt:
-                pass
         try:
             yield self.env.timeout(self.__idle_timeout())
             self.change_status(ComputerStatus.off,
