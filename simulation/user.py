@@ -51,6 +51,7 @@ class User(Base):
         if self.get_arg('fleet_generator'):
             # If generating a random fleet, we start inactive until Monday.
             shutdown_time = DISTRIBUTION((24 + IN_TIME + 1) * 3600, 3600).rvs()
+            self.__computer.change_status(ComputerStatus.off)
             self.__stats.append(
                 'USER_SHUTDOWN_TIME', shutdown_time, self.__computer.cid)
             yield self.env.timeout(shutdown_time)
