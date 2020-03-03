@@ -48,7 +48,6 @@ def lognorm(m: float, s: float = None) -> scipy.stats.lognorm:
 
 N = 1000
 IN_TIME = 9
-LUNCH_TIME = 13
 OUT_TIME = 17
 SMALL_SHUTDOWN = 3600
 OFF_FRACTION = 0.01
