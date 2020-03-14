@@ -167,6 +167,8 @@ class FleetGenerator(Base):
         """Distribution for the activity by the user."""
         if timestamp is not None:
             day, hour = timestamp_to_day(timestamp)
+        if day in (0, 6):
+            return DISTRIBUTION(ACTIVITY / 10, 60)
         return DISTRIBUTION(ACTIVITY, 600)
 
     def _inactivity_time(self, cid: str, timestamp: int = None,
