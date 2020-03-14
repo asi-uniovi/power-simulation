@@ -113,10 +113,10 @@ class Plot(Base):
         """Plot a daily bar chart."""
         bottom = numpy.asarray([0.0] * 24)
         COLORS = {
-            'ACTIVITY_TIME': 'g',
-            'INACTIVITY_TIME': 'r',
-            'USER_SHUTDOWN_TIME': 'b',
-            'AUTO_SHUTDOWN_TIME': 'y',
+            'ACTIVITY_TIME': 'tab:blue',
+            'INACTIVITY_TIME': 'tab:orange',
+            'USER_SHUTDOWN_TIME': 'lightgrey',
+            'AUTO_SHUTDOWN_TIME': 'dimgray',
         }
         suffix = ''
         width = 2
