@@ -14,6 +14,7 @@
 
 """Module to generate fleets based on very high level parameters."""
 
+import functools
 import math
 import numpy
 import typing
@@ -50,10 +51,10 @@ N = 1000
 IN_TIME = 9
 OUT_TIME = 17
 SMALL_SHUTDOWN = 3600
-OFF_FRACTION = 0.01
-OFF_FRACTION_NIGHT = 0.8
+OFF_FRACTION = 0.05
+OFF_FRACTION_NIGHT = 0.7
 DISTRIBUTION = lognorm
-ACTIVITY = 900
+ACTIVITY = 1800
 INACTIVITY = 1800
 
 
@@ -108,9 +109,12 @@ class FleetGenerator(Base):
 
     def off_frequency_for_hour(self, cid: str, day: int, hour: int) -> float:
         """Shutdown frequency for a given simulation hour."""
-        if day in (0, 6) or hour >= OUT_TIME:
-            return OFF_FRACTION_NIGHT
-        return OFF_FRACTION
+        fraction = OFF_FRACTION
+        if day in (0, 6):
+            fraction = 0.0
+        elif hour == OUT_TIME:
+            fraction = OFF_FRACTION_NIGHT
+        return self._shutdowns_by_fraction(fraction)[cid]
 
     def get_all_hourly_percentiles(
             self, key: str, percentile: float) -> typing.List[float]:
@@ -196,3 +200,10 @@ class FleetGenerator(Base):
         if day == 5:
             return DISTRIBUTION(time_left + 48 * 3600, 1800)
         return DISTRIBUTION(time_left, 1800)
+
+    @functools.lru_cache(maxsize=None)
+    def _shutdowns_by_fraction(self, fraction):
+        """Generates a dist with a fraction of 1s or 0s per PC."""
+        ones = int(fraction * len(self.__servers))
+        return dict(zip(self.__servers,
+                        [1] * ones + [0] * (len(self.__servers) - ones)))
