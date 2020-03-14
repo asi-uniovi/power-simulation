@@ -199,8 +199,8 @@ class FleetGenerator(Base):
     def _user_shutdown_time_next_in_time(self, cid: str, day: int, hour: int):
         """Shutdown time for next IN_TIME."""
         time_left = int(24 - hour + IN_TIME) * 3600
-        if day == 5:
-            return DISTRIBUTION(time_left + 48 * 3600, 1800)
+        if day in (5, 6):
+            return DISTRIBUTION(time_left + 24 * (7 - day) * 3600, 1800)
         return DISTRIBUTION(time_left, 1800)
 
     @functools.lru_cache(maxsize=None)
