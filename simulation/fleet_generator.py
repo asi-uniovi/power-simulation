@@ -50,12 +50,17 @@ def lognorm(m: float, s: float = None) -> scipy.stats.lognorm:
 N = 1000
 IN_TIME = 9
 OUT_TIME = 17
-SMALL_SHUTDOWN = 3600
+SMALL_SHUTDOWN = 1800
 OFF_FRACTION = 0.05
 OFF_FRACTION_NIGHT = 0.7
 DISTRIBUTION = lognorm
-ACTIVITY = 2700
-INACTIVITY = 1800
+ACTIVITY = 1800
+INACTIVITY = 900
+
+
+def is_workhour(day, hour):
+    """Indicates if one hour is a working hour."""
+    return day not in (0, 6) and hour >= IN_TIME and hour <= OUT_TIME
 
 
 class FleetGenerator(Base):
@@ -110,7 +115,7 @@ class FleetGenerator(Base):
     def off_frequency_for_hour(self, cid: str, day: int, hour: int) -> float:
         """Shutdown frequency for a given simulation hour."""
         fraction = OFF_FRACTION
-        if day in (0, 6):
+        if not is_workhour(day, hour):
             fraction = 0.0
         elif hour == OUT_TIME:
             fraction = OFF_FRACTION_NIGHT
@@ -167,15 +172,13 @@ class FleetGenerator(Base):
         """Distribution for the activity by the user."""
         if timestamp is not None:
             day, hour = timestamp_to_day(timestamp)
-        if day in (0, 6):
+        if not is_workhour(day, hour):
             return DISTRIBUTION(ACTIVITY / 10, 60)
         return DISTRIBUTION(ACTIVITY, 600)
 
     def _inactivity_time(self, cid: str, timestamp: int = None,
                          day: int = None, hour: int = None):
         """Distribution for the inactivity by the user."""
-        if timestamp is not None:
-            day, hour = timestamp_to_day(timestamp)
         return DISTRIBUTION(INACTIVITY, 600)
 
     def _user_shutdown_time(self, cid: str, timestamp: int = None,
@@ -183,11 +186,9 @@ class FleetGenerator(Base):
         """Distribution for the shutdown triggered by the user."""
         if timestamp is not None:
             day, hour = timestamp_to_day(timestamp)
-        if day not in (0, 6):
-            if hour <= IN_TIME or hour >= OUT_TIME:
-                return self._user_shutdown_time_prob(cid, day, hour, 0.1)
-            return self._user_shutdown_time_prob(cid, day, hour, 0.7)
-        return self._user_shutdown_time_prob(cid, day, hour, 0.05)
+        if hour == OUT_TIME or hour <= IN_TIME:
+            return self._user_shutdown_time_prob(cid, day, hour, 0.0)
+        return self._user_shutdown_time_prob(cid, day, hour, 0.7)
 
     def _user_shutdown_time_prob(
             self, cid: str, day: int, hour: int, short: float):
