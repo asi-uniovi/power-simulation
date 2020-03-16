@@ -81,6 +81,7 @@ class FleetGenerator(Base):
         super(FleetGenerator, self).__init__()
         self.__target_satisfaction = self.get_config_int('target_satisfaction')
         self.__servers = generate_servers(self.users_num)
+        self.__initialised = {cid: False for cid in self.__servers}
 
     @property
     def servers(self) -> typing.List[str]:
@@ -115,7 +116,10 @@ class FleetGenerator(Base):
     def off_frequency_for_hour(self, cid: str, day: int, hour: int) -> float:
         """Shutdown frequency for a given simulation hour."""
         fraction = OFF_FRACTION
-        if not is_workhour(day, hour):
+        if not self.__initialised[cid]:
+            self.__initialised[cid] = True
+            return 1.0
+        elif not is_workhour(day, hour):
             fraction = 0.0
         elif hour == OUT_TIME:
             fraction = OFF_FRACTION_NIGHT
@@ -205,8 +209,8 @@ class FleetGenerator(Base):
         return DISTRIBUTION(time_left, 1800)
 
     @functools.lru_cache(maxsize=None)
-    def _shutdowns_by_fraction(self, fraction):
+    def _shutdowns_by_fraction(self, fraction: float) -> typing.List[float]:
         """Generates a dist with a fraction of 1s or 0s per PC."""
         ones = int(fraction * len(self.__servers))
         return dict(zip(self.__servers,
-                        [1] * ones + [0] * (len(self.__servers) - ones)))
+                        [1.0] * ones + [0.0] * (len(self.__servers) - ones)))
