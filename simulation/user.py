@@ -21,8 +21,6 @@ from simulation.activity_distribution import timestamp_to_day
 from simulation.base import Base
 from simulation.computer import Computer
 from simulation.computer import ComputerStatus
-from simulation.fleet_generator import DISTRIBUTION
-from simulation.fleet_generator import IN_TIME
 from simulation.stats import Stats
 
 
@@ -48,13 +46,6 @@ class User(Base):
 
     def run(self) -> None:
         """Generates requests af the defined frequency."""
-        if self.get_arg('fleet_generator'):
-            # If generating a random fleet, we start inactive until Monday.
-            shutdown_time = DISTRIBUTION((24 + IN_TIME + 1) * 3600, 1800).rvs()
-            self.__computer.change_status(ComputerStatus.off)
-            self.__stats.append(
-                'USER_SHUTDOWN_TIME', shutdown_time, self.__computer.cid)
-            yield self.env.timeout(shutdown_time)
         while True:
             if self.__indicate_shutdown():
                 shutdown_time = self.__shutdown_interval()
