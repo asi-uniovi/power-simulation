@@ -190,16 +190,9 @@ class FleetGenerator(Base):
         """Distribution for the shutdown triggered by the user."""
         if timestamp is not None:
             day, hour = timestamp_to_day(timestamp)
-        if hour == OUT_TIME or hour <= IN_TIME:
-            return self._user_shutdown_time_prob(cid, day, hour, 0.0)
-        return self._user_shutdown_time_prob(cid, day, hour, 0.7)
-
-    def _user_shutdown_time_prob(
-            self, cid: str, day: int, hour: int, short: float):
-        """Resolves the shutdown profile based on the probability per event."""
-        if scipy.rand() <= short:
-            return DISTRIBUTION(SMALL_SHUTDOWN, 900)
-        return self._user_shutdown_time_next_in_time(cid, day, hour)
+        if hour == OUT_TIME or not is_workhour(day, hour):
+            return self._user_shutdown_time_next_in_time(cid, day, hour)
+        return DISTRIBUTION(SMALL_SHUTDOWN, 900)
 
     def _user_shutdown_time_next_in_time(self, cid: str, day: int, hour: int):
         """Shutdown time for next IN_TIME."""
