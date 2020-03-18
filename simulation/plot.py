@@ -129,15 +129,19 @@ class Plot(Base):
                      color=COLORS[key], hatch='////' if orig else None)
             bottom = bottom + data
 
-    def __generate_carry_over(self, intervals):
+    def __generate_carry_over(self, intervals, remaining: int = 3600):
         """Generates the carry over intervals from the current ones."""
         carry_over, new_intervals = [], []
         for i in intervals:
-            if i <= 3600:
+            if i <= remaining:
                 new_intervals.append(i)
+                remaining -= i
             else:
-                carry_over.append(i - 3600)
-                new_intervals.append(3600)
+                carry_over.append(i - remaining)
+                new_intervals.append(remaining)
+                remaining = 0
+            if remaining <= 0:
+                break
         return carry_over, new_intervals
 
     def __generate_hourly_time_percentages(self, hist):
