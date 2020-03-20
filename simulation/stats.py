@@ -14,6 +14,7 @@
 
 """Simulation stats container."""
 
+import collections
 import logging
 import typing
 import injector
@@ -126,6 +127,18 @@ class Stats(Base):
             return self.__storage[key].get_all_events(cid)
         except KeyError:
             return []
+
+    def get_merged_events(self) -> typing.Dict[
+            str, typing.List[typing.Tuple[float, float, float]]]:
+        """Gets all events on the histogram with timestamp for all keys."""
+        intervals = collections.defaultdict(list)
+        for key, hist in self.__storage.items():
+            for cid in self.__training_distribution.servers:
+                merged = []
+                for timestamp, interval in hist.get_all_events(cid):
+                    merged.append((key, timestamp, interval))
+                intervals[cid].extend(merged)
+        return intervals
 
     def get_all_histogram(self, key: str, cid: str = None) -> numpy.ndarray:
         """Gets all of the histogram data."""

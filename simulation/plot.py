@@ -25,7 +25,9 @@ from simulation.base import Base
 from simulation.static import DAYS
 from simulation.static import HISTOGRAMS
 from simulation.static import REVERSE_DAYS
+from simulation.static import hour_to_day
 from simulation.static import timed
+from simulation.static import timestamp_to_hour
 from simulation.stats import Stats
 
 logger = logging.getLogger(__name__)
@@ -79,14 +81,8 @@ class Plot(Base):
     @timed
     def plot_hourly_time_percentages(self):
         """Plots the time percentages as percentual bar charts."""
-        stats = self.__generate_hourly_time_percentages(
-            self.__stats.get_all_hourly_distributions())
+        stats = self.__generate_events2()
         bar_s = [i * 1.05 for i in range(0, 48, 2)]
-        if not self.get_arg('fleet_generator'):
-            hists = self.__generate_hourly_time_percentages(
-                self.__training_distribution.get_all_hourly_distributions())
-            bar_s = [i * 1.05 for i in range(0, 48, 2)]
-            bar_h = [i + 1 for i in bar_s]
 
         figure, axes = plt.subplots(nrows=7, sharex='col')
 
@@ -94,11 +90,7 @@ class Plot(Base):
         axesd.rotate(1)
         for day, axis in enumerate(axesd):
             self.__plot_bar(axis, bar_s, stats.get(day))
-            if not self.get_arg('fleet_generator'):
-                self.__plot_bar(axis, bar_h, hists.get(day), orig=True)
-                axis.set_xticks([i + 1/2 for i in bar_h])
-            else:
-                axis.set_xticks(bar_s)
+            axis.set_xticks(bar_s)
             axis.set_xticklabels(range(24))
             axis.set_ylim(0, 100)
             axis.set_title(REVERSE_DAYS[day])
@@ -120,52 +112,42 @@ class Plot(Base):
         }
         suffix = ''
         width = 2
-        if not self.get_arg('fleet_generator'):
-            suffix = ' (model)' if orig else ' (simulated)'
-            width = 1
         for key in HISTOGRAMS:
-            data = [hist[key][h] for h in range(24)]
+            data = [hist[h][key] / hist[h]['TOTAL'] * 100 for h in range(24)]
             axis.bar(bar, data, width=width, bottom=bottom, label=key + suffix,
                      color=COLORS[key], hatch='////' if orig else None)
             bottom = bottom + data
 
-    def __generate_carry_over(self, intervals, remaining: int = 3600):
-        """Generates the carry over intervals from the current ones."""
-        carry_over, new_intervals = [], []
-        for i in intervals:
-            if i <= remaining:
-                new_intervals.append(i)
-                remaining -= i
+    def __process_pc_intervals(self, intervals):
+        """Buckets and cuts the intervals of a PC, which are given sorted."""
+        processed = collections.defaultdict(
+            lambda: collections.defaultdict(list))
+        used = 0
+        for key, timestamp, interval in sorted(
+                intervals, key=operator.itemgetter(1)):
+            hour = timestamp_to_hour(timestamp)
+            if (used + interval) <= 3600:
+                processed[hour][key].append(interval)
+                used += interval
             else:
-                carry_over.append(i - remaining)
-                new_intervals.append(remaining)
-                remaining = 0
-            if remaining <= 0:
-                break
-        return carry_over, new_intervals
+                half = 3600 - used
+                processed[hour][key].append(half)
+                remaining = interval - half
+                for i in range(int(remaining // 3600)):
+                    processed[(hour + i) % 168][key].append(3600)
+                processed[(hour + i + 1) % 168][key].append(remaining % 3600)
+                used = remaining % 3600
+        return processed
 
-    def __generate_hourly_time_percentages(self, hist):
-        """Calculates the percentage with carry over for the time spent."""
-        totals = {}
-        key_totals = {}
-        for key in HISTOGRAMS:
-            previous_carry_over = []
-            for day in range(7):
-                for hour in range(24):
-                    carry_over, new_intervals = self.__generate_carry_over(
-                        numpy.append(hist.get(key, {}).get(day, {}).get(
-                            hour, []), previous_carry_over))
-                    total = numpy.sum(new_intervals)
-                    previous_carry_over = carry_over
-                    dct = key_totals.setdefault(day, {}).setdefault(hour, {})
-                    dct[key] = total
-                    dct = totals.setdefault(day, {})
-                    dct[hour] = dct.get(hour, 0.0) + total
-        percentages = {}
-        for day, hours in key_totals.items():
-            for hour, keys in hours.items():
-                for key, total in keys.items():
-                    percentages.setdefault(day, {}).setdefault(
-                        key, {}).setdefault(
-                            hour, total / totals[day][hour] * 100)
-        return percentages
+    def __generate_events2(self):
+        """Generate the buckets of events per hour."""
+        buckets = collections.defaultdict(
+            lambda: collections.defaultdict(
+                lambda: collections.defaultdict(int)))
+        for intervals in self.__stats.get_merged_events().values():
+            for hour, keys in self.__process_pc_intervals(intervals).items():
+                d, h = hour_to_day(hour)
+                for key, events in keys.items():
+                    buckets[d][h][key] += sum(events)
+                    buckets[d][h]['TOTAL'] += sum(events)
+        return buckets

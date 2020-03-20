@@ -115,6 +115,13 @@ def timestamp_to_day(timestamp: int) -> typing.Tuple[int, int]:
     return day, hour
 
 
+def timestamp_to_hour(timestamp: int) -> int:
+    """Converts from a simulation timestamp to a simulation hour."""
+    hour = int((timestamp % WEEK(1)) // HOUR(1))
+    assert hour >= 0 and hour <= 167
+    return hour
+
+
 def hour_to_day(hour: int) -> typing.Tuple[int, int]:
     """Converts from a simulation hour to the pair (day, hour)."""
     day = int(hour // 24)
