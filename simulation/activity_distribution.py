@@ -24,28 +24,17 @@ import typing
 import injector
 import numpy
 from simulation.base import Base
-from simulation.distribution import EmpiricalDistribution
 from simulation.fleet_generator import FleetGenerator
 from simulation.model import Model
 from simulation.static import DAYS
 from simulation.static import HISTOGRAMS
 from simulation.static import WEEK
 from simulation.static import draw_from_distribution
+from simulation.static import previous_hour
 from simulation.static import timed
 from simulation.static import timestamp_to_day
 
 logger = logging.getLogger(__name__)
-
-
-def previous_hour(day: int, hour: int) -> typing.Tuple[int, int]:
-    """Gets the previous hour with wrap."""
-    hour -= 1
-    if hour < 0:
-        hour = 23
-        day -= 1
-        if day < 0:
-            day = 6
-    return day, hour
 
 
 class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):

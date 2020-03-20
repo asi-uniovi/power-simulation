@@ -122,6 +122,17 @@ def hour_to_day(hour: int) -> typing.Tuple[int, int]:
     return day, hour
 
 
+def previous_hour(day: int, hour: int) -> typing.Tuple[int, int]:
+    """Gets the previous hour with wrap."""
+    hour -= 1
+    if hour < 0:
+        hour = 23
+        day -= 1
+        if day < 0:
+            day = 6
+    return day, hour
+
+
 def weight(x: float, ip: float, fp: float) -> float:
     """Linear increment between ip and fp function."""
     return numpy.maximum(0.0, numpy.minimum(1.0, (ip - x) / (ip - fp)))
