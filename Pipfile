@@ -5,7 +5,7 @@ name = "pypi"
 
 [packages]
 flamegraph = {git = "https://github.com/evanhempel/python-flamegraph.git"}
-injector = "<0.16"
+injector = "*"
 matplotlib = "*"
 memory_profiler = {git = "https://github.com/pythonprofilers/memory_profiler.git"}
 numpy = "*"
