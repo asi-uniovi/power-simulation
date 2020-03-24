@@ -177,12 +177,19 @@ class FleetGenerator(Base):
         if timestamp is not None:
             day, hour = timestamp_to_day(timestamp)
         if not is_workhour(day, hour):
-            return DISTRIBUTION(ACTIVITY / 10, 60)
+            return DISTRIBUTION(ACTIVITY / 100, 1)
         return DISTRIBUTION(ACTIVITY, 600)
 
     def _inactivity_time(self, cid: str, timestamp: int = None,
                          day: int = None, hour: int = None):
         """Distribution for the inactivity by the user."""
+        if timestamp is not None:
+            day, hour = timestamp_to_day(timestamp)
+
+        if hour >= OUT_TIME:
+            if self.off_frequency_for_hour(cid, day, hour) < 1.0:
+                return self._user_shutdown_time_next_in_time(cid, day, hour)
+
         return DISTRIBUTION(INACTIVITY, 600)
 
     def _user_shutdown_time(self, cid: str, timestamp: int = None,
@@ -205,5 +212,5 @@ class FleetGenerator(Base):
     def _shutdowns_by_fraction(self, fraction: float) -> typing.List[float]:
         """Generates a dist with a fraction of 1s or 0s per PC."""
         ones = int(fraction * len(self.__servers))
-        return dict(zip(self.__servers,
+        return dict(zip(sorted(self.__servers),
                         [1.0] * ones + [0.0] * (len(self.__servers) - ones)))

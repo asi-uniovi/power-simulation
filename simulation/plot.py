@@ -122,28 +122,28 @@ class Plot(Base):
         """Buckets and cuts the intervals of a PC, which are given sorted."""
         processed = collections.defaultdict(
             lambda: collections.defaultdict(list))
-        used = 0
         for key, timestamp, interval in sorted(
                 intervals, key=operator.itemgetter(1)):
             hour = timestamp_to_hour(timestamp)
-            if (used + interval) <= 3600:
+            used = timestamp % 3600
+            if (used + interval) <= 3600.0:
                 processed[hour][key].append(interval)
-                used += interval
             else:
                 half = 3600 - used
                 processed[hour][key].append(half)
                 remaining = interval - half
-                for i in range(int(remaining // 3600)):
-                    processed[(hour + i) % 168][key].append(3600)
-                processed[(hour + i + 1) % 168][key].append(remaining % 3600)
-                used = remaining % 3600
+                extra_hours = int(remaining // 3600)
+                for i in range(extra_hours):
+                    processed[(hour + i + 1) % 168][key].append(3600)
+                processed[(hour + extra_hours + 1) % 168][key].append(
+                    remaining % 3600)
         return processed
 
     def __generate_events2(self):
         """Generate the buckets of events per hour."""
         buckets = collections.defaultdict(
             lambda: collections.defaultdict(
-                lambda: collections.defaultdict(int)))
+                lambda: collections.defaultdict(float)))
         for intervals in self.__stats.get_merged_events().values():
             for hour, keys in self.__process_pc_intervals(intervals).items():
                 d, h = hour_to_day(hour)
