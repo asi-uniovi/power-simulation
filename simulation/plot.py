@@ -84,7 +84,7 @@ class Plot(Base):
         stats = self.__generate_events2()
         bar_s = [i * 1.05 for i in range(0, 48, 2)]
 
-        figure, axes = plt.subplots(nrows=7, sharex='col')
+        figure, axes = plt.subplots(nrows=7)
 
         axesd = collections.deque(axes)
         axesd.rotate(1)
