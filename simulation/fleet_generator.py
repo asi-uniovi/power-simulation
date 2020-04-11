@@ -177,7 +177,7 @@ class FleetGenerator(Base):
         if timestamp is not None:
             day, hour = timestamp_to_day(timestamp)
         if not is_workhour(day, hour):
-            return DISTRIBUTION(ACTIVITY / 100, 1)
+            return DISTRIBUTION(ACTIVITY / 10, 30)
         return DISTRIBUTION(ACTIVITY, 600)
 
     def _inactivity_time(self, cid: str, timestamp: int = None,
