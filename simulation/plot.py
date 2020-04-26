@@ -110,11 +110,16 @@ class Plot(Base):
             'USER_SHUTDOWN_TIME': 'lightgrey',
             'AUTO_SHUTDOWN_TIME': 'dimgray',
         }
-        suffix = ''
+        LABELS = {
+            'ACTIVITY_TIME': 'Activity time (%)',
+            'INACTIVITY_TIME': 'Inactivity time (%)',
+            'USER_SHUTDOWN_TIME': 'Shutdown time (%)',
+            # 'AUTO_SHUTDOWN_TIME': '',
+        }
         width = 2
-        for key in HISTOGRAMS:
+        for key in LABELS:
             data = [hist[h][key] / hist[h]['TOTAL'] * 100 for h in range(24)]
-            axis.bar(bar, data, width=width, bottom=bottom, label=key + suffix,
+            axis.bar(bar, data, width=width, bottom=bottom, label=LABELS[key],
                      color=COLORS[key], hatch='////' if orig else None)
             bottom = bottom + data
 
