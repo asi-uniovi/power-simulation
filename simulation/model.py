@@ -17,20 +17,21 @@
 import typing
 import numpy
 import scipy.optimize
-from simulation.base import Base
+from simulation.configuration import Configuration
 from simulation.distribution import EmpiricalDistribution
 from simulation.static import user_satisfaction
 from simulation.static import weighted_user_satisfaction
 
 
-class Model(Base):
+class Model(object):
     """Represents the model for a given hour.
 
     A model will store all the needed distributions and will offer basic
     functionality like timeout threshold calculation.
     """
 
-    def __init__(self, xmax: float, xmin: float, inactivity: typing.List = None,
+    def __init__(self, config: Configuration, xmax: float,
+                 xmin: float, inactivity: typing.List = None,
                  activity: typing.List = None, off_duration: typing.List = None,
                  off_fraction: typing.List = None):
         super(Model, self).__init__()
@@ -39,9 +40,10 @@ class Model(Base):
         self.__off_duration = EmpiricalDistribution(off_duration)
         self.__off_fraction = off_fraction or []
         self.__optimal_timeout = None
-        self.__satisfaction_threshold = self.get_config_int(
+        self.__satisfaction_threshold = config.get_config_int(
             'satisfaction_threshold')
-        self.__target_satisfaction = self.get_config_int('target_satisfaction')
+        self.__target_satisfaction = config.get_config_int(
+            'target_satisfaction')
         self.__xmax = xmax
         self.__xmin = xmin
 

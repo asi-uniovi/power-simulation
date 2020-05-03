@@ -14,7 +14,6 @@
 
 """User (in)activity distribution parsing, fitting and generation."""
 
-import abc
 import functools
 import itertools
 import json
@@ -23,7 +22,7 @@ import operator
 import typing
 import injector
 import numpy
-from simulation.base import Base
+from simulation.configuration import Configuration
 from simulation.fleet_generator import FleetGenerator
 from simulation.model import Model
 from simulation.static import DAYS
@@ -37,7 +36,7 @@ from simulation.static import timestamp_to_day
 logger = logging.getLogger(__name__)
 
 
-class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
+class ActivityDistributionBase(object):
     """Stores the hourly activity distribution over a week.
 
     Each bucket of the histogram contains the distribution of the log file
@@ -46,17 +45,21 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
 
     @injector.inject
     @injector.noninjectable('config_section')
-    def __init__(self, model_builder: injector.ClassAssistedBuilder[Model],
+    def __init__(self, config: Configuration,
+                 model_builder: injector.ClassAssistedBuilder[Model],
                  config_section: str):
         """All the data of this object is loaded from the config object."""
         super(ActivityDistributionBase, self).__init__()
-        self.__target_satisfaction = self.get_config_int('target_satisfaction')
-        self.__satisfaction_threshold = self.get_config_int(
+        self.__target_satisfaction = config.get_config_int(
+            'target_satisfaction')
+        self.__satisfaction_threshold = config.get_config_int(
             'satisfaction_threshold')
-        self.__trace_file = self.get_config('file', section=config_section)
-        self.__xmin = self.get_config_float('xmin', section=config_section)
-        self.__xmax = self.get_config_float('xmax', section=config_section)
-        self.__duration = self.get_config_float(
+        self.__per_pc = config.get_arg('per_pc')
+        self.__per_hour = config.get_arg('per_hour')
+        self.__trace_file = config.get_config('file', section=config_section)
+        self.__xmin = config.get_config_float('xmin', section=config_section)
+        self.__xmax = config.get_config_float('xmax', section=config_section)
+        self.__duration = config.get_config_float(
             'duration', section=config_section)
         self.__model_builder = functools.partial(
             model_builder.build, xmax=self.__xmax, xmin=self.__xmin)
@@ -70,7 +73,8 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
         """Read only servers list."""
         return self.__servers
 
-    def test_timeout(self, timeout: float) -> typing.Tuple[float, float, float]:
+    def test_timeout(
+            self, timeout: float) -> typing.Tuple[float, float, float]:
         """Calculate analytically the US and RI for a given timeout."""
         return self.__get_flat_model().test_timeout(timeout)
 
@@ -140,9 +144,9 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
                 total = sum(len(i.resolve_key(key))
                             for i in transposed.get(day, {}).get(hour, []))
                 total /= len(self.__servers)
-                if not self.get_arg('per_hour'):
+                if not self.__per_hour:
                     total /= 168
-                if not self.get_arg('per_pc'):
+                if not self.__per_pc:
                     total /= len(self.__servers)
                 total /= self.__duration / WEEK(1)
                 hours.append(total)
@@ -274,13 +278,13 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
 
     def __merge_histograms(self) -> None:
         """Merges histograms to be global or per PC/hour."""
-        if not self.get_arg('per_hour') and not self.get_arg('per_pc'):
+        if not self.__per_hour and not self.__per_pc:
             logger.info('Merging histogram both per hour and PC.')
             self.__merge_per_hour_and_pc()
-        elif not self.get_arg('per_hour'):
+        elif not self.__per_hour:
             logger.info('Merging histogram per hour.')
             self.__merge_per_hour()
-        elif not self.get_arg('per_pc'):
+        elif not self.__per_pc:
             logger.info('Merging histogram per PC.')
             self.__merge_per_pc()
         else:
@@ -338,40 +342,25 @@ class ActivityDistributionBase(Base, metaclass=abc.ABCMeta):
 
 
 @injector.singleton
-class ActivityDistribution(ActivityDistributionBase):
-    """Activity distribution for tracing purposes."""
-
-    def __init__(self):
-        super(ActivityDistribution, self).__init__(
-            config_section='activity_distribution')
-
-
-@injector.singleton
-class TrainingDistribution(ActivityDistributionBase):
-    """Activity distribution for training purposes."""
-
-    def __init__(self):
-        super(TrainingDistribution, self).__init__(
-            config_section='training_distribution')
-
-
-@injector.singleton
-class DistributionFactory(Base):
+class DistributionFactory(object):
     """Creates distribution objects based on the command line flags."""
 
     @injector.inject
-    def __init__(self, activity_distribution: ActivityDistribution,
-                 training_distribution: TrainingDistribution,
+    def __init__(self, config: Configuration,
+                 distr_builder: injector.ClassAssistedBuilder[
+                     ActivityDistributionBase],
                  fleet_generator: FleetGenerator):
         super(DistributionFactory, self).__init__()
-        self.__activity_distribution = activity_distribution
-        self.__training_distribution = training_distribution
+        self.__distr_builder = distr_builder
         self.__fleet_generator = fleet_generator
+        self.__is_fleet_generator = config.get_arg('fleet_generator')
 
     def __call__(self, training=False):
         """Return one of the distribution objects as needed."""
-        if self.get_arg('fleet_generator'):
+        if self.__is_fleet_generator:
             return self.__fleet_generator
         if training:
-            return self.__training_distribution
-        return self.__activity_distribution
+            return self.__distr_builder.build(
+                config_section='training_distribution')
+        return self.__distr_builder.build(
+            config_section='activity_distribution')

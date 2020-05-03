@@ -18,13 +18,13 @@ import injector
 import numpy
 from simulation.activity_distribution import DistributionFactory
 from simulation.activity_distribution import timestamp_to_day
-from simulation.base import Base
 from simulation.computer import Computer
 from simulation.computer import ComputerStatus
+from simulation.configuration import Configuration
 from simulation.stats import Stats
 
 
-class User(Base):
+class User(object):
     """A user model.
 
     This class generates requests to the system randomly, based on:
@@ -35,7 +35,8 @@ class User(Base):
     @injector.inject
     @injector.noninjectable('cid')
     def __init__(
-            self, computer_builder: injector.ClassAssistedBuilder[Computer],
+            self, config: Configuration,
+            computer_builder: injector.ClassAssistedBuilder[Computer],
             distr_factory: DistributionFactory, stats: Stats, cid: str):
         super(User, self).__init__()
         self.__computer = computer_builder.build(cid=cid)
@@ -43,6 +44,7 @@ class User(Base):
         self.__stats = stats
         self.__current_hour = None
         self.__off_frequency = None
+        self.__config = config
 
     def run(self) -> None:
         """Generates requests af the defined frequency."""
@@ -52,20 +54,20 @@ class User(Base):
                 self.__computer.change_status(ComputerStatus.off)
                 self.__stats.append(
                     'USER_SHUTDOWN_TIME', shutdown_time, self.__computer.cid)
-                yield self.env.timeout(shutdown_time)
-            yield self.env.process(self.__computer.serve())
+                yield self.__config.env.timeout(shutdown_time)
+            yield self.__config.env.process(self.__computer.serve())
             inactivity_time = (self.__activity_distribution
                                .random_inactivity_for_timestamp(
-                                   self.__computer.cid, self.env.now))
+                                   self.__computer.cid, self.__config.env.now))
             self.__stats.append(
                 'INACTIVITY_TIME', inactivity_time, self.__computer.cid)
-            yield self.env.timeout(inactivity_time)
+            yield self.__config.env.timeout(inactivity_time)
 
     def __indicate_shutdown(self) -> bool:
         """Indicates whether we need to shutdown or not."""
         if not self.__computer.is_on:
             return False
-        hour = timestamp_to_day(self.env.now)
+        hour = timestamp_to_day(self.__config.env.now)
         if self.__current_hour != hour:
             self.__current_hour = hour
             self.__off_frequency = (
@@ -80,4 +82,4 @@ class User(Base):
         """Generates shutdown interval lengths."""
         return numpy.around(
             self.__activity_distribution.off_interval_for_timestamp(
-                self.__computer.cid, self.env.now))
+                self.__computer.cid, self.__config.env.now))

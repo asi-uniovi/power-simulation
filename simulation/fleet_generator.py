@@ -14,12 +14,13 @@
 
 """Module to generate fleets based on very high level parameters."""
 
+import injector
 import functools
 import math
 import numpy
 import typing
 import scipy.stats
-from simulation.base import Base
+from simulation.configuration import Configuration
 from simulation.static import draw_from_distribution
 from simulation.static import generate_servers
 from simulation.static import HISTOGRAMS
@@ -63,14 +64,15 @@ def is_workhour(day, hour):
     return day not in (0, 6) and hour >= IN_TIME and hour <= OUT_TIME
 
 
-class FleetGenerator(Base):
+class FleetGenerator(object):
     """Geenerates a fleet based on high level parameters.
 
     This class has the same same interface as ActiviyDistribution, but instead
     it generates the timeout and (in)activity based on these other parameters.
     """
 
-    def __init__(self):
+    @injector.inject
+    def __init__(self, config: Configuration):
         """Constructs the simulated fleet.
 
         Args:
@@ -79,8 +81,9 @@ class FleetGenerator(Base):
           out_hour: int, the time of leaving work.
         """
         super(FleetGenerator, self).__init__()
-        self.__target_satisfaction = self.get_config_int('target_satisfaction')
-        self.__servers = generate_servers(self.users_num)
+        self.__target_satisfaction = config.get_config_int(
+            'target_satisfaction')
+        self.__servers = generate_servers(config.users_num)
         self.__initialised = {cid: False for cid in self.__servers}
 
     @property

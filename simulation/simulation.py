@@ -25,7 +25,6 @@ import sqlite3
 import time
 import typing
 from simulation.activity_distribution import DistributionFactory
-from simulation.base import Base
 from simulation.configuration import Configuration
 from simulation.histogram import create_histogram_tables
 from simulation.module import Module
@@ -37,11 +36,12 @@ from simulation.user import User
 logger = logging.getLogger(__name__)
 
 
-class Simulation(Base):
+class Simulation(object):
     """Constructs the system and runs the simulation."""
 
     @injector.inject
-    def __init__(self, distr_factory: DistributionFactory,
+    def __init__(self, config: Configuration,
+                 distr_factory: DistributionFactory,
                  user_builder: injector.ClassAssistedBuilder[User],
                  plot: Plot, stats: Stats):
         super(Simulation, self).__init__()
@@ -50,7 +50,8 @@ class Simulation(Base):
         self.__user_builder = user_builder
         self.__plot = plot
         self.__stats = stats
-        self.target_satisfaction = self.get_config_int('target_satisfaction')
+        self.__config = config
+        self.target_satisfaction = config.get_config_int('target_satisfaction')
 
     @property
     def timeout(self) -> float:
@@ -65,14 +66,14 @@ class Simulation(Base):
     @timed
     def run(self) -> typing.Tuple[float, float]:
         """Sets up and starts a new simulation."""
-        self.new_run()
-        if self.debug:
-            self.env.process(self.__monitor_time())
+        self.__config.new_run()
+        if self.__config.debug:
+            self.__config.env.process(self.__monitor_time())
         for cid in self.__generate_cids():
-            self.env.process(self.__user_builder.build(cid=cid).run())
+            self.__config.env.process(self.__user_builder.build(cid=cid).run())
         logger.debug('Simulation starting')
-        self.env.run(until=self.simulation_time)
-        logger.debug('Simulation ended at %d s', self.env.now)
+        self.__config.env.run(until=self.__config.simulation_time)
+        logger.debug('Simulation ended at %d s', self.__config.env.now)
         self.__stats.flush()
         self.__validate_results()
         results = (self.__stats.user_satisfaction(),
@@ -88,11 +89,11 @@ class Simulation(Base):
     def __generate_cids(self) -> typing.List[str]:
         """Generate the computer IDs, so at least all are chosen once."""
         existing_servers = len(self.__activity_distribution.servers)
-        sample_size = self.users_num - existing_servers
+        sample_size = self.__config.users_num - existing_servers
 
         cids = random.sample(
             self.__activity_distribution.servers,
-            min(self.users_num, existing_servers))
+            min(self.__config.users_num, existing_servers))
 
         if sample_size > 0:
             if sample_size <= existing_servers:
@@ -110,7 +111,8 @@ class Simulation(Base):
         ust = self.__stats.sum_histogram('USER_SHUTDOWN_TIME', trim=True)
         ast = self.__stats.sum_histogram('AUTO_SHUTDOWN_TIME', trim=True)
         it = self.__stats.sum_histogram('INACTIVITY_TIME', trim=True)
-        val1 = (ust + at + it) / self.simulation_time / self.users_num
+        val1 = (ust + at + it) / self.__config.simulation_time / (
+            self.__config.users_num)
 
         if 0.99 > val1 > 1.01:
             logger.warning('Validation of total time failed: %.2f', val1)
@@ -121,9 +123,11 @@ class Simulation(Base):
     def __monitor_time(self) -> float:
         """Indicates how te simulation is progressing."""
         while True:
-            logger.debug('%.2f%% completed',
-                         self.env.now / self.simulation_time * 100.0)
-            yield self.env.timeout(self.simulation_time / 10.0)
+            logger.debug(
+                '%.2f%% completed',
+                self.__config.env.now / self.__config.simulation_time * 100.0)
+            yield self.__config.env.timeout(
+                self.__config.simulation_time / 10.0)
 
 
 def confidence_interval(m: float, alpha: float = 0.05):
@@ -155,8 +159,8 @@ def runner() -> None:
     logger.info('Parsing done at second %.2f', time.process_time() - ini)
 
     logger.info('Simulating %d users during %d s (%.1f week(s)).',
-                simulator.users_num, simulator.simulation_time,
-                simulator.simulation_time / WEEK(1))
+                configuration.users_num, configuration.simulation_time,
+                configuration.simulation_time / WEEK(1))
     logger.info('User Satisfaction (US) target is %d%%.',
                 simulator.target_satisfaction)
     if simulator.timeout < math.inf:

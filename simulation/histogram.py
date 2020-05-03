@@ -22,25 +22,30 @@ import sqlite3
 import injector
 import numpy
 from simulation.activity_distribution import DistributionFactory
-from simulation.base import Base
+from simulation.configuration import Configuration
 from simulation.static import hour_to_day
 from simulation.static import WEEK
 
 logger = logging.getLogger(__name__)
 
 
-class Histogram(Base):
+class Histogram(object):
     """Histogram stored in a DB."""
 
     @injector.inject
     @injector.noninjectable('name')
-    def __init__(self, distr_factory: DistributionFactory,
-                 conn: sqlite3.Connection, name: str):
+    def __init__(self, config: Configuration,
+                 distr_factory: DistributionFactory, conn: sqlite3.Connection,
+                 name: str):
         super(Histogram, self).__init__()
         self.__activity_distribution = distr_factory()
-        self.__cache_size = self.get_config_int('cache_size', section='stats')
+        self.__cache_size = config.get_config_int(
+            'cache_size', section='stats')
         self.__cursor = conn.cursor()
         self.__name = name
+        self.__config = config
+        self.__per_pc = config.get_arg('per_pc')
+        self.__per_hour = config.get_arg('per_hour')
         self.__write_cache = []
 
     @property
@@ -62,7 +67,7 @@ class Histogram(Base):
             self.__cursor.executemany(
                 '''INSERT INTO histogram
                        (run, histogram, timestamp, computer, value)
-                   VALUES(%d, '%s', ?, ?, ?);''' % (self.runs, self.__name),
+                   VALUES(%d, '%s', ?, ?, ?);''' % (self.__config.runs, self.__name),
                 self.__write_cache)
             self.__write_cache = []
 
@@ -70,7 +75,7 @@ class Histogram(Base):
             self, run: int = None) -> typing.List[numpy.ndarray]:
         """Gets all the subhistograms per hour."""
         if run is None:
-            run = self.runs
+            run = self.__config.runs
         self.flush()
         self.__cursor.execute(
             '''SELECT hour, value
@@ -89,7 +94,7 @@ class Histogram(Base):
     ) -> typing.List[typing.Tuple[float, float]]:
         """Gets all the data from the histogram."""
         if run is None:
-            run = self.runs
+            run = self.__config.runs
         self.flush()
         if cid is None:
             self.__cursor.execute(
@@ -117,7 +122,7 @@ class Histogram(Base):
             self, percentile: float, run: int = None) -> typing.List[float]:
         """Gets all the summaries per hour."""
         if run is None:
-            run = self.runs
+            run = self.__config.runs
         percentiles = []
         for hist in self.get_all_hourly_histograms(run):
             try:
@@ -129,7 +134,7 @@ class Histogram(Base):
     def get_all_hourly_count(self, run: int = None) -> typing.List[int]:
         """Gets all the count per hour."""
         if run is None:
-            run = self.runs
+            run = self.__config.runs
         self.flush()
         self.__cursor.execute(
             '''SELECT hour, COUNT(*) AS count
@@ -142,16 +147,16 @@ class Histogram(Base):
         dct = dict(self.__cursor.fetchall())
         total = [dct.get(i, 0) / self.simulation_weeks
                  for i in range(168)]
-        if not self.get_arg('per_hour'):
+        if not self.__per_hour:
             total = [i / 168 for i in total]
-        if not self.get_arg('per_pc'):
+        if not self.__per_pc:
             total = [i / self.servers for i in total]
         return total
 
     def get_all_hourly_distributions(self, run: int = None):
         """Returns all the intervals per hour."""
         if run is None:
-            run = self.runs
+            run = self.__config.runs
         self.flush()
         self.__cursor.execute(
             '''SELECT hour, value
@@ -172,7 +177,7 @@ class Histogram(Base):
             self, cid: str = None, trim: bool = False, run: int = None) -> int:
         """Sums up all the elements of this histogram."""
         if run is None:
-            run = self.runs
+            run = self.__config.runs
         self.flush()
         if trim:
             if cid is None:
@@ -186,8 +191,8 @@ class Histogram(Base):
                                  FROM histogram
                                 WHERE histogram = ?
                                       AND run = ?);''' % (
-                                          self.simulation_time,
-                                          self.simulation_time),
+                                          self.__config.simulation_time,
+                                          self.__config.simulation_time),
                     (self.__name, run))
             else:
                 self.__cursor.execute(
@@ -201,8 +206,8 @@ class Histogram(Base):
                                 WHERE histogram = ?
                                       AND run = ?
                                       AND computer = ?);''' % (
-                                          self.simulation_time,
-                                          self.simulation_time),
+                                          self.__config.simulation_time,
+                                          self.__config.simulation_time),
                     (self.__name, run, cid))
         else:
             if cid is None:
@@ -226,7 +231,7 @@ class Histogram(Base):
     def count_histogram(self, cid: str = None, run: int = None) -> int:
         """Counts the number of elements in this histogram."""
         if run is None:
-            run = self.runs
+            run = self.__config.runs
         self.flush()
         if cid is None:
             self.__cursor.execute(

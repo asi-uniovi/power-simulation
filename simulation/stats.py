@@ -20,7 +20,7 @@ import typing
 import injector
 import numpy
 from simulation.activity_distribution import DistributionFactory
-from simulation.base import Base
+from simulation.configuration import Configuration
 from simulation.histogram import Histogram
 from simulation.static import weighted_user_satisfaction
 
@@ -28,18 +28,21 @@ logger = logging.getLogger(__name__)
 
 
 @injector.singleton
-class Stats(Base):
+class Stats(object):
     """This is just a singleton dict with some helpers."""
 
     @injector.inject
-    def __init__(self, distr_factory: DistributionFactory,
+    def __init__(self, config: Configuration,
+                 distr_factory: DistributionFactory,
                  historgram_builder: injector.ClassAssistedBuilder[Histogram]):
         super(Stats, self).__init__()
         self.__training_distribution = distr_factory(training=True)
         self.__histogram_builder = historgram_builder
-        self.__target_satisfaction = self.get_config_int('target_satisfaction')
-        self.__satisfaction_threshold = self.get_config_int(
+        self.__target_satisfaction = config.get_config_int(
+            'target_satisfaction')
+        self.__satisfaction_threshold = config.get_config_int(
             'satisfaction_threshold')
+        self.__config = config
         self.__storage = {}
 
     def _idle_timeout(self, cid: str = None) -> float:
@@ -64,7 +67,8 @@ class Stats(Base):
                         i,
                         self._idle_timeout(cid),
                         self.__satisfaction_threshold)
-                        for i in self.get_all_histogram('INACTIVITY_TIME', cid))
+                        for i in self.get_all_histogram(
+                                'INACTIVITY_TIME', cid))
                     / count * 100)
         if lst:
             return numpy.mean(lst)
@@ -99,7 +103,7 @@ class Stats(Base):
         if key not in self.__storage:
             self.__storage[key] = self.__histogram_builder.build(name=key)
         if timestamp is None:
-            timestamp = self.env.now
+            timestamp = self.__config.env.now
         self.__storage[key].append(timestamp, cid, value)
         logger.debug('%s in PC %s = %f s (timestamp = %d s)',
                      key, cid, value, timestamp)

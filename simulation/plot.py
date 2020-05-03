@@ -21,7 +21,6 @@ import matplotlib.pyplot as plt
 import numpy
 import operator
 from simulation.activity_distribution import DistributionFactory
-from simulation.base import Base
 from simulation.static import DAYS
 from simulation.static import HISTOGRAMS
 from simulation.static import REVERSE_DAYS
@@ -34,7 +33,7 @@ logger = logging.getLogger(__name__)
 
 
 @injector.singleton
-class Plot(Base):
+class Plot(object):
     """Generates plots from the Stats modules."""
 
     @injector.inject

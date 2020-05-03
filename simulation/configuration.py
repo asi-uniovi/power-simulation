@@ -63,6 +63,37 @@ class Configuration(object):
         self.__runs += 1
         self.__env = simpy.Environment()
 
+    @property
+    def training_time(self) -> int:
+        """Indicates the simulation duration."""
+        return self.get_config_int('duration', section='training_distribution')
+
+    @property
+    def debug(self) -> bool:
+        """Indicates if this is a debug run."""
+        return bool(self.get_arg('debug'))
+
+    @property
+    def users_num(self) -> int:
+        """Number of users being simulated."""
+        return self.get_arg('users') or self.get_config_int('users')
+
+    @property
+    def simulation_time(self) -> int:
+        """Indicates the simulation duration."""
+        return self.get_arg('simulation_time') or self.get_config_int(
+            'duration', section='activity_distribution')
+
+    @property
+    def simulation_weeks(self) -> float:
+        """Indicates the simulation duration in weeks."""
+        return self.simulation_time / 604800
+
+    @property
+    def training_weeks(self) -> float:
+        """Indicates the simulation duration in weeks."""
+        return self.training_time / 604800
+
     def get_arg(self, key: str) -> str:
         """Forwards the get action to the args container."""
         return getattr(self.__args, key)
