@@ -54,6 +54,7 @@ class ActivityDistributionBase(object):
             'target_satisfaction')
         self.__satisfaction_threshold = config.get_config_int(
             'satisfaction_threshold')
+        self.__config = config
         self.__per_pc = config.get_arg('per_pc')
         self.__per_hour = config.get_arg('per_hour')
         self.__trace_file = config.get_config('file', section=config_section)
@@ -91,7 +92,7 @@ class ActivityDistributionBase(object):
         if all_timespan:
             return self.__optimal_timeout_all(cid)
         return self.__optimal_timeout_timestamp(
-            cid, *timestamp_to_day(self.env.now))
+            cid, *timestamp_to_day(self.__config.env.now))
 
     def random_activity_for_timestamp(self, cid: str, timestamp: int) -> float:
         """Queries the activity distribution and generates a random sample."""
@@ -351,7 +352,10 @@ class DistributionFactory(object):
                      ActivityDistributionBase],
                  fleet_generator: FleetGenerator):
         super(DistributionFactory, self).__init__()
-        self.__distr_builder = distr_builder
+        self.__activity_distr = distr_builder.build(
+                config_section='activity_distribution')
+        self.__training_distr = distr_builder.build(
+                config_section='training_distribution')
         self.__fleet_generator = fleet_generator
         self.__is_fleet_generator = config.get_arg('fleet_generator')
 
@@ -360,7 +364,5 @@ class DistributionFactory(object):
         if self.__is_fleet_generator:
             return self.__fleet_generator
         if training:
-            return self.__distr_builder.build(
-                config_section='training_distribution')
-        return self.__distr_builder.build(
-            config_section='activity_distribution')
+            return self.__training_distr
+        return self.__activity_distr

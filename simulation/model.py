@@ -14,6 +14,7 @@
 
 """Representation of a model for a computer/user."""
 
+import injector
 import typing
 import numpy
 import scipy.optimize
@@ -30,9 +31,13 @@ class Model(object):
     functionality like timeout threshold calculation.
     """
 
+    @injector.inject
+    @injector.noninjectable('xmax', 'xmin', 'inactivity', 'activity',
+                            'off_duration', 'off_fraction')
     def __init__(self, config: Configuration, xmax: float,
                  xmin: float, inactivity: typing.List = None,
-                 activity: typing.List = None, off_duration: typing.List = None,
+                 activity: typing.List = None,
+                 off_duration: typing.List = None,
                  off_fraction: typing.List = None):
         super(Model, self).__init__()
         self.__inactivity = EmpiricalDistribution(inactivity)
