@@ -21,7 +21,7 @@ import scipy.interpolate
 logger = logging.getLogger(__name__)
 
 
-class EmpiricalDistribution:
+class EmpiricalDistribution(object):
     """Empirical distribution according to the data provided.
 
     This is implemented with a cubic spline, which is faster than Law's ranking
