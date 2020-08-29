@@ -22,11 +22,11 @@ python:
   - "3.6"
   - "3.7"
   - "3.8"
-  - "nightly"
+  - "3.9-dev"
   
 jobs:
   allow_failures:
-  - python: "nightly"
+  - python: "3.9-dev"
     if: branch = master
 
 install:
