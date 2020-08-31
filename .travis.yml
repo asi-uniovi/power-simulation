@@ -18,6 +18,15 @@ language: python
 
 cache: pip
 
+addons:
+  apt:
+    packages:
+    - gcc
+    - gfortran
+    - libopenblas-dev
+    - liblapack-dev
+    - cython
+
 python:
   - "3.6"
   - "3.7"
