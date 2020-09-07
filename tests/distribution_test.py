@@ -20,7 +20,7 @@ import scipy.stats
 
 from simulation.distribution import EmpiricalDistribution
 
-ALPHA = 0.001
+ALPHA = 0.01
 SIZE = 50000
 
 
@@ -39,8 +39,10 @@ def test_ks_2samp(original_dist):
     """Test the fitness of the empirical distribution to a dataset."""
     original_data = original_dist.rvs(size=SIZE)
     fitted_data = EmpiricalDistribution(data=original_data).rvs(size=SIZE)
+    # H0 is samples are from the same distribution.
     _, pvalue = scipy.stats.ks_2samp(original_data, fitted_data)
-    assert pvalue > ALPHA
+    # Assert we can't reject the H0.
+    assert pvalue >= ALPHA
 
 
 def test_merge():
@@ -52,5 +54,7 @@ def test_merge():
     one = EmpiricalDistribution(data=numpy.concatenate((
         scipy.stats.norm(loc=10, scale=4).rvs(size=SIZE),
         scipy.stats.norm(loc=20, scale=7).rvs(size=SIZE))))
+    # H0 is samples are from the same distribution.
     _, pvalue = scipy.stats.ks_2samp(one.rvs(size=SIZE), merged.rvs(size=SIZE))
-    assert pvalue > ALPHA
+    # Assert we can't reject the H0.
+    assert pvalue >= ALPHA
