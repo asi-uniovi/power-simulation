@@ -13,10 +13,15 @@
 # limitations under the License.
 
 dist: focal
+sudo: false
 
 language: python
 
-cache: pip
+cache:
+  apt: true
+  pip: true
+  directories:
+    - $HOME/.cache
 
 addons:
   apt:
@@ -25,14 +30,17 @@ addons:
     - gfortran
     - libopenblas-dev
     - liblapack-dev
-    - cython
+    - cython3
 
 python:
   - "3.6"
   - "3.7"
   - "3.8"
   - "3.9-dev"
-  
+
+virtualenv:
+  system_site_packages: true
+
 jobs:
   allow_failures:
   - python: "3.9-dev"
