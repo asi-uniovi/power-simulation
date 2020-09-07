@@ -38,9 +38,6 @@ python:
   - "3.8"
   - "3.9-dev"
 
-virtualenv:
-  system_site_packages: true
-
 jobs:
   allow_failures:
   - python: "3.9-dev"
