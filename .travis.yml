@@ -18,30 +18,12 @@ sudo: false
 language: python
 
 cache:
-  apt: true
   pip: true
-  directories:
-    - $HOME/.cache
-
-addons:
-  apt:
-    packages:
-    - gcc
-    - gfortran
-    - libopenblas-dev
-    - liblapack-dev
-    - cython3
 
 python:
   - "3.6"
   - "3.7"
   - "3.8"
-  - "3.9-dev"
-
-jobs:
-  allow_failures:
-  - python: "3.9-dev"
-    if: branch = master
 
 install:
   - make init
