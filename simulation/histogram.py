@@ -145,7 +145,7 @@ class Histogram(object):
              ORDER BY hour ASC;''',
             (self.__name, run))
         dct = dict(self.__cursor.fetchall())
-        total = [dct.get(i, 0) / self.simulation_weeks
+        total = [dct.get(i, 0) / self.__config.simulation_weeks
                  for i in range(168)]
         if self.__merge_by_hour:
             total = [i / 168 for i in total]
