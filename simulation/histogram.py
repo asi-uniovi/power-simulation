@@ -44,8 +44,8 @@ class Histogram(object):
         self.__cursor = conn.cursor()
         self.__name = name
         self.__config = config
-        self.__per_pc = config.get_arg('per_pc')
-        self.__per_hour = config.get_arg('per_hour')
+        self.__merge_by_pc = config.get_arg('merge_by_pc')
+        self.__merge_by_hour = config.get_arg('merge_by_hour')
         self.__write_cache = []
 
     @property
@@ -147,9 +147,9 @@ class Histogram(object):
         dct = dict(self.__cursor.fetchall())
         total = [dct.get(i, 0) / self.simulation_weeks
                  for i in range(168)]
-        if not self.__per_hour:
+        if self.__merge_by_hour:
             total = [i / 168 for i in total]
-        if not self.__per_pc:
+        if self.__merge_by_pc:
             total = [i / self.servers for i in total]
         return total
 

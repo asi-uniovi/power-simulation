@@ -55,8 +55,8 @@ class ActivityDistributionBase(object):
         self.__satisfaction_threshold = config.get_config_int(
             'satisfaction_threshold')
         self.__config = config
-        self.__per_pc = config.get_arg('per_pc')
-        self.__per_hour = config.get_arg('per_hour')
+        self.__merge_by_pc = config.get_arg('merge_by_pc')
+        self.__merge_by_hour = config.get_arg('merge_by_hour')
         self.__trace_file = config.get_config('file', section=config_section)
         self.__xmin = config.get_config_float('xmin', section=config_section)
         self.__xmax = config.get_config_float('xmax', section=config_section)
@@ -145,9 +145,9 @@ class ActivityDistributionBase(object):
                 total = sum(len(i.resolve_key(key))
                             for i in transposed.get(day, {}).get(hour, []))
                 total /= len(self.__servers)
-                if not self.__per_hour:
+                if self.__merge_by_hour:
                     total /= 168
-                if not self.__per_pc:
+                if self.__merge_by_pc:
                     total /= len(self.__servers)
                 total /= self.__duration / WEEK(1)
                 hours.append(total)
@@ -279,13 +279,13 @@ class ActivityDistributionBase(object):
 
     def __merge_histograms(self) -> None:
         """Merges histograms to be global or per PC/hour."""
-        if not self.__per_hour and not self.__per_pc:
+        if self.__merge_by_hour and self.__merge_by_pc:
             logger.info('Merging histogram both per hour and PC.')
             self.__merge_per_hour_and_pc()
-        elif not self.__per_hour:
+        elif self.__merge_by_hour:
             logger.info('Merging histogram per hour.')
             self.__merge_per_hour()
-        elif not self.__per_pc:
+        elif self.__merge_by_pc:
             logger.info('Merging histogram per PC.')
             self.__merge_per_pc()
         else:

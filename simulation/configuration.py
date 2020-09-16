@@ -133,12 +133,12 @@ class Configuration(object):
         parser.add_argument('--trace',
                             action='store_true',
                             help='generate a profiling trace')
-        parser.add_argument('--per_pc',
+        parser.add_argument('--merge_by_pc',
                             action='store_true',
-                            help='do not merge by PC')
-        parser.add_argument('--per_hour',
+                            help='merge by PC')
+        parser.add_argument('--merge_by_hour',
                             action='store_true',
-                            help='do not merge by hour')
+                            help='merge by hour')
         parser.add_argument('--max_runs',
                             type=positive_int, default=100,
                             help='do not run the simulation more than this')
