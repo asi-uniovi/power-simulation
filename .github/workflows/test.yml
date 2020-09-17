@@ -29,7 +29,7 @@ jobs:
           pipenv --venv
 
       - name: Pull up pip cache
-        user: actions/cache@v2
+        uses: actions/cache@v2
         path: ${{ steps.pipenv-venv.outputs.dir }}
         key: ${{ runner.os }}-pip-${{ hashFiles('**/Pipfile.lock') }}
         restore-keys: |
