@@ -19,6 +19,8 @@ init:
 
 test:
 	pipenv run pytest
+
+smoketest:
 	pipenv run ./main.py --config config/test.ini
 
 lint:
