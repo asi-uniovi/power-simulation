@@ -28,14 +28,14 @@ jobs:
           pipenv --python 3
 
       - name: Get virtualenv location
-        id: pipenv-venv
+        id: pipenv_venv
         run: |
           pipenv --venv
 
       - name: Pull up pip cache
         uses: actions/cache@v2
         with:
-          path: ${{ steps.pipenv-venv.outputs.dir }}
+          path: ${{ steps.pipenv_venv.outputs.dir }}
           key: ${{ runner.os }}-pip-${{ hashFiles('**/Pipfile.lock') }}
           restore-keys: |
             ${{ runner.os }}-pip-
