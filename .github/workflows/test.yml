@@ -30,7 +30,7 @@ jobs:
       - name: Get virtualenv location
         id: pipenv_venv
         run: |
-          pipenv --venv
+          echo "::set-output name=dir::$(pipenv --venv)"
 
       - name: Pull up pip cache
         uses: actions/cache@v2
