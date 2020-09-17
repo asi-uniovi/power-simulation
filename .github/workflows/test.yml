@@ -3,21 +3,37 @@ name: Test
 on: [push, pull_request]
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: [3.6, 3.7, 3.8]
 
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
 
-      - uses: dschep/install-pipenv-action@v1
+      - name: Install pipenv
+        uses: dschep/install-pipenv-action@v1
+
+      - name: Get virtualenv location
+        id: pipenv-venv
+        run: |
+          pipenv --venv
+
+      - name: Pull up pip cache
+        user: actions/cache@v2
+        path: ${{ steps.pipenv-venv.outputs.dir }}
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/Pipfile.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
 
       - name: Install dependencies
         run: |
