@@ -127,5 +127,5 @@ class Model(object):
             # satisfaction target, therefore, if we provide the max value, we
             # ensure to, at least, be as close as possible.
             if f(self.__xmax) > f(self.__xmin):
-                return self.__xmax
+                return self.__satisfaction_threshold
             return self.__xmin
