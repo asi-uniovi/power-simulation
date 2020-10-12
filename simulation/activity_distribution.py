@@ -67,6 +67,7 @@ class ActivityDistributionBase(object):
         self.__servers = []
         self.__models = {}
         self.__optimal_timeout = None
+        self.__optimal_timeouts = {}
         self.__parse_trace()
 
     @property
@@ -74,23 +75,47 @@ class ActivityDistributionBase(object):
         """Read only servers list."""
         return self.__servers
 
-    def test_timeout(
-            self, timeout: float) -> typing.Tuple[float, float, float]:
+    def test_timeout(self, timeouts):
         """Calculate analytically the US and RI for a given timeout."""
-        return self.__get_flat_model().test_timeout(timeout)
+        all_wus = []
+        all_us = []
+        all_ri = 0.0
+        all_ti = 0.0
+        for cid, days in timeouts.items():
+            for day, hours in days.items():
+                for hour, t in hours.items():
+                    model = self.__distribution_for_hour(cid, day, hour)
+                    if model:
+                        wus, us, ri, ti = model.test_timeout(t)
+                        all_wus.append(wus)
+                        all_us.append(us)
+                        all_ri += ri
+                        all_ti += ti
+        return (numpy.mean(all_wus), numpy.mean(all_us), all_ri / all_ti * 100)
+
+    def all_idle_timeouts(self):
+        self.global_idle_timeout()
+        return self.__optimal_timeouts
 
     def global_idle_timeout(self) -> float:
         """Calculates the value of the idle timer for a given satisfaction."""
         if self.__optimal_timeout is None:
-            self.__optimal_timeout = numpy.mean([self.optimal_idle_timeout(
-                cid, all_timespan=True) for cid in self.__servers])
+            timeouts = []
+            for cid, days in self.__models.items():
+                self.__optimal_timeouts[cid] = {}
+                for day, hours in days.items():
+                    self.__optimal_timeouts[cid][day] = {}
+                    for hour in hours.keys():
+                        model = self.__distribution_for_hour(cid, day, hour)
+                        if model:
+                            t = model.optimal_idle_timeout()
+                            self.__optimal_timeouts[cid][day][hour] = t
+                            timeouts.append(t)
+            self.__optimal_timeout = numpy.mean(timeouts)
         return self.__optimal_timeout
 
-    def optimal_idle_timeout(
-            self, cid: str, all_timespan: bool = False) -> float:
+    def optimal_idle_timeout(self, cid: str) -> float:
         """Calculates the value of the idle timer for a given satisfaction."""
-        if all_timespan:
-            return self.__optimal_timeout_all(cid)
         return self.__optimal_timeout_timestamp(
             cid, *timestamp_to_day(self.__config.env.now))
 
@@ -199,12 +224,11 @@ class ActivityDistributionBase(object):
         return hist.optimal_idle_timeout()
 
     def __distribution_for_hour(self, cid: str, day: int, hour: int) -> Model:
-        """Queries the activity distribution to the get average inactivity."""
         previous_count = 0
         d, h = day, hour
         distribution = self.__get(cid, d, h)
-        if distribution is None:
-            while distribution is None:
+        if distribution is None or not distribution.is_complete:
+            while distribution is None or not distribution.is_complete:
                 if previous_count > 168:
                     logger.warning('There is no model for %s (%d,%d)',
                                    cid, day, hour)

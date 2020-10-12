@@ -51,6 +51,13 @@ class Model(object):
             'target_satisfaction')
         self.__xmax = xmax
         self.__xmin = xmin
+        self.__tested = None
+
+    @property
+    def is_complete(self) -> bool:
+        """Indicates if the model has all the minimum distributions."""
+        return (len(self.__inactivity.data) > 0
+                or len(self.__inactivity.data) > 0)
 
     @property
     def inactivity(self) -> EmpiricalDistribution:
@@ -73,17 +80,19 @@ class Model(object):
         return self.__off_fraction
 
     def test_timeout(
-            self, timeout: float) -> typing.Tuple[float, float, float]:
+            self, timeout: float) -> typing.Tuple[float, float, float, float]:
         """Calculate analytically the US and RI for a given timeout."""
-        wus = (numpy.sum(weighted_user_satisfaction(
-            self.inactivity.data, timeout, self.__satisfaction_threshold))
-               / len(self.inactivity.data)) * 100
-        us = (numpy.sum(user_satisfaction(self.inactivity.data, timeout))
-              / len(self.inactivity.data)) * 100
-        ri = (numpy.sum(numpy.where(self.inactivity.data > timeout,
-                                    self.inactivity.data - timeout, 0.0))
-              / numpy.sum(self.inactivity.data)) * 100
-        return (wus, us, ri)
+        if self.__tested is None:
+            wus = (numpy.sum(weighted_user_satisfaction(
+                self.inactivity.data, timeout, self.__satisfaction_threshold))
+                   / len(self.inactivity.data)) * 100
+            us = (numpy.sum(user_satisfaction(self.inactivity.data, timeout))
+                  / len(self.inactivity.data)) * 100
+            ri = numpy.sum(numpy.where(self.inactivity.data > timeout,
+                                       self.inactivity.data - timeout, 0.0))
+            ti = numpy.sum(self.inactivity.data)
+            self.__tested = (wus, us, ri, ti)
+        return self.__tested
 
     def resolve_key(self, key: str) -> EmpiricalDistribution:
         """Matches histograms and keys."""
@@ -104,11 +113,13 @@ class Model(object):
         self.__off_duration.extend([i.off_duration for i in others])
         self.__off_fraction.extend(i.off_fraction for i in others)
         self.__optimal_timeout = None
+        self.__tested = None
 
     def optimal_idle_timeout(self) -> float:
         """Does the search for the optimal timeout for this model."""
         if self.__optimal_timeout is None:
-            self.__optimal_timeout = self.__optimal_timeout_search()
+            self.__optimal_timeout = min(self.__optimal_timeout_search(),
+                                         self.__satisfaction_threshold)
         return self.__optimal_timeout
 
     def __optimal_timeout_search(self) -> float:

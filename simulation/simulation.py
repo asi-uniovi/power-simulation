@@ -59,9 +59,14 @@ class Simulation(object):
         return self.__training_distribution.global_idle_timeout()
 
     @property
+    def all_timeouts(self) -> float:
+        """Average global timeout."""
+        return self.__training_distribution.all_idle_timeouts()
+
+    @property
     def test_timeout(self) -> typing.Tuple[float, float, float]:
         """Average global timeout."""
-        return self.__activity_distribution.test_timeout(self.timeout)
+        return self.__activity_distribution.test_timeout(self.all_timeouts)
 
     @timed
     def run(self) -> typing.Tuple[float, float]:
