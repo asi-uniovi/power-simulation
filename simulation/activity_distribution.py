@@ -55,8 +55,10 @@ class ActivityDistributionBase(object):
         self.__satisfaction_threshold = config.get_config_int(
             'satisfaction_threshold')
         self.__config = config
-        self.__merge_by_pc = config.get_arg('merge_by_pc')
-        self.__merge_by_hour = config.get_arg('merge_by_hour')
+        self.__config_section = config_section
+        do_merge = (config_section == 'training_distribution')
+        self.__merge_by_pc = config.get_arg('merge_by_pc') and do_merge
+        self.__merge_by_hour = config.get_arg('merge_by_hour') and do_merge
         self.__trace_file = config.get_config('file', section=config_section)
         self.__xmin = config.get_config_float('xmin', section=config_section)
         self.__xmax = config.get_config_float('xmax', section=config_section)
@@ -304,16 +306,20 @@ class ActivityDistributionBase(object):
     def __merge_histograms(self) -> None:
         """Merges histograms to be global or per PC/hour."""
         if self.__merge_by_hour and self.__merge_by_pc:
-            logger.info('Merging histogram both per hour and PC.')
+            logger.info('%s: Merging histogram both per hour and PC.',
+                        self.__config_section)
             self.__merge_per_hour_and_pc()
         elif self.__merge_by_hour:
-            logger.info('Merging histogram per hour.')
+            logger.info('%s: Merging histogram per hour.',
+                        self.__config_section)
             self.__merge_per_hour()
         elif self.__merge_by_pc:
-            logger.info('Merging histogram per PC.')
+            logger.info('%s: Merging histogram per PC.',
+                        self.__config_section)
             self.__merge_per_pc()
         else:
-            logger.info('Will not merge any dataset.')
+            logger.info('%s: Will not merge any dataset.',
+                        self.__config_section)
 
     def __merge_per_hour(self) -> None:
         """Merge so all hours have the same model."""
