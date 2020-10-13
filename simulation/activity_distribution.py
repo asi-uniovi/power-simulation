@@ -88,16 +88,39 @@ class ActivityDistributionBase(object):
                 for hour, t in hours.items():
                     model = self.__distribution_for_hour(cid, day, hour)
                     if model:
-                        wus, us, ri, ti = model.test_timeout(t)
+                        wus, us, ri, ti = model.test_timeout(t, retest=True)
                         all_wus.append(wus)
                         all_us.append(us)
                         all_ri += ri
                         all_ti += ti
-        return (numpy.mean(all_wus), numpy.mean(all_us), all_ri / all_ti * 100)
+        return (numpy.mean(all_wus), numpy.median(all_wus), numpy.std(all_wus),
+                numpy.mean(all_us), numpy.median(all_us), numpy.std(all_us),
+                all_ri / all_ti * 100)
 
     def all_idle_timeouts(self):
         self.global_idle_timeout()
         return self.__optimal_timeouts
+
+    def graph_results(self, min_t, max_t, step):
+        # example: min_t = 0, max_t = 20*60, step=30
+        with open('graphic.csv', 'w') as f:
+            f.write('t;wus_mean;wus_median;wus_std;us_mean;us_median;us_std;ri')
+            for t in range(min_t, max_t, step):
+                logger.info('Testing timeout %d...', t)
+                metrics = [str(i).replace('.', ',') for i in
+                           self.test_timeout(self.construct_timeouts(t))]
+                f.write("%d;%s\n" % (t, ';'.join(metrics)))
+                logger.info('Done.')
+
+    def construct_timeouts(self, t):
+        timeouts = {}
+        for cid, days in self.__models.items():
+            timeouts[cid] = {}
+            for day, hours in days.items():
+                timeouts[cid][day] = {}
+                for hour in hours.keys():
+                    timeouts[cid][day][hour] = t
+        return timeouts
 
     def global_idle_timeout(self) -> float:
         """Calculates the value of the idle timer for a given satisfaction."""
@@ -113,7 +136,9 @@ class ActivityDistributionBase(object):
                             t = model.optimal_idle_timeout()
                             self.__optimal_timeouts[cid][day][hour] = t
                             timeouts.append(t)
-            self.__optimal_timeout = numpy.mean(timeouts)
+            self.__optimal_timeout = (numpy.mean(timeouts),
+                                      numpy.median(timeouts),
+                                      numpy.std(timeouts))
         return self.__optimal_timeout
 
     def optimal_idle_timeout(self, cid: str) -> float:

@@ -68,6 +68,10 @@ class Simulation(object):
         """Average global timeout."""
         return self.__activity_distribution.test_timeout(self.all_timeouts)
 
+    def graph_timeouts(self) -> None:
+        """Average global timeout."""
+        return self.__training_distribution.graph_results(0, 20*60, 30)
+
     @timed
     def run(self) -> typing.Tuple[float, float]:
         """Sets up and starts a new simulation."""
@@ -168,12 +172,17 @@ def runner() -> None:
                 configuration.simulation_time / WEEK(1))
     logger.info('User Satisfaction (US) target is %d%%.',
                 simulator.target_satisfaction)
-    if simulator.timeout < math.inf:
-        logger.info('Average global timeout will be %.2f s (%.2f min).',
-                    simulator.timeout, simulator.timeout / 60)
-        logger.info('A priori WUS = %.2f%%, US = %.2f%%, RI = %.2f%%.',
+    if simulator.timeout[0] < math.inf:
+        logger.info('Average global timeout will be %.2f s '
+                    '(median = %.2f s, std = %.2f s)',
+                    *simulator.timeout)
+        logger.info('A priori WUS = %.2f%% (median = %.2f%%, std = %.2f p.p.), '
+                    'US = %.2f%% (median = %.2f%%, std = %.2f p.p.), '
+                    'RI = %.2f%%.',
                     *simulator.test_timeout)
         logger.info('A priori analysis at second %.2f', time.process_time() - ini)
+        # simulator.graph_timeouts()
+        # logger.info('Graph done %.2f', time.process_time() - ini)
     (s, i, t), c = run(), 1
     logger.info('Run 1: US = %.2f%%, RI = %.2f%%, timeout = %.2f', s, i, t)
 

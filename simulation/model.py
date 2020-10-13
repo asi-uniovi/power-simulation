@@ -56,8 +56,7 @@ class Model(object):
     @property
     def is_complete(self) -> bool:
         """Indicates if the model has all the minimum distributions."""
-        return (len(self.__inactivity.data) > 0
-                or len(self.__inactivity.data) > 0)
+        return (len(self.__inactivity.data) > 0)
 
     @property
     def inactivity(self) -> EmpiricalDistribution:
@@ -80,9 +79,10 @@ class Model(object):
         return self.__off_fraction
 
     def test_timeout(
-            self, timeout: float) -> typing.Tuple[float, float, float, float]:
+            self, timeout: float,
+            retest: bool = False) -> typing.Tuple[float, float, float, float]:
         """Calculate analytically the US and RI for a given timeout."""
-        if self.__tested is None:
+        if self.__tested is None or retest:
             wus = (numpy.sum(weighted_user_satisfaction(
                 self.inactivity.data, timeout, self.__satisfaction_threshold))
                    / len(self.inactivity.data)) * 100
