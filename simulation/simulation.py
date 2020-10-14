@@ -70,7 +70,7 @@ class Simulation(object):
 
     def graph_timeouts(self) -> None:
         """Average global timeout."""
-        return self.__training_distribution.graph_results(0, 20*60, 30)
+        return self.__training_distribution.graph_results(0, 30*60+1, 30)
 
     @timed
     def run(self) -> typing.Tuple[float, float]:
@@ -181,8 +181,8 @@ def runner() -> None:
                     'RI = %.2f%%.',
                     *simulator.test_timeout)
         logger.info('A priori analysis at second %.2f', time.process_time() - ini)
-        # simulator.graph_timeouts()
-        # logger.info('Graph done %.2f', time.process_time() - ini)
+        simulator.graph_timeouts()
+        logger.info('Graph done %.2f', time.process_time() - ini)
     (s, i, t), c = run(), 1
     logger.info('Run 1: US = %.2f%%, RI = %.2f%%, timeout = %.2f', s, i, t)
 
