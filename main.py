@@ -20,6 +20,8 @@ import sys
 import flamegraph
 import matplotlib
 matplotlib.use('Agg')
+import numpy
+numpy.seterr('raise')
 from simulation.simulation import runner
 
 
