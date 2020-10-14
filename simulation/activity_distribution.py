@@ -86,13 +86,16 @@ class ActivityDistributionBase(object):
         for cid, days in timeouts.items():
             for day, hours in days.items():
                 for hour, t in hours.items():
-                    model = self.__distribution_for_hour(cid, day, hour)
-                    if model:
+                    model = self.__get(cid, day, hour)
+                    if model is not None and model.is_complete:
                         wus, us, ri, ti = model.test_timeout(t, retest=True)
                         all_wus.append(wus)
                         all_us.append(us)
                         all_ri += ri
                         all_ti += ti
+                    else:
+                        all_ri += 3600 - min(t, 1800)
+                        all_ti += 3600
         return (numpy.mean(all_wus), numpy.median(all_wus), numpy.std(all_wus),
                 numpy.mean(all_us), numpy.median(all_us), numpy.std(all_us),
                 all_ri / all_ti * 100)
@@ -104,7 +107,7 @@ class ActivityDistributionBase(object):
     def graph_results(self, min_t, max_t, step):
         # example: min_t = 0, max_t = 20*60, step=30
         with open('graphic.csv', 'w') as f:
-            f.write('t;wus_mean;wus_median;wus_std;us_mean;us_median;us_std;ri')
+            f.write('t;wus_mean;wus_median;wus_std;us_mean;us_median;us_std;ri\n')
             for t in range(min_t, max_t, step):
                 logger.info('Testing timeout %d...', t)
                 metrics = [str(i).replace('.', ',') for i in
