@@ -21,9 +21,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install pipenv
-        run: |
-          sudo apt-get install libpq-dev -y
-          pip install pipenv
+        run: pip install pipenv
 
       - name: Cache Pipenv virtualenv
         uses: actions/cache@v2
@@ -38,7 +36,7 @@ jobs:
         env:
           PIPENV_NOSPIN: 'true'
           WORKON_HOME: ~/.local/share/virtualenvs
-          PIPENV_CACHE_DIR: ~/.local/share/pipcache
+          PYTHONPATH: '.'
         if: steps.pipenv-cache.outputs.cache-hit != 'true'
         run: make init
 
