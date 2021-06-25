@@ -22,34 +22,26 @@ jobs:
 
       - name: Install pipenv
         run: pip install pipenv
+        
+      - name: Create virtualenv
+        run: pipenv --python ${{ matrix.python-version }}
 
-      - name: Cache Pipenv virtualenv
+      - name: Get virtualenv location
+        id: pipenv_venv
+        run: echo "::set-output name=venv::$(pipenv --venv)"
+
+      - name: Pull up pip cache
         uses: actions/cache@v2
-        id: pipenv-cache
         with:
-          path: ~/.local/share/virtualenvs
-          key: ${{ runner.os }}-pipenv-v2-${{ hashFiles('**/Pipfile.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-pipenv-v2-
+          path: ${{ steps.pipenv_venv.outputs.venv }}
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/Pipfile.lock') }}
+          restore-keys: ${{ runner.os }}-pip-
 
-      - name: Install Dependencies
-        env:
-          PIPENV_NOSPIN: 'true'
-          WORKON_HOME: ~/.local/share/virtualenvs
-          PYTHONPATH: '.'
-        if: steps.pipenv-cache.outputs.cache-hit != 'true'
+      - name: Install/Update dependencies
         run: make init
 
-      - name: Run Tests
-        env:
-          PIPENV_NOSPIN: 'true'
-          WORKON_HOME: ~/.local/share/virtualenvs
-          PYTHONPATH: '.'
+      - name: Test
         run: make test
 
-      - name: Run Smoke Tests
-        env:
-          PIPENV_NOSPIN: 'true'
-          WORKON_HOME: ~/.local/share/virtualenvs
-          PYTHONPATH: '.'
+      - name: Smoke Test
         run: make smoketest
