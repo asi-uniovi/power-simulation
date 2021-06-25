@@ -5,9 +5,15 @@ on: [push, pull_request]
 jobs:
   test:
     runs-on: ubuntu-latest
+
     strategy:
       matrix:
         python-version: [3.6, 3.7, 3.8, 3.9]
+
+    env:
+      PIPENV_NOSPIN: 1
+      PIPENV_SKIP_LOCK: 1
+      PIPENV_VENV_IN_PROJECT: 1
 
     steps:
       - name: Checkout
@@ -26,16 +32,12 @@ jobs:
       - name: Create virtualenv
         run: pipenv --python ${{ matrix.python-version }}
 
-      - name: Get virtualenv location
-        id: pipenv_venv
-        run: echo "::set-output name=venv::$(pipenv --venv)"
-
       - name: Pull up pip cache
         uses: actions/cache@v2
         with:
-          path: ${{ steps.pipenv_venv.outputs.venv }}
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/Pipfile.lock') }}
-          restore-keys: ${{ runner.os }}-pip-
+          path: ${{ github.action_path }}/.venv
+          key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('**/Pipfile.lock') }}
+          restore-keys: ${{ runner.os }}-pip-${{ matrix.python-version }}-
 
       - name: Install/Update dependencies
         run: make init
