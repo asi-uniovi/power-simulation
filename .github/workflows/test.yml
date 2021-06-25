@@ -5,9 +5,15 @@ on: [push, pull_request]
 jobs:
   test:
     runs-on: ubuntu-latest
+
     strategy:
       matrix:
-        python-version: [3.6, 3.7, 3.8]
+        python-version: [3.6, 3.7, 3.8, 3.9]
+
+    env:
+      PIPENV_NOSPIN: 1
+      PIPENV_SKIP_LOCK: 1
+      PIPENV_VENV_IN_PROJECT: 1
 
     steps:
       - name: Checkout
@@ -21,33 +27,27 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install pipenv
-        uses: dschep/install-pipenv-action@v1
-
+        run: pip install pipenv
+        
       - name: Create virtualenv
-        run: |
-          pipenv --python 3
+        run: pipenv --python ${{ matrix.python-version }}
 
       - name: Get virtualenv location
         id: pipenv_venv
-        run: |
-          echo "::set-output name=venv::$(pipenv --venv)"
+        run: echo "::set-output name=venv::$(pipenv --venv)"
 
       - name: Pull up pip cache
         uses: actions/cache@v2
         with:
           path: ${{ steps.pipenv_venv.outputs.venv }}
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/Pipfile.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
+          key: ${{ runner.os }}-pip-${{ matrix.python-version }}
+          restore-keys: ${{ runner.os }}-pip-${{ matrix.python-version }}
 
-      - name: Install dependencies
-        run: |
-          make init
+      - name: Install/Update dependencies
+        run: make init
 
       - name: Test
-        run: |
-          make test
+        run: make test
 
       - name: Smoke Test
-        run: |
-          make smoketest
+        run: make smoketest
