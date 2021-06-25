@@ -35,7 +35,7 @@ jobs:
       - name: Pull up pip cache
         uses: actions/cache@v2
         with:
-          path: ${GITHUB_WORKSPACE}/.venv
+          path: ${{ github.workspace }}/.venv
           key: ${{ runner.os }}-pip-${{ matrix.python-version }}
           restore-keys: ${{ runner.os }}-pip-${{ matrix.python-version }}
 
