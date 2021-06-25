@@ -39,18 +39,14 @@ jobs:
           PIPENV_NOSPIN: 'true'
           WORKON_HOME: ~/.local/share/virtualenvs
           PIPENV_CACHE_DIR: ~/.local/share/pipcache
-          if: steps.pipenv-cache.outputs.cache-hit != 'true'
-          run: make init
+        if: steps.pipenv-cache.outputs.cache-hit != 'true'
+        run: make init
 
       - name: Run Tests
         env:
           PIPENV_NOSPIN: 'true'
           WORKON_HOME: ~/.local/share/virtualenvs
           PYTHONPATH: '.'
-          ENV_ROLE: ${{ secrets.ENV_ROLE }}
-          NOHCHI_MOTT_SECRET_KEY: ${{ secrets.NOHCHI_MOTT_SECRET_KEY }}
-          GET_ENVIRONMENT: ${{ secrets.GET_ENVIRONMENT }}
-          EMAIL_NO_REPLY: ${{ secrets.EMAIL_NO_REPLY }}
         run: make test
 
       - name: Run Smoke Tests
@@ -58,8 +54,4 @@ jobs:
           PIPENV_NOSPIN: 'true'
           WORKON_HOME: ~/.local/share/virtualenvs
           PYTHONPATH: '.'
-          ENV_ROLE: ${{ secrets.ENV_ROLE }}
-          NOHCHI_MOTT_SECRET_KEY: ${{ secrets.NOHCHI_MOTT_SECRET_KEY }}
-          GET_ENVIRONMENT: ${{ secrets.GET_ENVIRONMENT }}
-          EMAIL_NO_REPLY: ${{ secrets.EMAIL_NO_REPLY }}
         run: make smoketest
