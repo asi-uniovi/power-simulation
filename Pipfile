@@ -16,5 +16,4 @@ simpy = "*"
 
 [dev-packages]
 flake8 = "*"
-mypy = "*"
 pytest = "*"
