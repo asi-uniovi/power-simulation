@@ -94,7 +94,7 @@ class Stats(object):
                         for i in self.get_all_histogram('INACTIVITY_TIME')
                         if i > self._idle_timeout())
                     / self.sum_histogram('INACTIVITY_TIME') * 100)
-        except ZeroDivisionError:
+        except (ValueError, ZeroDivisionError):
             return 0.0
 
     def append(self, key: str, value: float, cid: str,
