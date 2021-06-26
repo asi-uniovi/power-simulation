@@ -39,7 +39,7 @@ jobs:
           restore-keys: ${{ runner.os }}-pip-${{ matrix.python-version }}-
 
       - name: Install/Update dependencies
-        run: pipenv update
+        run: pipenv update --dev
 
       - name: Test
         run: make test
