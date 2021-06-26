@@ -181,8 +181,9 @@ def runner() -> None:
                     'RI = %.2f%%.',
                     *simulator.test_timeout)
         logger.info('A priori analysis at second %.2f', time.process_time() - ini)
-        simulator.graph_timeouts()
-        logger.info('Graph done %.2f', time.process_time() - ini)
+        if configuration.get_arg('graph_timeouts'):
+            simulator.graph_timeouts()
+            logger.info('Graph done %.2f', time.process_time() - ini)
     (s, i, t), c = run(), 1
     logger.info('Run 1: US = %.2f%%, RI = %.2f%%, timeout = %.2f', s, i, t)
 

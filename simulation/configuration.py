@@ -160,4 +160,7 @@ class Configuration(object):
         parser.add_argument('--users',
                             type=positive_int,
                             help='Override number of users from the config.')
+        parser.add_argument('--graph_timeouts',
+                            action='store_true',
+                            help='Produce the comparative of timeouts.')
         self.__args = parser.parse_args()
