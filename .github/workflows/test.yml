@@ -8,7 +8,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: [3.6, 3.7, 3.8, 3.9]
+        python-version: [3.7, 3.8, 3.9, 3.10]
 
     env:
       PIPENV_NOSPIN: 1
@@ -27,7 +27,7 @@ jobs:
 
       - name: Install pipenv
         run: pip install pipenv
-        
+
       - name: Create virtualenv
         run: pipenv --python ${{ matrix.python-version }}
 
