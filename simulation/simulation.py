@@ -153,7 +153,7 @@ def confidence_interval(m: float, alpha: float = 0.05):
 @timed
 def runner() -> None:
     """Bind all and launch the simulation!"""
-    ini = time.process_time()
+    ini0 = ini = time.process_time()
     custom_injector = injector.Injector([Module])
     configuration = custom_injector.get(Configuration)
     config_logging(configuration)
@@ -165,8 +165,9 @@ def runner() -> None:
     confidence_width = configuration.get_arg('max_confidence_interval_width')
     run = custom_injector.get(profile)(simulator.run)
 
-    logger.info('Parsing done at second %.2f', time.process_time() - ini)
+    logger.info('Parsing done (%.2f s)', time.process_time() - ini)
 
+    ini = time.process_time()
     logger.info('Simulating %d users during %d s (%.1f week(s)).',
                 configuration.users_num, configuration.simulation_time,
                 configuration.simulation_time / WEEK(1))
@@ -180,10 +181,12 @@ def runner() -> None:
                     'US = %.2f%% (median = %.2f%%, std = %.2f p.p.), '
                     'RI = %.2f%%.',
                     *simulator.test_timeout)
-        logger.info('A priori analysis at second %.2f', time.process_time() - ini)
+        logger.info('A priori analysis done (%.2f s)', time.process_time() - ini)
         if configuration.get_arg('graph_timeouts'):
             simulator.graph_timeouts()
             logger.info('Graph done %.2f', time.process_time() - ini)
+
+    ini = time.process_time()
     (s, i, t), c = run(), 1
     logger.info('Run 1: US = %.2f%%, RI = %.2f%%, timeout = %.2f', s, i, t)
 
@@ -206,15 +209,16 @@ def runner() -> None:
                 break
         logger.info('All runs done (%d).', c)
 
-    logger.info('Runs done at second %.2f', time.process_time() - ini)
+    logger.info('Simulation runs done (%.2f s)', time.process_time() - ini)
+
 
     if configuration.get_arg('plot'):
+        ini = time.process_time()
         logger.debug('Storing plots.')
         custom_injector.get(Plot).plot_all()
-
-    logger.info('Plotting done at second %.2f', time.process_time() - ini)
+        logger.info('Plotting done (%.2f s)', time.process_time() - ini)
 
     logger.debug('Process memory footprint: %.2f MiB',
                  memory_profiler.memory_usage()[0])
 
-    logger.info('All done at second %.2f', time.process_time() - ini)
+    logger.info('All done (total %.2f s)', time.process_time() - ini0)

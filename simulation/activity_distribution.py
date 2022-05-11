@@ -345,9 +345,6 @@ class ActivityDistributionBase(object):
             logger.info('%s: Merging histogram per PC.',
                         self.__config_section)
             self.__merge_per_pc()
-        else:
-            logger.info('%s: Will not merge any dataset.',
-                        self.__config_section)
 
     def __merge_per_hour(self) -> None:
         """Merge so all hours have the same model."""
