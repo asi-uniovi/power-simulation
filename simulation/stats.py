@@ -48,7 +48,7 @@ class Stats(object):
     def _idle_timeout(self, cid: str = None) -> float:
         """Indicates the global idle timeout."""
         if cid is None:
-            return self.__training_distribution.global_idle_timeout()
+            return self.__training_distribution.global_idle_timeout()[0]
         return self.__training_distribution.optimal_idle_timeout(cid)
 
     def optimal_idle_timeout(self) -> float:
