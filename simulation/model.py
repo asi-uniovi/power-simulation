@@ -43,7 +43,7 @@ class Model(object):
         self.__inactivity = EmpiricalDistribution(inactivity)
         self.__activity = EmpiricalDistribution(activity)
         self.__off_duration = EmpiricalDistribution(off_duration)
-        self.__off_fraction = off_fraction or []
+        self.__off_fraction = off_fraction or [0.0]
         self.__optimal_timeout = None
         self.__satisfaction_threshold = config.get_config_int(
             'satisfaction_threshold')
