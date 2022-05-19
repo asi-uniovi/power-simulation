@@ -13,8 +13,6 @@ jobs:
 
     env:
       PIPENV_NOSPIN: 1
-      WORKON_HOME: ~/.local/share/virtualenvs
-      PIPENV_CACHE_DIR: ~/.local/share/pipcache
 
     steps:
       - name: Checkout
@@ -33,7 +31,7 @@ jobs:
       - name: Pull up pip cache
         uses: actions/cache@v2
         with:
-          path: ${{ WORKON_HOME }}
+          path: ~/.local/share/virtualenvs
           key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('**/Pipfile.lock') }}
           restore-keys: ${{ runner.os }}-pip-${{ matrix.python-version }}-
 
