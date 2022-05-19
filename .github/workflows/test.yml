@@ -5,6 +5,7 @@ on: [push, pull_request]
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     strategy:
       matrix:
@@ -12,7 +13,8 @@ jobs:
 
     env:
       PIPENV_NOSPIN: 1
-      PIPENV_VENV_IN_PROJECT: 1
+      WORKON_HOME: ~/.local/share/virtualenvs
+      PIPENV_CACHE_DIR: ~/.local/share/pipcache
 
     steps:
       - name: Checkout
@@ -25,21 +27,19 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install pipenv / wheel
-        run: pip install --upgrade pipenv wheel
-
-      - name: Create virtualenv
-        run: pipenv --python ${{ matrix.python-version }}
+      - name: Install pipenv
+        run: pip install --upgrade pipenv
 
       - name: Pull up pip cache
         uses: actions/cache@v2
         with:
-          path: ${{ github.workspace }}/.venv
+          path: ${{ WORKON_HOME }}
           key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('**/Pipfile.lock') }}
           restore-keys: ${{ runner.os }}-pip-${{ matrix.python-version }}-
 
       - name: Install/Update dependencies
-        run: pipenv update --dev
+        if: steps.cache-pipenv.outputs.cache-hit != 'true'
+        run: make init
 
       - name: Test
         run: make test
