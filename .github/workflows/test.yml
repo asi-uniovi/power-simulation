@@ -37,7 +37,7 @@ jobs:
 
       - name: Install/Update dependencies
         if: steps.cache-pipenv.outputs.cache-hit != 'true'
-        run: make init
+        run: pipenv install --site-packages
 
       - name: Test
         run: make test
