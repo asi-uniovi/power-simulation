@@ -1,0 +1,32 @@
+name: Test
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        python-version: ['3.8', '3.9', '3.10']
+
+    env:
+      PIPENV_NOSPIN: 1
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+
+      - run: pipx install pipenv
+
+      - uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pipenv
+
+      - run: pipenv install --python ${{ matrix.python-version }}
+
+      - run: make test
+
+      - run: make smoketest
