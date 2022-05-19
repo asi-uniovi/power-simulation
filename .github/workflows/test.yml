@@ -5,7 +5,6 @@ on: [push, pull_request]
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
 
     strategy:
       matrix:
@@ -36,7 +35,7 @@ jobs:
           restore-keys: ${{ runner.os }}-pip-${{ matrix.python-version }}
 
       - name: Install/Update dependencies
-        run: pipenv install --dev --site-packages
+        run: pipenv install --dev --site-packages --python {{ matrix.python-versions }}
 
       - name: Test
         run: make test
