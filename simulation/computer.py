@@ -70,7 +70,7 @@ class Computer(object):
                 and self.__last_auto_shutdown is not None):
             self.__stats.append(
                 'AUTO_SHUTDOWN_TIME',
-                self.__config.env.now - self.__last_auto_shutdown,
+                self.__config.now - self.__last_auto_shutdown,
                 self.__computer_id, timestamp=self.__last_auto_shutdown)
             self.__last_auto_shutdown = None
         self.__status = status
@@ -83,7 +83,7 @@ class Computer(object):
             self.__idle_timer.interrupt()
         activity_time = (
             self.__activity_distribution.random_activity_for_timestamp(
-                self.__computer_id, self.__config.env.now))
+                self.__computer_id, self.__config.now))
         self.__stats.append(
             'ACTIVITY_TIME', activity_time, self.__computer_id)
         yield self.__config.env.timeout(activity_time)
@@ -103,6 +103,6 @@ class Computer(object):
             yield self.__config.env.timeout(self.__idle_timeout())
             self.change_status(ComputerStatus.off,
                                interrupt_idle_timer=False)
-            self.__last_auto_shutdown = self.__config.env.now
+            self.__last_auto_shutdown = self.__config.now
         except simpy.Interrupt:
             pass

@@ -55,7 +55,7 @@ class Histogram(object):
 
     def append(self, timestamp: int, cid: str, value: float) -> None:
         """Inserts into the histogram, just in cache for now."""
-        self.__write_cache.append((timestamp, cid, float(value)))
+        self.__write_cache.append((float(timestamp), cid, float(value)))
         if len(self.__write_cache) >= self.__cache_size:
             self.flush()
 
@@ -111,7 +111,8 @@ class Histogram(object):
                           AND run = ?
                           AND computer = ?;''',
                 (self.__name, run, cid))
-        return [(i['timestamp'], i['value']) for i in self.__cursor.fetchall()]
+        cursor = self.__cursor.fetchall()
+        return [(i['timestamp'], i['value']) for i in cursor]
 
     def get_all_histogram(
             self, cid: str = None, run: int = None) -> numpy.ndarray:

@@ -58,6 +58,11 @@ class Configuration(object):
         """Current SimPy environment in use."""
         return self.__env
 
+    @property
+    def now(self) -> simpy.Environment:
+        """Current SimPy timestamp."""
+        return float(self.__env.now)
+
     def new_run(self) -> None:
         """Start a new simulation run."""
         self.__runs += 1
@@ -143,7 +148,7 @@ class Configuration(object):
                             type=positive_int, default=100,
                             help='do not run the simulation more than this')
         parser.add_argument('--max_confidence_interval_width',
-                            type=positive_float, default=0.5,
+                            type=positive_float, default=2,
                             help=('run simulations until the confidence '
                                   'intervals are narrower than this'))
         parser.add_argument('--fleet_generator',

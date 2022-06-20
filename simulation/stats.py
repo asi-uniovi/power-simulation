@@ -103,7 +103,7 @@ class Stats(object):
         if key not in self.__storage:
             self.__storage[key] = self.__histogram_builder.build(name=key)
         if timestamp is None:
-            timestamp = self.__config.env.now
+            timestamp = float(self.__config.now)
         self.__storage[key].append(timestamp, cid, value)
         logger.debug('%s in PC %s = %f s (timestamp = %d s)',
                      key, cid, value, timestamp)

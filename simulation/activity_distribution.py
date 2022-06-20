@@ -67,6 +67,7 @@ class ActivityDistributionBase(object):
         self.__model_builder = functools.partial(
             model_builder.build, xmax=self.__xmax, xmin=self.__xmin)
         self.__servers = []
+        self.__empty_servers = []
         self.__models = {}
         self.__optimal_timeout = None
         self.__optimal_timeouts = {}
@@ -76,6 +77,27 @@ class ActivityDistributionBase(object):
     def servers(self) -> typing.List[str]:
         """Read only servers list."""
         return self.__servers
+
+    @property
+    def empty_servers(self) -> typing.List[str]:
+        """Read only empty servers list."""
+        return self.__empty_servers
+
+    def intersect(self, other: 'ActivityDistributionBase') -> None:
+        """Make this activity distribution intersect with other."""
+        to_remove = set(self.empty_servers) | set(other.empty_servers)
+        to_remove |= set(self.servers) ^ set(other.servers)
+        self.remove_servers(to_remove)
+        other.remove_servers(to_remove)
+
+    def remove_servers(self, empty_servers: typing.List[str]) -> None:
+        """Blacklist some of the servers."""
+        self.__empty_servers = set(self.__empty_servers) | set(empty_servers)
+        for cid in self.__empty_servers:
+            if cid in self.__models:
+                del self.__models[cid]
+        self.__servers = sorted(set(self.__servers) - self.__empty_servers)
+        self.__empty_servers = sorted(self.__empty_servers)
 
     def test_timeout(self, timeouts):
         """Calculate analytically the US and RI for a given timeout."""
@@ -105,7 +127,6 @@ class ActivityDistributionBase(object):
         return self.__optimal_timeouts
 
     def graph_results(self, min_t, max_t, step):
-        # example: min_t = 0, max_t = 20*60, step=30
         with open('graphic.csv', 'w') as f:
             f.write('t;wus_mean;wus_median;wus_std;us_mean;us_median;us_std;ri\n')
             for t in range(min_t, max_t, step):
@@ -147,7 +168,7 @@ class ActivityDistributionBase(object):
     def optimal_idle_timeout(self, cid: str) -> float:
         """Calculates the value of the idle timer for a given satisfaction."""
         return self.__optimal_timeout_timestamp(
-            cid, *timestamp_to_day(self.__config.env.now))
+            cid, *timestamp_to_day(self.__config.now))
 
     def random_activity_for_timestamp(self, cid: str, timestamp: int) -> float:
         """Queries the activity distribution and generates a random sample."""
@@ -162,14 +183,14 @@ class ActivityDistributionBase(object):
         return draw_from_distribution(
             self.__distribution_for_hour(
                 cid, *timestamp_to_day(timestamp)).inactivity,
-            min_value=self.__xmin, max_value=self.__xmax)
+            min_value=0.1, max_value=self.__xmax)
 
     def off_interval_for_timestamp(self, cid: str, timestamp: int) -> float:
         """Samples an off interval for the day and hour provided"""
         return draw_from_distribution(
             self.__distribution_for_hour(
                 cid, *timestamp_to_day(timestamp)).off_duration,
-            min_value=self.__xmin, max_value=self.__xmax)
+            min_value=0.1, max_value=self.__xmax)
 
     def off_frequency_for_hour(self, cid: str, day: int, hour: int) -> float:
         """Determines whether a computer should turndown or not."""
@@ -299,6 +320,7 @@ class ActivityDistributionBase(object):
             if len(self.__servers) != len(set(self.__servers)):
                 raise ValueError('There are duplicate PCs')
         self.__merge_histograms()
+        self.__filter_out_empty_servers()
 
     def __parse_model(
             self,
@@ -311,7 +333,7 @@ class ActivityDistributionBase(object):
                 day = DAYS[d['Day']]
                 hour = int(d['Hour'])
                 histogram.setdefault(day, {}).setdefault(
-                    hour, {})[t] = self.__filter(t, d['Intervals'])
+                    hour, {})[t] = self.__filter(d['Intervals'])
         models = {}
         for day, hours in histogram.items():
             for hour, dct in hours.items():
@@ -323,13 +345,9 @@ class ActivityDistributionBase(object):
                         off_fraction=dct['OffFrequencies']))
         return models
 
-    def __filter(self, t: str, data: typing.List[float]) -> typing.List[float]:
+    def __filter(self, data: typing.List[float]) -> typing.List[float]:
         """Perform filtering on the raw data to improve quality."""
-        if t == 'InactivityIntervals':
-            data = (i for i in data if self.__xmin <= i <= self.__xmax)
-        if t != 'OffFrequencies':
-            data = (i for i in data if i > 0)
-        return list(data)
+        return list(i for i in data if 0 < i <= self.__xmax)
 
     def __merge_histograms(self) -> None:
         """Merges histograms to be global or per PC/hour."""
@@ -388,6 +406,28 @@ class ActivityDistributionBase(object):
         self.__models = {cid: {d: {h: merged_model for h in range(24)}
                                for d in range(7)}
                          for cid in self.__models.keys()}
+
+    def __filter_out_empty_servers(self) -> None:
+        """Removes the servers that have no data in any of the histograms."""
+        logger.debug('Filtering servers with no data.')
+        empty_servers = set()
+        for cid in self.__servers:
+            if self.__is_empty_histogram(cid):
+                empty_servers.add(cid)
+                if cid in self.__models:
+                    del self.__models[cid]
+        self.__servers = sorted(set(self.__servers) - empty_servers)
+        self.__empty_servers = sorted(empty_servers)
+        logger.info('%d servers have been filtered out.', len(empty_servers))
+
+    def __is_empty_histogram(self, cid: str) -> bool:
+        """Indicates if a histogram is empty."""
+        for day in range(7):
+            for hour in range(24):
+                model = self.__get(cid, day, hour)
+                if model.is_complete:
+                    return False
+        return True
 
     def __get(self, cid: int, day: int, hour: int) -> Model:
         """Generic getter for a model."""

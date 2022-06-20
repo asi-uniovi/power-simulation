@@ -167,6 +167,8 @@ def draw_from_distribution(distribution: scipy.stats.rv_continuous,
                            max_value: float = float('inf')) -> float:
     """Gets a value from a distribution bounding the limit."""
     rnd = distribution.rvs()
+    if not rnd:
+        return min_value
     while rnd < min_value or rnd > max_value:
         rnd = distribution.rvs()
     return rnd

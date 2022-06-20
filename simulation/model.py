@@ -56,7 +56,7 @@ class Model(object):
     @property
     def is_complete(self) -> bool:
         """Indicates if the model has all the minimum distributions."""
-        return (len(self.__inactivity.data) > 0)
+        return self.inactivity.is_complete
 
     @property
     def inactivity(self) -> EmpiricalDistribution:

@@ -52,6 +52,7 @@ class Simulation(object):
         self.__stats = stats
         self.__config = config
         self.target_satisfaction = config.get_config_int('target_satisfaction')
+        self.__activity_distribution.intersect(self.__training_distribution)
 
     @property
     def timeout(self) -> float:
@@ -82,7 +83,7 @@ class Simulation(object):
             self.__config.env.process(self.__user_builder.build(cid=cid).run())
         logger.debug('Simulation starting')
         self.__config.env.run(until=self.__config.simulation_time)
-        logger.debug('Simulation ended at %d s', self.__config.env.now)
+        logger.debug('Simulation ended at %d s', self.__config.now)
         self.__stats.flush()
         self.__validate_results()
         results = (self.__stats.user_satisfaction(),
@@ -134,7 +135,7 @@ class Simulation(object):
         while True:
             logger.debug(
                 '%.2f%% completed',
-                self.__config.env.now / self.__config.simulation_time * 100.0)
+                self.__config.now / self.__config.simulation_time * 100.0)
             yield self.__config.env.timeout(
                 self.__config.simulation_time / 10.0)
 

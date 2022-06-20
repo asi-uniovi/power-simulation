@@ -38,10 +38,17 @@ class EmpiricalDistribution(object):
         """Returns the sample data used for the fitting."""
         return self.__data
 
-    def rvs(self, size=None):
+    @property
+    def is_complete(self):
+        """Indicate if the distribution has data."""
+        return self.data.size > 0
+
+    def rvs(self, size=1):
         """Sample the spline that has the inverse CDF."""
-        if self.__data.size < 2:
-            return numpy.random.choice(self.__data, size=size)
+        if self.__data.size == 0:
+            return None
+        if self.__data.size == 1:
+            return numpy.repeat(self.__data, repeats=size)
         if self.__spline is None:
             self.__fit_spline()
         return self.__spline(numpy.random.random(size=size), nu=0)
