@@ -52,11 +52,11 @@
         },
         "injector": {
             "hashes": [
-                "sha256:2e5f5629d9c42f8ed8a3f8a5b4e9dc8ac80547cd95c7ce0bd0fc3f4baae6bc77",
-                "sha256:3eaaf51cd3ba7be1354d92a5210c8bba43dd324300eafd214e1f2568834a912f"
+                "sha256:0c82dedc8e1354e8fd22ab3d99b88bddef6dedb9c77d6c22c4d89db3d15837f5",
+                "sha256:b7897abf2a562840660fbb62feef0e6598cba7e89d9fb3b22a8b2e63fdf818cb"
             ],
             "index": "pypi",
-            "version": "==0.19.0"
+            "version": "==0.20.0"
         },
         "kiwisolver": {
             "hashes": [
