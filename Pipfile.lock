@@ -37,11 +37,11 @@
         },
         "fonttools": {
             "hashes": [
-                "sha256:af2e155851b226792c50a0fde950b39ae05ee5b92cc790f5c7bf5dec1e5e6eab",
-                "sha256:cb6eee1330423ffaa56af962aeb2b8db409dc8f98b9d8e79ea109a09d4168191"
+                "sha256:9a1c52488045cd6c6491fd07711a380f932466e317cb8e016fc4e99dc7eac2f0",
+                "sha256:d73f25b283cd8033367451122aa868a23de0734757a01984e4b30b18b9050c72"
             ],
             "index": "pypi",
-            "version": "==4.34.3"
+            "version": "==4.34.4"
         },
         "iniconfig": {
             "hashes": [
