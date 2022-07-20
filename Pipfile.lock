@@ -104,7 +104,7 @@
                 "sha256:f8ad8285b01b0d4695102546b342b493b3ccc6781fc28c8c6a1bb63e95d22f09",
                 "sha256:f9f39e2f049db33a908319cf46624a569b36983c7c78318e9726a4cb8923b26c"
             ],
-            "index": "pypi",
+            "markers": "python_version >= '3.7'",
             "version": "==1.4.4"
         },
         "matplotlib": {
@@ -151,7 +151,7 @@
         "memory-profiler": {
             "editable": true,
             "git": "https://github.com/pythonprofilers/memory_profiler.git",
-            "ref": "e3c36833f555c762f4ceec245a33f645f36b93a9"
+            "ref": "eed3447369e5b0cd708de045b757e0bac853a83b"
         },
         "mpmath": {
             "hashes": [
