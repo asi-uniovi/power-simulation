@@ -18,7 +18,8 @@ jobs:
         with:
           fetch-depth: 1
 
-      - run: pipx install setuptools pipenv
+      - run: pipx install setuptools
+      - run: pipx install pipenv
 
       - uses: actions/setup-python@v4
         with:
