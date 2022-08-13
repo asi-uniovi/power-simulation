@@ -18,7 +18,7 @@ jobs:
         with:
           fetch-depth: 1
 
-      - run: curl https://raw.githubusercontent.com/pypa/pipenv/master/get-pipenv.py | python
+      - run: pipx install pipenv
 
       - uses: actions/setup-python@v4
         with:
