@@ -14,7 +14,6 @@ psutil = "*"
 pytest = "*"
 scipy = "*"
 simpy = "*"
-packaging = "*"
 
 [dev-packages]
 flake8 = "*"
