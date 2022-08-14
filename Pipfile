@@ -13,6 +13,7 @@ powerlaw = "*"
 psutil = "*"
 scipy = "*"
 simpy = "*"
+typing-extensions = "*"
 
 [dev-packages]
 flake8 = "*"
