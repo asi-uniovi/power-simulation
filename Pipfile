@@ -11,9 +11,9 @@ memory_profiler = {git = "https://github.com/pythonprofilers/memory_profiler.git
 numpy = "*"
 powerlaw = "*"
 psutil = "*"
-pytest = "*"
 scipy = "*"
 simpy = "*"
 
 [dev-packages]
 flake8 = "*"
+pytest = "*"
