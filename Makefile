@@ -15,7 +15,7 @@
 .PHONY: init test lint cleanall clean cleanlogs cleanpyc
 
 init:
-	pipenv install --dev --site-packages
+	pipenv install --dev
 
 test:
 	pipenv run pytest
