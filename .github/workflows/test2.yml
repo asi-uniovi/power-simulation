@@ -18,12 +18,12 @@ jobs:
         with:
           fetch-depth: 1
 
-      - run: pipx install pipenv
-
       - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
           cache: pipenv
+
+      - run: pipx install pipenv
 
       - run: pipenv install --python ${{ matrix.python-version }}
 
