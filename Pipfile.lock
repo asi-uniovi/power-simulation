@@ -29,11 +29,11 @@
         },
         "fonttools": {
             "hashes": [
-                "sha256:2ee4509aeba40542a6c6d00895a0c66f3cb8b9edda2fa58438dd9f769e3ce76e",
-                "sha256:e4467a36e24f918507b5cfdc61d2a479b6c7393a85d1f126f3c84f76e8df2151"
+                "sha256:4606e1a88ee1f6699d182fea9511bd9a8a915d913eab4584e5226da1180fcce7",
+                "sha256:fff6b752e326c15756c819fe2fe7ceab69f96a1dbcfe8911d0941cdb49905007"
             ],
             "index": "pypi",
-            "version": "==4.37.0"
+            "version": "==4.37.1"
         },
         "injector": {
             "hashes": [
