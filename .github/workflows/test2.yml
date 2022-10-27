@@ -23,8 +23,6 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: pipenv
 
-      - run: pip install pipenv
-
       - run: make init
 
       - run: make test
