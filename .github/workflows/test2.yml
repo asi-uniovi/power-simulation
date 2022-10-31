@@ -19,13 +19,15 @@ jobs:
           fetch-depth: 1
 
       - uses: actions/setup-python@v4
+        id: setuppy
         with:
           python-version: ${{ matrix.python-version }}
+          check-latest: true
           cache: pipenv
 
-      - run: python -m pip install --upgrade pipenv wheel
+      - run: curl https://raw.githubusercontent.com/pypa/pipenv/master/get-pipenv.py | ${{ steps.setuppy.outputs.python-path }}
 
-      - run: pipenv install --dev --python ${{ matrix.python-version }}
+      - run: pipenv install --dev --python '${{ steps.setuppy.outputs.python-path }}'
 
       - run: make test
 
