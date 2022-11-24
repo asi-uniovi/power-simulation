@@ -4,6 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
+exceptiongroup = "*"
 flamegraph = {git = "https://github.com/evanhempel/python-flamegraph.git", editable = true}
 injector = "*"
 matplotlib = "*"
