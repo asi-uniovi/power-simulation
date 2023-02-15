@@ -15,6 +15,7 @@ psutil = "*"
 scipy = "*"
 simpy = "*"
 typing-extensions = "*"
+importlib_resources = "*"
 
 [dev-packages]
 flake8 = "*"
