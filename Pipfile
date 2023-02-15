@@ -16,6 +16,7 @@ scipy = "*"
 simpy = "*"
 typing-extensions = "*"
 importlib_resources = "*"
+zipp = "*"
 
 [dev-packages]
 flake8 = "*"
