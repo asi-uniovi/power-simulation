@@ -106,11 +106,11 @@
         },
         "importlib-resources": {
             "hashes": [
-                "sha256:04358673182e6b483bc9bab4c6d0b8a7e75a8f33bbe8a9009a90a23a34920146",
-                "sha256:390bfc5c00efd1ef7f7973828604def6d60a9c226c1638fe501faf1e7a3a7582"
+                "sha256:4be82589bf5c1d7999aedf2a45159d10cb3ca4f19b2271f8792bc8e6da7b22f6",
+                "sha256:7b1deeebbf351c7578e09bf2f63fa2ce8b5ffec296e0d349139d43cca061a81a"
             ],
             "index": "pypi",
-            "version": "==5.11.1"
+            "version": "==5.12.0"
         },
         "injector": {
             "hashes": [
