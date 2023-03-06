@@ -98,11 +98,11 @@
         },
         "fonttools": {
             "hashes": [
-                "sha256:2bb244009f9bf3fa100fc3ead6aeb99febe5985fa20afbfbaa2f8946c2fbdaf1",
-                "sha256:820466f43c8be8c3009aef8b87e785014133508f0de64ec469e4efb643ae54fb"
+                "sha256:909c104558835eac27faeb56be5a4c32694192dca123d073bf746ce9254054af",
+                "sha256:f5e764e1fd6ad54dfc201ff32af0ba111bcfbe0d05b24540af74c63db4ed6390"
             ],
-            "markers": "python_version >= '3.7'",
-            "version": "==4.38.0"
+            "markers": "python_version >= '3.8'",
+            "version": "==4.39.0"
         },
         "importlib-resources": {
             "hashes": [
@@ -548,11 +548,11 @@
         },
         "pytest": {
             "hashes": [
-                "sha256:c7c6ca206e93355074ae32f7403e8ea12163b1163c976fee7d4d84027c162be5",
-                "sha256:d45e0952f3727241918b8fd0f376f5ff6b301cc0777c6f9a556935c92d8a7d42"
+                "sha256:130328f552dcfac0b1cec75c12e3f005619dc5f874f0a06e8ff7263f0ee6225e",
+                "sha256:c99ab0c73aceb050f68929bc93af19ab6db0558791c6a0715723abe9d0ade9d4"
             ],
             "index": "pypi",
-            "version": "==7.2.1"
+            "version": "==7.2.2"
         }
     }
 }
