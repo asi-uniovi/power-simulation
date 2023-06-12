@@ -133,7 +133,7 @@
                 "sha256:eb52c10fda31159c22c7ed85074e05f8b97da8773ea461706c273e31bcbea836",
                 "sha256:ec468c022d09f1817c691cf884feb1030ef6f1e93e3ea6831b0d8144c06480d1"
             ],
-            "index": "pypi",
+            "markers": "python_version >= '3.8'",
             "version": "==4.40.0"
         },
         "importlib-resources": {
@@ -561,11 +561,11 @@
         },
         "pytest": {
             "hashes": [
-                "sha256:3799fa815351fea3a5e96ac7e503a96fa51cc9942c3753cda7651b93c1cfa362",
-                "sha256:434afafd78b1d78ed0addf160ad2b77a30d35d4bdf8af234fe621919d9ed15e3"
+                "sha256:cdcbd012c9312258922f8cd3f1b62a6580fdced17db6014896053d47cddf9295",
+                "sha256:ee990a3cc55ba808b80795a79944756f315c67c12b56abd3ac993a7b8c17030b"
             ],
             "index": "pypi",
-            "version": "==7.3.1"
+            "version": "==7.3.2"
         }
     }
 }
