@@ -26,7 +26,7 @@ jobs:
 
       - run: ${{ steps.setuppy.outputs.python-path }} -m ensurepip --upgrade
 
-      - run: curl https://raw.githubusercontent.com/pypa/pipenv/master/get-pipenv.py | ${{ steps.setuppy.outputs.python-path }}
+      - run: ${{ steps.setuppy.outputs.python-path }} -m pip install pipenv
 
       - run: pipenv install --dev --python '${{ steps.setuppy.outputs.python-path }}'
 
