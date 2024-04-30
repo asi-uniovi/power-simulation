@@ -22,8 +22,9 @@ jobs:
         id: setuppy
         with:
           python-version: ${{ matrix.python-version }}
-          check-latest: true
           cache: pipenv
+
+      - run: ${{ steps.setuppy.outputs.python-path }} -m ensurepip --upgrade
 
       - run: curl https://raw.githubusercontent.com/pypa/pipenv/master/get-pipenv.py | ${{ steps.setuppy.outputs.python-path }}
 
