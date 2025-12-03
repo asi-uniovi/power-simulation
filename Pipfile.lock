@@ -180,11 +180,11 @@
         },
         "injector": {
             "hashes": [
-                "sha256:74379ccef3b893bc7d0b7d504c255b5160c5a55e97dc7bdcc73cb33cc7dce3a1",
-                "sha256:79b2d4a0874c75d3aa735f11c5b32b89d9542711ca07071161882c5e9cc15ed6"
+                "sha256:7e59db84faa5358474c8ee05abca6ab6bd02519fbefcf175e0b230ee7d2d4bac",
+                "sha256:86ab389805b4aaabfe235b2b2b85ff515af4d0209faccf1d60de2872c92c1fa0"
             ],
             "index": "pypi",
-            "version": "==0.22.0"
+            "version": "==0.23.0"
         },
         "kiwisolver": {
             "hashes": [
