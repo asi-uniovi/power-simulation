@@ -695,12 +695,12 @@
         },
         "simpy": {
             "hashes": [
-                "sha256:06d0750a7884b11e0e8e20ce0bc7c6d4ed5f1743d456695340d13fdff95001a6",
-                "sha256:7c5ae380240fd2238671160e4830956f8055830a8317edf5c05e495b3823cd88"
+                "sha256:43071f84b6512c9b4fcb33ef057f240ccb1d1f3b263f9b4f9229d072e310b372",
+                "sha256:76ef36b71e0436ba94e55febc001c78879e493a323f045bbcfbb0b216e9b1fbc"
             ],
             "index": "pypi",
             "markers": "python_version >= '3.8'",
-            "version": "==4.1.1"
+            "version": "==4.1.2"
         },
         "six": {
             "hashes": [
