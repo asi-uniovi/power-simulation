@@ -18,6 +18,7 @@ import argparse
 import configparser
 import os
 import injector
+import numpy
 import simpy
 
 
@@ -61,7 +62,7 @@ class Configuration(object):
     @property
     def now(self) -> simpy.Environment:
         """Current SimPy timestamp."""
-        return float(self.__env.now)
+        return float(numpy.squeeze(self.__env.now))
 
     def new_run(self) -> None:
         """Start a new simulation run."""
