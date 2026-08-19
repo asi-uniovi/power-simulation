@@ -55,7 +55,7 @@ class Histogram(object):
 
     def append(self, timestamp: int, cid: str, value: float) -> None:
         """Inserts into the histogram, just in cache for now."""
-        self.__write_cache.append((float(timestamp), cid, float(value)))
+        self.__write_cache.append((float(timestamp), cid, float(numpy.squeeze(value))))
         if len(self.__write_cache) >= self.__cache_size:
             self.flush()
 
